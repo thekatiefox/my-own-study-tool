@@ -4,7 +4,7 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getStreak, getTotalDueCards, getDailyStats, getAllPacks } from '@/lib/database';
+import { getStreak, getTotalDueCards, getDailyStats, getAllPacks, getPackProgress } from '@/lib/database';
 import { loadAllPacks } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
 import NewsCard from '@/components/NewsCard';
@@ -53,9 +53,23 @@ export default function HomeScreen() {
 
   const handleStartReview = async () => {
     const packs = await getAllPacks();
-    if (packs.length > 0) {
-      router.push(`/review/${packs[0].id}`);
+    if (packs.length === 0) return;
+
+    // Find the pack with the most due cards
+    const progressList = await Promise.all(
+      packs.map(async (p) => ({ id: p.id, ...(await getPackProgress(p.id)) }))
+    );
+
+    // Prefer pack with most due cards; if none due, pick pack with most unlearned cards
+    const bestDue = progressList.sort((a, b) => b.dueCards - a.dueCards)[0];
+    if (bestDue.dueCards > 0) {
+      router.push(`/review/${bestDue.id}`);
+      return;
     }
+    const bestNew = progressList.sort((a, b) =>
+      (b.totalCards - b.learnedCards) - (a.totalCards - a.learnedCards)
+    )[0];
+    router.push(`/review/${bestNew.id}`);
   };
 
   return (
