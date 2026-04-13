@@ -5,7 +5,7 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { getTotalDueCards } from '@/lib/database';
-import { loadAllPacks } from '@/lib/packs';
+import { loadAllPacks, getAllPackData } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
 import QuickQuiz from '@/components/QuickQuiz';
 import * as WebBrowser from 'expo-web-browser';
@@ -17,6 +17,7 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const [dueCards, setDueCards] = useState(0);
+  const [totalCards, setTotalCards] = useState(0);
   const [news, setNews] = useState<NewsStory[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [expandedStory, setExpandedStory] = useState<number | null>(null);
@@ -27,6 +28,8 @@ export default function HomeScreen() {
       await loadAllPacks();
       const d = await getTotalDueCards();
       setDueCards(d);
+      const packs = getAllPackData();
+      setTotalCards(packs.reduce((sum, p) => sum + p.cards.length, 0));
     } catch (err) {
       console.error('Failed to load home data:', err);
     }
@@ -80,11 +83,12 @@ export default function HomeScreen() {
         {dueCards > 0 ? (
           <>
             <Text style={[styles.heroCount, { color: colors.primary }]}>{dueCards}</Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due for review</Text>
           </>
         ) : (
           <>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>All caught up</Text>
+            <Text style={[styles.heroCount, { color: colors.primary }]}>{totalCards}</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards to explore</Text>
           </>
         )}
       </Pressable>
