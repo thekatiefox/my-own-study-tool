@@ -1,0 +1,99 @@
+{
+  "id": "css-layout",
+  "name": "CSS Layout & Styling",
+  "description": "Master CSS layout systems, responsive design, and modern styling techniques that senior devs reach for daily.",
+  "icon": "🎨",
+  "category": "CSS",
+  "cards": [
+    {
+      "id": "css-001",
+      "front": "What is the CSS Box Model?",
+      "back": "Every element is a rectangular box with four layers:\n\n1. Content — the actual text/image\n2. Padding — space between content and border\n3. Border — surrounds the padding\n4. Margin — space outside the border\n\nbox-sizing: content-box (default) — width/height = content only\nbox-sizing: border-box — width/height includes padding + border\n\nBest practice: Use border-box globally:\n*, *::before, *::after { box-sizing: border-box; }",
+      "tags": ["box-model", "fundamentals"]
+    },
+    {
+      "id": "css-002",
+      "front": "Explain Flexbox. When do you use it?",
+      "back": "Flexbox is a 1-dimensional layout system (row OR column).\n\nContainer properties:\n• display: flex\n• flex-direction: row | column\n• justify-content: alignment on main axis\n• align-items: alignment on cross axis\n• gap: spacing between items\n\nItem properties:\n• flex: grow shrink basis (e.g., flex: 1 0 auto)\n• align-self: override cross-axis alignment\n\nUse for: navbars, card rows, centering, equal-height columns, any 1D layout.",
+      "tags": ["flexbox", "layout"]
+    },
+    {
+      "id": "css-003",
+      "front": "Explain CSS Grid. When do you use it vs Flexbox?",
+      "back": "Grid is a 2-dimensional layout system (rows AND columns simultaneously).\n\n.grid {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr;\n  grid-template-rows: auto 1fr auto;\n  gap: 16px;\n}\n\nGrid vs Flexbox:\n• Grid: 2D layouts, page-level structure, complex alignment\n• Flexbox: 1D layouts, component-level, distributing space\n\nThey work great together — Grid for page layout, Flexbox for components within grid cells.",
+      "tags": ["grid", "layout"]
+    },
+    {
+      "id": "css-004",
+      "front": "What is CSS specificity and how is it calculated?",
+      "back": "Specificity determines which CSS rule wins when multiple rules target the same element.\n\nSpecificity hierarchy (highest to lowest):\n1. !important (avoid this)\n2. Inline styles (style=\"\") — (1,0,0,0)\n3. IDs (#header) — (0,1,0,0)\n4. Classes, attributes, pseudo-classes (.btn, [type], :hover) — (0,0,1,0)\n5. Elements, pseudo-elements (div, ::before) — (0,0,0,1)\n6. Universal selector (*) — (0,0,0,0)\n\nExample: #nav .link:hover = (0,1,2,0)\nWhen equal specificity: last rule in source order wins.",
+      "tags": ["specificity", "selectors"]
+    },
+    {
+      "id": "css-005",
+      "front": "What are CSS Custom Properties (variables)?",
+      "back": "Custom properties are reusable values defined with -- prefix:\n\n:root {\n  --primary: #6C5CE7;\n  --spacing-md: 16px;\n}\n\n.button {\n  background: var(--primary);\n  padding: var(--spacing-md);\n}\n\nKey features:\n• Cascade and inherit like normal CSS\n• Can be changed at runtime with JavaScript\n• Scoped to elements (not just global)\n• Can have fallbacks: var(--color, blue)\n• Enable dynamic theming (dark mode) by changing root variables",
+      "tags": ["variables", "theming"]
+    },
+    {
+      "id": "css-006",
+      "front": "What is the difference between position values?",
+      "back": "• static: default, normal document flow\n• relative: offset from normal position, still occupies original space\n• absolute: removed from flow, positioned relative to nearest positioned ancestor\n• fixed: removed from flow, positioned relative to viewport (stays during scroll)\n• sticky: toggles between relative and fixed based on scroll position\n\nsticky example:\n.header { position: sticky; top: 0; } — header sticks to top when you scroll past it.\n\nKey: absolute + relative parent is the most common positioning pattern.",
+      "tags": ["positioning", "layout"]
+    },
+    {
+      "id": "css-007",
+      "front": "How do media queries work for responsive design?",
+      "back": "@media (max-width: 768px) {\n  .sidebar { display: none; }\n}\n\nModern approach — mobile-first:\n/* Base styles = mobile */\n.grid { grid-template-columns: 1fr; }\n\n/* Tablet and up */\n@media (min-width: 768px) {\n  .grid { grid-template-columns: 1fr 1fr; }\n}\n\nModern alternatives:\n• Container queries: @container (min-width: 400px)\n• clamp(): font-size: clamp(1rem, 2.5vw, 2rem)\n• minmax() in Grid: grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))",
+      "tags": ["responsive", "media-queries"]
+    },
+    {
+      "id": "css-008",
+      "front": "What is the stacking context and how does z-index work?",
+      "back": "z-index controls layering of positioned elements, but only within the same stacking context.\n\nA new stacking context is created by:\n• position + z-index (not auto)\n• opacity < 1\n• transform, filter, perspective\n• isolation: isolate\n\nCommon gotcha: z-index: 9999 doesn't work because the element is in a lower stacking context than the element it's trying to cover.\n\nFix: Use isolation: isolate on containers to create predictable stacking contexts. Avoid z-index wars.",
+      "tags": ["z-index", "stacking"]
+    },
+    {
+      "id": "css-009",
+      "front": "What are CSS transitions vs animations?",
+      "back": "Transitions: Animate between two states on property change.\n.btn {\n  transition: background 0.3s ease, transform 0.2s;\n}\n.btn:hover { background: blue; transform: scale(1.05); }\n\nAnimations: Multi-step, can auto-play, loop, and reverse.\n@keyframes fadeIn {\n  from { opacity: 0; }\n  to { opacity: 1; }\n}\n.modal { animation: fadeIn 0.3s ease-out; }\n\nRule of thumb:\n• Transition = simple A→B state changes (hover, active)\n• Animation = complex, multi-step, or auto-playing motion",
+      "tags": ["animations", "transitions"]
+    },
+    {
+      "id": "css-010",
+      "front": "What is BEM naming convention?",
+      "back": "BEM = Block Element Modifier. A CSS naming methodology:\n\n• Block: standalone component → .card\n• Element: part of a block → .card__title\n• Modifier: variation → .card--featured\n\nExample:\n.search-form { }           /* Block */\n.search-form__input { }     /* Element */\n.search-form__button { }    /* Element */\n.search-form--dark { }      /* Modifier */\n\nBenefits: Flat specificity (all classes), self-documenting, avoids cascading conflicts. Widely used in large codebases.",
+      "tags": ["methodology", "naming"]
+    },
+    {
+      "id": "css-011",
+      "front": "What are pseudo-classes vs pseudo-elements?",
+      "back": "Pseudo-classes (:) select elements in a specific STATE:\n• :hover, :focus, :active — interaction states\n• :first-child, :nth-child(2n) — structural\n• :not(.hidden), :has(.icon) — logical\n\nPseudo-elements (::) create virtual ELEMENTS:\n• ::before, ::after — inject content\n• ::placeholder — style input placeholder\n• ::selection — style selected text\n\n:has() is a game-changer:\n.card:has(img) { } — style cards that contain an image\n.form:has(:invalid) { } — style form when any input is invalid",
+      "tags": ["selectors", "pseudo"]
+    },
+    {
+      "id": "css-012",
+      "front": "How does CSS-in-JS work and what are the tradeoffs?",
+      "back": "CSS-in-JS writes styles in JavaScript (styled-components, Emotion, etc.):\n\nconst Button = styled.button`\n  background: ${props => props.primary ? 'blue' : 'gray'};\n  padding: 8px 16px;\n`;\n\nPros:\n• Scoped styles (no class collisions)\n• Dynamic styles based on props/state\n• Co-located with component code\n• Dead code elimination\n\nCons:\n• Runtime overhead (generating CSS)\n• Larger bundle size\n• No CSS caching separate from JS\n\nTrend: Moving toward zero-runtime solutions (Tailwind, CSS Modules, vanilla-extract).",
+      "tags": ["css-in-js", "architecture"]
+    },
+    {
+      "id": "css-013",
+      "front": "What are container queries and why do they matter?",
+      "back": "Container queries let components respond to their CONTAINER's size, not the viewport.\n\n.card-container {\n  container-type: inline-size;\n}\n\n@container (min-width: 400px) {\n  .card { flex-direction: row; }\n}\n\nWhy they matter:\n• Components adapt to where they're placed, not page width\n• True component-based responsive design\n• A sidebar card and a main-content card can have different layouts\n• Works with container-name for targeting specific containers\n\nThis is the future of responsive component design.",
+      "tags": ["container-queries", "responsive"]
+    },
+    {
+      "id": "css-014",
+      "front": "What is the cascade in CSS and how does it resolve conflicts?",
+      "back": "The cascade determines which styles apply when rules conflict:\n\n1. Origin & Importance:\n   User agent → Author → Author !important → User !important\n\n2. Specificity:\n   Inline > ID > Class > Element\n\n3. Source Order:\n   Later rules win when specificity is equal\n\nCSS Cascade Layers (@layer) add a new dimension:\n@layer base, components, utilities;\n\n@layer base { a { color: blue; } }\n@layer utilities { .text-red { color: red; } }\n\nLayers let you control cascade priority independent of specificity.",
+      "tags": ["cascade", "fundamentals"]
+    },
+    {
+      "id": "css-015",
+      "front": "What are the modern CSS units and when to use each?",
+      "back": "Absolute: px (use sparingly)\n\nRelative to font:\n• em — relative to parent font-size\n• rem — relative to root font-size (most predictable)\n• ch — width of '0' character (great for max-width of text)\n\nRelative to viewport:\n• vw, vh — 1% of viewport width/height\n• dvh — dynamic viewport height (accounts for mobile browser chrome)\n• svh, lvh — small/large viewport height\n\nBest practices:\n• rem for font sizes and spacing\n• % or fr for layouts\n• ch for readable line lengths (max-width: 65ch)\n• dvh instead of vh on mobile",
+      "tags": ["units", "responsive"]
+    }
+  ]
+}

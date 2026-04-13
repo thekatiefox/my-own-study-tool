@@ -1,0 +1,99 @@
+{
+  "id": "web-performance",
+  "name": "Web Performance",
+  "description": "Understand Core Web Vitals, rendering pipeline, caching strategies, and optimization techniques that separate seniors from juniors.",
+  "icon": "⚡",
+  "category": "Performance",
+  "cards": [
+    {
+      "id": "perf-001",
+      "front": "What are Core Web Vitals?",
+      "back": "Google's key metrics for user experience:\n\n• LCP (Largest Contentful Paint): <2.5s\n  How fast the main content loads. Measured by the largest image or text block in the viewport.\n\n• INP (Interaction to Next Paint): <200ms\n  How fast the page responds to user input. Replaced FID in 2024.\n\n• CLS (Cumulative Layout Shift): <0.1\n  How much the page layout shifts unexpectedly. Caused by images without dimensions, injected content, web fonts.\n\nThese directly impact SEO rankings and user retention.",
+      "tags": ["core-web-vitals", "metrics"]
+    },
+    {
+      "id": "perf-002",
+      "front": "What is the Critical Rendering Path?",
+      "back": "The sequence of steps the browser takes to render a page:\n\n1. Parse HTML → DOM tree\n2. Parse CSS → CSSOM tree\n3. Combine DOM + CSSOM → Render tree\n4. Layout — calculate geometry (position, size)\n5. Paint — fill in pixels (colors, borders, shadows)\n6. Composite — combine layers and display\n\nOptimizations:\n• Minimize render-blocking CSS/JS\n• Inline critical CSS\n• Defer non-critical JS (defer/async attributes)\n• Reduce DOM depth and complexity\n• Use will-change for composite-only animations",
+      "tags": ["rendering", "browser"]
+    },
+    {
+      "id": "perf-003",
+      "front": "What is code splitting and how does it improve performance?",
+      "back": "Code splitting breaks your bundle into smaller chunks loaded on demand.\n\nRoute-based splitting:\nconst Settings = lazy(() => import('./Settings'));\n\nComponent-based splitting:\nconst HeavyChart = lazy(() => import('./Chart'));\n\nHow it helps:\n• Smaller initial bundle → faster first load\n• Users only download code they need\n• Better caching (unchanged chunks stay cached)\n\nTools: React.lazy(), dynamic import(), webpack/Vite chunk splitting, Next.js automatic route splitting.\n\nRule of thumb: Split at route boundaries first, then heavy components.",
+      "tags": ["code-splitting", "bundling"]
+    },
+    {
+      "id": "perf-004",
+      "front": "What is tree shaking?",
+      "back": "Tree shaking eliminates unused code from your final bundle.\n\nHow it works:\n• Bundler analyzes ES module import/export statements\n• Unused exports are removed from the bundle\n• Only works with static ES modules (import/export), NOT CommonJS (require)\n\nExample:\n// math.js exports add, subtract, multiply\nimport { add } from './math';\n// subtract and multiply are tree-shaken out\n\nTo ensure tree shaking works:\n• Use ES modules\n• Avoid side effects in modules\n• Set \"sideEffects\": false in package.json\n• Avoid barrel files that re-export everything",
+      "tags": ["tree-shaking", "bundling"]
+    },
+    {
+      "id": "perf-005",
+      "front": "What are the different image optimization strategies?",
+      "back": "1. Format: Use modern formats\n   • WebP (30% smaller than JPEG)\n   • AVIF (50% smaller than JPEG)\n   • Use <picture> for format fallbacks\n\n2. Sizing:\n   • Serve different sizes: srcset + sizes attributes\n   • Never serve larger images than displayed\n\n3. Loading:\n   • loading=\"lazy\" for below-fold images\n   • fetchpriority=\"high\" for hero images\n   • Decode asynchronously: decoding=\"async\"\n\n4. Always set width/height to prevent CLS\n\n5. Use CDN with automatic optimization (Cloudflare Images, Next.js Image, Imgix)",
+      "tags": ["images", "optimization"]
+    },
+    {
+      "id": "perf-006",
+      "front": "What is the difference between defer and async for scripts?",
+      "back": "<script> — blocks HTML parsing, downloads and executes immediately\n\n<script async> — downloads in parallel with HTML parsing, executes immediately when ready (order not guaranteed)\n\n<script defer> — downloads in parallel, executes AFTER HTML parsing, in order\n\nWhen to use:\n• defer: Most scripts (maintains order, doesn't block)\n• async: Independent scripts (analytics, ads) that don't depend on DOM or other scripts\n• Neither: Scripts that must run before page renders (rare)\n\n<script type=\"module\"> is deferred by default.",
+      "tags": ["scripts", "loading"]
+    },
+    {
+      "id": "perf-007",
+      "front": "What caching strategies should you know?",
+      "back": "Browser caching:\n• Cache-Control: max-age=31536000, immutable (for hashed assets)\n• Cache-Control: no-cache (always revalidate with server)\n• ETag / Last-Modified for conditional requests\n\nService Worker caching:\n• Cache First: serve from cache, update in background\n• Network First: try network, fall back to cache\n• Stale While Revalidate: serve stale, update cache\n\nApplication caching:\n• React Query / SWR for API response caching\n• useMemo / React.memo for computed value caching\n• CDN edge caching for static assets\n\nKey: Hash filenames (app.abc123.js) + long cache = perfect caching.",
+      "tags": ["caching", "http"]
+    },
+    {
+      "id": "perf-008",
+      "front": "What causes layout thrashing and how do you avoid it?",
+      "back": "Layout thrashing occurs when you repeatedly read and write DOM properties that trigger layout recalculation:\n\n// BAD — forces layout on every read\nelements.forEach(el => {\n  el.style.width = container.offsetWidth + 'px'; // read → layout → write\n});\n\n// GOOD — batch reads, then batch writes\nconst width = container.offsetWidth; // read once\nelements.forEach(el => {\n  el.style.width = width + 'px'; // write only\n});\n\nProperties that trigger layout:\noffsetWidth, offsetHeight, getBoundingClientRect(), scrollTop, clientWidth\n\nUse requestAnimationFrame() to batch DOM writes.",
+      "tags": ["dom", "layout"]
+    },
+    {
+      "id": "perf-009",
+      "front": "What is virtualization / windowing?",
+      "back": "Rendering only the visible items in a long list instead of all items at once.\n\nWithout virtualization:\n10,000 items = 10,000 DOM nodes = slow, high memory\n\nWith virtualization:\n10,000 items but only ~20 DOM nodes (what's visible + buffer)\n\nHow it works:\n1. Calculate which items are visible based on scroll position\n2. Only render those items\n3. Use absolute positioning or transforms to place them correctly\n4. Recycle DOM nodes as user scrolls\n\nLibraries: @tanstack/virtual, react-window, react-virtuoso\n\nUse when: Lists > 100 items, complex row components, or measured performance issues.",
+      "tags": ["virtualization", "lists"]
+    },
+    {
+      "id": "perf-010",
+      "front": "What is the PRPL pattern?",
+      "back": "PRPL is a pattern for structuring and serving web apps for maximum performance:\n\nP — Push critical resources (preload, HTTP/2 push)\nR — Render initial route as fast as possible\nP — Pre-cache remaining routes (service worker)\nL — Lazy-load other routes on demand\n\nImplementation:\n• Inline critical CSS in <head>\n• Preload key resources: <link rel=\"preload\">\n• Service worker to cache app shell\n• Code split routes with dynamic import()\n• Prefetch likely next routes: <link rel=\"prefetch\">\n\nThis achieves instant subsequent navigations after the first load.",
+      "tags": ["architecture", "loading"]
+    },
+    {
+      "id": "perf-011",
+      "front": "How do you measure frontend performance?",
+      "back": "Lab tools (dev environment):\n• Lighthouse (Chrome DevTools) — overall audit\n• Chrome Performance tab — flame charts, bottlenecks\n• WebPageTest — multi-location testing\n• Bundle analyzer (webpack-bundle-analyzer)\n\nField tools (real users):\n• Chrome User Experience Report (CrUX)\n• web-vitals library: import { onLCP, onINP, onCLS } from 'web-vitals'\n• Performance Observer API\n• Real User Monitoring (RUM) services\n\nKey API:\nperformance.mark('start');\n// ... work ...\nperformance.mark('end');\nperformance.measure('task', 'start', 'end');\n\nAlways measure in the field — lab results can differ significantly.",
+      "tags": ["measurement", "tools"]
+    },
+    {
+      "id": "perf-012",
+      "front": "What are Web Workers and when should you use them?",
+      "back": "Web Workers run JavaScript on a separate thread, preventing main thread blocking.\n\n// main.js\nconst worker = new Worker('worker.js');\nworker.postMessage({ data: largeArray });\nworker.onmessage = (e) => console.log(e.data);\n\n// worker.js\nself.onmessage = (e) => {\n  const result = heavyComputation(e.data);\n  self.postMessage(result);\n};\n\nUse for:\n• Heavy computations (sorting, filtering large datasets)\n• Image/video processing\n• Data parsing (large JSON, CSV)\n• Encryption/hashing\n\nLimitations: No DOM access, communication via postMessage (structured clone). Use Comlink for a nicer API.",
+      "tags": ["workers", "threading"]
+    },
+    {
+      "id": "perf-013",
+      "front": "What is resource hints and preloading?",
+      "back": "Resource hints tell the browser about resources you'll need:\n\n<link rel=\"preload\" href=\"font.woff2\" as=\"font\" crossorigin>\n— Download NOW, needed for current page\n\n<link rel=\"prefetch\" href=\"next-page.js\">\n— Download when idle, needed for NEXT navigation\n\n<link rel=\"preconnect\" href=\"https://api.example.com\">\n— Establish connection early (DNS + TCP + TLS)\n\n<link rel=\"dns-prefetch\" href=\"https://cdn.example.com\">\n— DNS lookup only (cheaper than preconnect)\n\nfetchpriority=\"high\" on <img> or <script>\n— Boost priority of critical resources\n\nUse preload sparingly — everything can't be high priority.",
+      "tags": ["resource-hints", "loading"]
+    },
+    {
+      "id": "perf-014",
+      "front": "What is the difference between SSR, SSG, and CSR?",
+      "back": "CSR (Client-Side Rendering):\n• Browser downloads empty HTML + JS bundle\n• JS renders the page\n• Slow first paint, fast subsequent navigation\n\nSSR (Server-Side Rendering):\n• Server renders HTML for each request\n• Browser shows content immediately, then hydrates\n• Fast first paint, more server load\n\nSSG (Static Site Generation):\n• HTML generated at BUILD time\n• Served from CDN, fastest possible\n• Content only updates on rebuild\n\nISR (Incremental Static Regeneration):\n• SSG + background revalidation\n• Best of both: CDN speed + fresh content\n\nChoose based on: How dynamic is the data? How important is SEO?",
+      "tags": ["rendering", "architecture"]
+    },
+    {
+      "id": "perf-015",
+      "front": "What causes Cumulative Layout Shift and how do you fix it?",
+      "back": "CLS measures unexpected visual shifts. Common causes:\n\n1. Images without dimensions\n   Fix: Always set width and height, or use aspect-ratio\n\n2. Ads/embeds without reserved space\n   Fix: Use min-height or aspect-ratio containers\n\n3. Web fonts causing FOUT/FOIT\n   Fix: font-display: swap + preload fonts\n   Better: size-adjust or font-metric-override\n\n4. Dynamically injected content\n   Fix: Reserve space with placeholders/skeletons\n\n5. Late-loading CSS\n   Fix: Inline critical CSS, preload stylesheets\n\nMeasure with: Layout Instability API or web-vitals library",
+      "tags": ["cls", "core-web-vitals"]
+    }
+  ]
+}

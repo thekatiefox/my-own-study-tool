@@ -1,0 +1,99 @@
+{
+  "id": "typescript-essentials",
+  "name": "TypeScript Essentials",
+  "description": "Level up your TypeScript — generics, utility types, type narrowing, and patterns that make codebases safer and more expressive.",
+  "icon": "🔷",
+  "category": "TypeScript",
+  "cards": [
+    {
+      "id": "ts-001",
+      "front": "What are generics in TypeScript and why use them?",
+      "back": "Generics let you write reusable code that works with multiple types while maintaining type safety.\n\nfunction identity<T>(value: T): T {\n  return value;\n}\n\nidentity<string>('hello'); // type: string\nidentity<number>(42);      // type: number\n\nReal-world examples:\n• Array<T>, Promise<T>, Map<K, V>\n• useState<number>(0)\n• function fetch<T>(url: string): Promise<T>\n\nWithout generics you'd use 'any', losing type safety. Generics = flexibility + safety.",
+      "tags": ["generics", "fundamentals"]
+    },
+    {
+      "id": "ts-002",
+      "front": "What is the difference between 'type' and 'interface'?",
+      "back": "Both define object shapes, but differ in key ways:\n\ninterface User {\n  name: string;\n}\ninterface User { age: number; } // declaration merging!\n\ntype User = {\n  name: string;\n};\n// type User = { age: number }; // ERROR: duplicate\n\nKey differences:\n• interface: declaration merging, extends, better error messages\n• type: unions, intersections, mapped types, tuples, primitives\n\ntype Status = 'active' | 'inactive'; // only type can do this\ntype Pair = [string, number]; // only type can do this\n\nGuideline: Use interface for objects, type for everything else.",
+      "tags": ["types", "interfaces"]
+    },
+    {
+      "id": "ts-003",
+      "front": "Explain TypeScript utility types: Partial, Required, Pick, Omit.",
+      "back": "Built-in types that transform other types:\n\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nPartial<User> — all properties optional\n{ id?: number; name?: string; email?: string; }\n\nRequired<User> — all properties required\n\nPick<User, 'id' | 'name'> — only selected properties\n{ id: number; name: string; }\n\nOmit<User, 'email'> — everything except specified\n{ id: number; name: string; }\n\nCommon in React:\ntype Props = Pick<User, 'name' | 'email'>;\ntype UpdatePayload = Partial<Omit<User, 'id'>>;",
+      "tags": ["utility-types", "generics"]
+    },
+    {
+      "id": "ts-004",
+      "front": "What is type narrowing in TypeScript?",
+      "back": "Narrowing refines a type within a conditional block:\n\nfunction process(value: string | number) {\n  if (typeof value === 'string') {\n    value.toUpperCase(); // TS knows it's string here\n  } else {\n    value.toFixed(2); // TS knows it's number here\n  }\n}\n\nNarrowing techniques:\n• typeof — primitives\n• instanceof — classes\n• 'property' in obj — object shapes\n• Discriminated unions — type field\n• Type predicates — custom: function isUser(x): x is User\n• Truthiness — if (value) { ... }\n\nDiscriminated unions are the most powerful pattern for complex narrowing.",
+      "tags": ["narrowing", "type-guards"]
+    },
+    {
+      "id": "ts-005",
+      "front": "What are discriminated unions?",
+      "back": "A union type where each member has a shared literal property (discriminant) that TypeScript can use for narrowing:\n\ntype Result =\n  | { status: 'success'; data: User }\n  | { status: 'error'; message: string }\n  | { status: 'loading' };\n\nfunction handle(result: Result) {\n  switch (result.status) {\n    case 'success':\n      result.data; // TS knows data exists\n      break;\n    case 'error':\n      result.message; // TS knows message exists\n      break;\n    case 'loading':\n      // no extra properties\n      break;\n  }\n}\n\nPerfect for: API states, form states, event handling, Redux actions.",
+      "tags": ["unions", "patterns"]
+    },
+    {
+      "id": "ts-006",
+      "front": "What is the 'unknown' type vs 'any'?",
+      "back": "Both accept any value, but unknown is TYPE-SAFE:\n\nlet a: any = 'hello';\na.foo(); // No error — any disables type checking\n\nlet b: unknown = 'hello';\nb.foo(); // ERROR — must narrow first\n\nif (typeof b === 'string') {\n  b.toUpperCase(); // OK after narrowing\n}\n\nRules:\n• any: opt out of type system (avoid)\n• unknown: \"I don't know the type yet\" (safe)\n• never: \"this should never happen\" (exhaustiveness)\n\nUse unknown for: API responses, JSON parsing, catch blocks\nUse any for: migration from JS, quick prototyping only",
+      "tags": ["any", "unknown", "safety"]
+    },
+    {
+      "id": "ts-007",
+      "front": "What are mapped types in TypeScript?",
+      "back": "Mapped types transform every property of a type:\n\ntype Readonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ntype Optional<T> = {\n  [K in keyof T]?: T[K];\n};\n\ntype Nullable<T> = {\n  [K in keyof T]: T[K] | null;\n};\n\nWith key remapping (as):\ntype Getters<T> = {\n  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];\n};\n// { getName: () => string; getAge: () => number; }\n\nMapped types power most built-in utility types (Partial, Required, Readonly, Record).",
+      "tags": ["mapped-types", "advanced"]
+    },
+    {
+      "id": "ts-008",
+      "front": "What is 'as const' and when should you use it?",
+      "back": "'as const' makes values deeply readonly and narrows their types to literal types:\n\nconst colors = ['red', 'blue'] as const;\n// type: readonly ['red', 'blue'] (not string[])\n\nconst config = {\n  api: 'https://api.example.com',\n  timeout: 3000,\n} as const;\n// type: { readonly api: 'https://...'; readonly timeout: 3000 }\n\nUse cases:\n• Enum-like constant objects\n• Route definitions\n• Action type strings (Redux)\n• Function arguments that should be literal types\n• Config objects\n\nCombines well with typeof: type Color = typeof colors[number]; // 'red' | 'blue'",
+      "tags": ["const-assertions", "literals"]
+    },
+    {
+      "id": "ts-009",
+      "front": "What are conditional types?",
+      "back": "Types that choose between two types based on a condition:\n\ntype IsString<T> = T extends string ? 'yes' : 'no';\n\nIsString<string>  // 'yes'\nIsString<number>  // 'no'\n\nWith infer (extract types):\ntype ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;\ntype Unwrap<T> = T extends Promise<infer U> ? U : T;\n\nUnwrap<Promise<string>> // string\nUnwrap<number>          // number\n\nConditional types + infer are how most advanced utility types work. They're like pattern matching for types.",
+      "tags": ["conditional-types", "advanced"]
+    },
+    {
+      "id": "ts-010",
+      "front": "What is the 'satisfies' operator?",
+      "back": "satisfies validates that a value matches a type WITHOUT widening it:\n\ntype Colors = Record<string, string | string[]>;\n\nconst palette = {\n  red: '#ff0000',\n  blue: ['#0000ff', '#0000cc'],\n} satisfies Colors;\n\npalette.red.toUpperCase();  // ✅ TS knows it's string\npalette.blue.map(c => c);   // ✅ TS knows it's string[]\n\nWithout satisfies (using : Colors):\npalette.red.toUpperCase();  // ❌ Error: could be string | string[]\n\nsatisfies = type-check + keep narrow type. Best of both worlds.",
+      "tags": ["satisfies", "es2022"]
+    },
+    {
+      "id": "ts-011",
+      "front": "What are template literal types?",
+      "back": "Types built from string template syntax:\n\ntype EventName = `on${Capitalize<string>}`;\n// matches: 'onClick', 'onHover', 'onAnything'\n\ntype CSSProperty = `${string}-${string}`;\n// matches: 'font-size', 'background-color'\n\nPractical example:\ntype Routes = '/users' | '/posts';\ntype ApiEndpoint = `GET ${Routes}` | `POST ${Routes}`;\n// 'GET /users' | 'GET /posts' | 'POST /users' | 'POST /posts'\n\nUsed heavily in: type-safe event systems, CSS-in-JS, API route typing, i18n keys.",
+      "tags": ["template-literals", "advanced"]
+    },
+    {
+      "id": "ts-012",
+      "front": "How do you type React component props effectively?",
+      "back": "Common patterns:\n\n// Basic props\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n  variant?: 'primary' | 'secondary';\n}\n\n// Extending HTML elements\ninterface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {\n  variant?: 'primary' | 'secondary';\n}\n\n// Children\ninterface LayoutProps {\n  children: React.ReactNode;\n}\n\n// Generic components\ninterface ListProps<T> {\n  items: T[];\n  renderItem: (item: T) => React.ReactNode;\n}\n\n// Discriminated union props\ntype ModalProps =\n  | { mode: 'create'; onSubmit: (data: FormData) => void }\n  | { mode: 'view'; data: Item }",
+      "tags": ["react", "props"]
+    },
+    {
+      "id": "ts-013",
+      "front": "What is the 'never' type and how is it used?",
+      "back": "never represents values that never occur:\n\n// Function that never returns\nfunction throwError(msg: string): never {\n  throw new Error(msg);\n}\n\n// Exhaustiveness checking (most useful!):\ntype Shape = 'circle' | 'square';\nfunction area(shape: Shape) {\n  switch (shape) {\n    case 'circle': return Math.PI;\n    case 'square': return 1;\n    default:\n      const _exhaustive: never = shape;\n      // If you add 'triangle' to Shape but forget a case,\n      // TypeScript errors HERE at compile time!\n      return _exhaustive;\n  }\n}\n\nnever = type system's way of saying 'this is impossible'.",
+      "tags": ["never", "exhaustiveness"]
+    },
+    {
+      "id": "ts-014",
+      "front": "What are type assertions and when are they appropriate?",
+      "back": "Type assertions tell TypeScript to treat a value as a specific type:\n\nconst input = document.getElementById('name') as HTMLInputElement;\ninput.value; // Now TS knows it's an input\n\nWhen appropriate:\n• DOM element access (getElementById returns Element | null)\n• Working with external data you've validated\n• After runtime type checks that TS can't follow\n\nWhen to AVOID:\n• To silence errors you don't understand\n• Instead of proper type narrowing\n• With 'as any' (defeats the purpose)\n\nPrefer type guards: if (input instanceof HTMLInputElement) { }\nUse assertions as a last resort, not a first reach.",
+      "tags": ["assertions", "safety"]
+    },
+    {
+      "id": "ts-015",
+      "front": "What is declaration merging?",
+      "back": "When two declarations with the same name exist, TypeScript merges them:\n\ninterface User { name: string; }\ninterface User { age: number; }\n// Result: interface User { name: string; age: number; }\n\nUseful for:\n• Extending third-party types without modifying source\n• Adding properties to Window, Process, etc.\n\ndeclare global {\n  interface Window {\n    myApp: { version: string };\n  }\n}\n\n• Module augmentation:\ndeclare module 'express' {\n  interface Request {\n    user?: User;\n  }\n}\n\nNote: 'type' aliases do NOT merge — only interfaces do.",
+      "tags": ["declaration-merging", "modules"]
+    }
+  ]
+}
