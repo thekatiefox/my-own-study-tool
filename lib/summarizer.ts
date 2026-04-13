@@ -1,8 +1,9 @@
+import { Platform } from 'react-native';
 import { GEMINI_API_KEY } from '@/secrets';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-const isConfigured = GEMINI_API_KEY && GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY_HERE';
+const isConfigured = GEMINI_API_KEY && (GEMINI_API_KEY as string) !== 'YOUR_GEMINI_API_KEY_HERE';
 
 export interface ArticleInput {
   title: string;
@@ -53,20 +54,27 @@ export async function summarizeArticles(
   const result = new Map<string, string>();
   if (!isConfigured || articles.length === 0) return result;
 
-  // Fetch article text in parallel
-  const texts = await Promise.all(articles.map(a => fetchArticleText(a.url)));
+  // On native, fetch article text for richer summaries. On web, CORS blocks this.
+  const texts = Platform.OS === 'web'
+    ? articles.map(() => '')
+    : await Promise.all(articles.map(a => fetchArticleText(a.url)));
+
+  const hasContent = texts.some(t => t.length > 0);
 
   const storiesBlock = articles.map((a, i) => {
-    const content = texts[i] || '(could not fetch article content)';
-    return `--- STORY ${i + 1} ---
-Title: ${a.title}
-Source: ${a.source}
-Content: ${content}`;
+    const content = texts[i];
+    return content
+      ? `--- STORY ${i + 1} ---\nTitle: ${a.title}\nSource: ${a.source}\nContent: ${content}`
+      : `--- STORY ${i + 1} ---\nTitle: ${a.title}\nSource: ${a.source}`;
   }).join('\n\n');
+
+  const contentInstruction = hasContent
+    ? 'Read the actual article content and write:'
+    : 'Based on each headline, write your best explanation:';
 
   const prompt = `You're explaining today's top tech news to someone who's new to the industry and has ADHD. Keep it super scannable and easy to digest.
 
-For each story below, read the actual article content and write:
+For each story below, ${contentInstruction}
 • What happened (1 short sentence, simple words)
 • Why it matters (1 short sentence, why should I care?)
 No jargon — if you must use a technical term, explain it in parentheses. Max 40 words total per story.
