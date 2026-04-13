@@ -2,26 +2,31 @@ import {
   getDueCards,
   getNewCards,
   getCardProgress,
+  getAllPacks,
 } from './database';
 import { CardContent, ReviewCard } from '@/types';
 
 const NEW_CARDS_PER_SESSION = 5;
 
+/** Shuffle an array in place (Fisher-Yates). */
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 /**
- * Build a review queue for a pack: due cards first, then new cards up to the daily limit.
+ * Build a review queue for a single pack: due cards first, then new cards.
  */
 export async function buildReviewQueue(packId: string): Promise<ReviewCard[]> {
   const today = new Date().toISOString().split('T')[0];
-
-  // Get cards due for review
   const dueRows = await getDueCards(packId, today);
-
-  // Get new cards (never seen before)
   const newRows = await getNewCards(packId, NEW_CARDS_PER_SESSION);
 
   const queue: ReviewCard[] = [];
 
-  // Add due cards
   for (const row of dueRows) {
     const progress = await getCardProgress(row.id);
     const content: CardContent = {
@@ -33,7 +38,6 @@ export async function buildReviewQueue(packId: string): Promise<ReviewCard[]> {
     queue.push({ content, progress, isFlipped: false });
   }
 
-  // Add new cards
   for (const row of newRows) {
     const content: CardContent = {
       id: row.id,
@@ -48,55 +52,45 @@ export async function buildReviewQueue(packId: string): Promise<ReviewCard[]> {
 }
 
 /**
- * Build a review queue across all packs (for the "Review All" home screen action).
+ * Build a mixed review queue from multiple packs, shuffled together.
+ * @param packIds - which packs to include (empty/undefined = all packs)
  */
-export async function buildGlobalReviewQueue(): Promise<{
-  cards: ReviewCard[];
-  packId: string;
-}> {
-  // For global review, we use a virtual "all" pack ID
-  // The home screen will handle routing
-  const today = new Date().toISOString().split('T')[0];
-  const { getDueCards: getDue, getNewCards: getNew, getCardProgress: getProgress } = await import('./database');
-
-  // We import getAllPacks to iterate
-  const { getAllPacks } = await import('./database');
-  const packs = await getAllPacks();
+export async function buildMixedReviewQueue(
+  packIds?: string[]
+): Promise<ReviewCard[]> {
+  const allPacks = await getAllPacks();
+  const selectedIds = packIds && packIds.length > 0
+    ? packIds
+    : allPacks.map(p => p.id);
 
   const queue: ReviewCard[] = [];
+  const today = new Date().toISOString().split('T')[0];
+  const newPerPack = Math.max(1, Math.floor(NEW_CARDS_PER_SESSION / selectedIds.length));
 
-  for (const pack of packs) {
-    const dueRows = await getDue(pack.id, today);
+  for (const pid of selectedIds) {
+    const dueRows = await getDueCards(pid, today);
     for (const row of dueRows) {
-      const progress = await getProgress(row.id);
+      const progress = await getCardProgress(row.id);
       queue.push({
-        content: {
-          id: row.id,
-          front: row.front,
-          back: row.back,
-          tags: JSON.parse(row.tags),
-        },
+        content: { id: row.id, front: row.front, back: row.back, tags: JSON.parse(row.tags) },
         progress,
         isFlipped: false,
+        packId: pid,
       });
     }
 
-    const newRows = await getNew(pack.id, NEW_CARDS_PER_SESSION);
+    const newRows = await getNewCards(pid, newPerPack);
     for (const row of newRows) {
       queue.push({
-        content: {
-          id: row.id,
-          front: row.front,
-          back: row.back,
-          tags: JSON.parse(row.tags),
-        },
+        content: { id: row.id, front: row.front, back: row.back, tags: JSON.parse(row.tags) },
         progress: null,
         isFlipped: false,
+        packId: pid,
       });
     }
   }
 
-  return { cards: queue, packId: 'all' };
+  return shuffle(queue);
 }
 
 export { NEW_CARDS_PER_SESSION };

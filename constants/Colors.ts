@@ -1,46 +1,47 @@
-// Brand colors
-const primary = '#6C5CE7';
-const primaryLight = '#A29BFE';
-const accent = '#00B894';
-const danger = '#E17055';
-const warning = '#FDCB6E';
+// Japanese coffee shop palette
+// Inspired by: light wood, concrete, warm amber backlighting, matcha
+const primary = '#B8845C';       // warm caramel — the "backlighting"
+const primaryLight = '#D4B896';  // light maple wood
+const accent = '#7B9E87';        // matcha green
+const danger = '#C47D5A';        // terracotta
+const warning = '#D4A574';       // warm amber
 
 const tintColorLight = primary;
-const tintColorDark = primaryLight;
+const tintColorDark = '#D4A574';
 
 export default {
   light: {
-    text: '#2D3436',
-    textSecondary: '#636E72',
-    background: '#F8F9FA',
+    text: '#2C2420',              // dark walnut
+    textSecondary: '#8B8680',     // concrete gray
+    background: '#F5F0EB',        // warm off-white concrete
     surface: '#FFFFFF',
     tint: tintColorLight,
-    tabIconDefault: '#B2BEC3',
+    tabIconDefault: '#B5AFA8',    // muted concrete
     tabIconSelected: tintColorLight,
     primary,
     primaryLight,
     accent,
     danger,
     warning,
-    border: '#DFE6E9',
+    border: '#E0D8D0',            // warm light border
     cardFront: '#FFFFFF',
-    cardBack: '#F0EDFF',
+    cardBack: '#FAF4ED',          // light warm linen
   },
   dark: {
-    text: '#F8F9FA',
-    textSecondary: '#B2BEC3',
-    background: '#1A1A2E',
-    surface: '#16213E',
+    text: '#F0EBE5',              // warm white
+    textSecondary: '#9B9590',     // warm gray
+    background: '#1A1816',        // dark charcoal concrete
+    surface: '#252220',           // slightly lighter dark
     tint: tintColorDark,
-    tabIconDefault: '#636E72',
+    tabIconDefault: '#5C5753',    // muted dark
     tabIconSelected: tintColorDark,
-    primary,
-    primaryLight,
+    primary: '#D4A574',           // brighter amber for dark mode
+    primaryLight: '#E8C9A0',
     accent,
     danger,
     warning,
-    border: '#2D3436',
-    cardFront: '#16213E',
-    cardBack: '#1A1A3E',
+    border: '#3A3633',            // dark warm border
+    cardFront: '#252220',
+    cardBack: '#2D2926',          // subtle warm shift
   },
 };

@@ -142,8 +142,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 20,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    marginBottom: 24,
   },
   bigStatsRow: {
     flexDirection: 'row',
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
   },
   bigStat: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 20,
     alignItems: 'center',
@@ -164,21 +165,22 @@ const styles = StyleSheet.create({
   },
   bigStatNumber: {
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   bigStatLabel: {
     fontSize: 14,
     marginTop: 4,
   },
   chartCard: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 20,
     marginBottom: 20,
   },
   chartTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     marginBottom: 2,
   },
   chartSubtitle: {
@@ -217,9 +219,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   motivationCard: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 20,
+    padding: 24,
     alignItems: 'center',
   },
   motivationEmoji: {

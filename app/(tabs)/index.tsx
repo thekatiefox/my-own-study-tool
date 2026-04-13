@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, Pressable, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getStreak, getTotalDueCards, getDailyStats, getAllPacks, getPackProgress } from '@/lib/database';
+import { getStreak, getTotalDueCards, getDailyStats } from '@/lib/database';
 import { loadAllPacks } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
 import NewsCard from '@/components/NewsCard';
@@ -20,6 +20,7 @@ export default function HomeScreen() {
   const [news, setNews] = useState<NewsStory[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -51,31 +52,24 @@ export default function HomeScreen() {
     }, [loadData])
   );
 
-  const handleStartReview = async () => {
-    const packs = await getAllPacks();
-    if (packs.length === 0) return;
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setNewsLoading(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
-    // Find the pack with the most due cards
-    const progressList = await Promise.all(
-      packs.map(async (p) => ({ id: p.id, ...(await getPackProgress(p.id)) }))
-    );
-
-    // Prefer pack with most due cards; if none due, pick pack with most unlearned cards
-    const bestDue = progressList.sort((a, b) => b.dueCards - a.dueCards)[0];
-    if (bestDue.dueCards > 0) {
-      router.push(`/review/${bestDue.id}`);
-      return;
-    }
-    const bestNew = progressList.sort((a, b) =>
-      (b.totalCards - b.learnedCards) - (a.totalCards - a.learnedCards)
-    )[0];
-    router.push(`/review/${bestNew.id}`);
+  const handleStartReview = () => {
+    router.push('/review/mix');
   };
 
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+      }
     >
       {/* Greeting */}
       <Text style={[styles.greeting, { color: colors.textSecondary }]}>
@@ -116,7 +110,7 @@ export default function HomeScreen() {
         ]}
       >
         <Text style={styles.startButtonText}>
-          {dueCards > 0 ? `Start Review (${dueCards} cards)` : 'Start Learning'}
+          {dueCards > 0 ? `Start Mixed Review (${dueCards} due)` : 'Start Learning'}
         </Text>
       </Pressable>
 
@@ -189,13 +183,16 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   greeting: {
-    fontSize: 16,
-    marginBottom: 4,
+    fontSize: 14,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 24,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    marginBottom: 28,
   },
   statsRow: {
     flexDirection: 'row',
@@ -205,9 +202,9 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 16,
+    padding: 18,
     alignItems: 'center',
   },
   statEmoji: {
@@ -223,23 +220,24 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   startButton: {
-    borderRadius: 16,
+    borderRadius: 14,
     paddingVertical: 18,
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#6C5CE7',
+    marginBottom: 28,
+    shadowColor: '#B8845C',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
     elevation: 6,
   },
   startButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
+    color: '#FFF9F4',
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   tipCard: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 20,
   },

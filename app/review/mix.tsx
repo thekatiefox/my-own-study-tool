@@ -3,17 +3,16 @@ import { StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import FlashCard from '@/components/FlashCard';
 import DifficultyButtons from '@/components/DifficultyButtons';
 import ProgressBar from '@/components/ProgressBar';
-import { buildReviewQueue } from '@/lib/scheduler';
+import { buildMixedReviewQueue } from '@/lib/scheduler';
 import { calculateSM2, createInitialProgress } from '@/lib/sm2';
 import { upsertCardProgress, recordReview } from '@/lib/database';
 import { ReviewCard, Difficulty, DIFFICULTY_TO_QUALITY } from '@/types';
 
-export default function ReviewScreen() {
-  const { packId } = useLocalSearchParams<{ packId: string }>();
+export default function MixedReviewScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const router = useRouter();
@@ -26,14 +25,12 @@ export default function ReviewScreen() {
   const [sessionStats, setSessionStats] = useState({ reviewed: 0, correct: 0 });
 
   useEffect(() => {
-    if (packId) {
-      loadCards();
-    }
-  }, [packId]);
+    loadCards();
+  }, []);
 
   const loadCards = async () => {
     try {
-      const queue = await buildReviewQueue(packId!);
+      const queue = await buildMixedReviewQueue();
       setCards(queue);
       setIsLoading(false);
 
@@ -41,7 +38,7 @@ export default function ReviewScreen() {
         setIsComplete(true);
       }
     } catch (err) {
-      console.error('Failed to load review queue:', err);
+      console.error('Failed to load mixed review queue:', err);
       setIsLoading(false);
     }
   };
@@ -56,7 +53,8 @@ export default function ReviewScreen() {
 
     const quality = DIFFICULTY_TO_QUALITY[difficulty];
     const isNew = card.progress === null;
-    const currentProgress = card.progress ?? createInitialProgress(card.content.id, packId!);
+    const cardPackId = card.packId ?? card.progress?.packId ?? 'unknown';
+    const currentProgress = card.progress ?? createInitialProgress(card.content.id, cardPackId);
 
     // Calculate new SM-2 values
     const result = calculateSM2({
@@ -69,7 +67,7 @@ export default function ReviewScreen() {
     // Save progress
     await upsertCardProgress({
       cardId: card.content.id,
-      packId: packId!,
+      packId: cardPackId,
       easeFactor: result.easeFactor,
       interval: result.interval,
       repetitions: result.repetitions,
@@ -145,6 +143,7 @@ export default function ReviewScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Progress */}
       <View style={styles.progressHeader}>
+        <Text style={[styles.headerLabel, { color: colors.primary }]}>Mixed Review</Text>
         <Text style={[styles.progressText, { color: colors.textSecondary }]}>
           {currentIndex + 1} / {cards.length}
         </Text>
@@ -186,6 +185,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 12,
     backgroundColor: 'transparent',
+  },
+  headerLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 2,
   },
   progressText: {
     fontSize: 14,

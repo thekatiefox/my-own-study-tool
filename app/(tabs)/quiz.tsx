@@ -4,6 +4,7 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { QuizPack, QuizQuestion } from '@/types';
+import * as Haptics from 'expo-haptics';
 
 import codeReviewData from '@/data/quizzes/code-review-scenarios.json';
 import systemDesignData from '@/data/quizzes/system-design-scenarios.json';
@@ -43,6 +44,9 @@ export default function QuizScreen() {
     setShowResult(true);
     if (index === activeQuiz!.questions[currentIndex].correctIndex) {
       setScore((s) => s + 1);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
@@ -198,13 +202,13 @@ export default function QuizScreen() {
       <View
         style={[
           styles.scenarioBox,
-          { backgroundColor: colorScheme === 'dark' ? '#0D1117' : '#F6F8FA', borderColor: colors.border },
+          { backgroundColor: colorScheme === 'dark' ? '#1A1816' : '#F5F0EB', borderColor: colors.border },
         ]}
       >
         <Text
           style={[
             styles.scenarioText,
-            { color: colorScheme === 'dark' ? '#E6EDF3' : '#24292F' },
+            { color: colorScheme === 'dark' ? '#F0EBE5' : '#2C2420' },
           ]}
         >
           {question.scenario}
@@ -224,20 +228,20 @@ export default function QuizScreen() {
 
         if (showResult) {
           if (index === question.correctIndex) {
-            optionBg = '#E8F5E9';
-            optionBorder = '#4CAF50';
-            optionTextColor = '#2E7D32';
+            optionBg = '#EDF5EF';
+            optionBorder = '#7B9E87';
+            optionTextColor = '#4A7A58';
             if (colorScheme === 'dark') {
-              optionBg = '#1B3A26';
-              optionTextColor = '#81C784';
+              optionBg = '#1E2D22';
+              optionTextColor = '#8FB89A';
             }
           } else if (index === selectedOption) {
-            optionBg = '#FFEBEE';
-            optionBorder = '#f44336';
-            optionTextColor = '#C62828';
+            optionBg = '#F5EDEA';
+            optionBorder = '#C47D5A';
+            optionTextColor = '#9E5A3A';
             if (colorScheme === 'dark') {
-              optionBg = '#3A1B1B';
-              optionTextColor = '#E57373';
+              optionBg = '#2D1E1A';
+              optionTextColor = '#D4976E';
             }
           }
         } else if (index === selectedOption) {
@@ -274,16 +278,16 @@ export default function QuizScreen() {
             styles.explanationBox,
             {
               backgroundColor: isCorrect
-                ? (colorScheme === 'dark' ? '#1B3A26' : '#E8F5E9')
-                : (colorScheme === 'dark' ? '#3A1B1B' : '#FFEBEE'),
-              borderColor: isCorrect ? '#4CAF50' : '#f44336',
+                ? (colorScheme === 'dark' ? '#1E2D22' : '#EDF5EF')
+                : (colorScheme === 'dark' ? '#2D1E1A' : '#F5EDEA'),
+              borderColor: isCorrect ? '#7B9E87' : '#C47D5A',
             },
           ]}
         >
           <Text
             style={[
               styles.explanationTitle,
-              { color: isCorrect ? '#4CAF50' : '#f44336' },
+              { color: isCorrect ? '#7B9E87' : '#C47D5A' },
             ]}
           >
             {isCorrect ? '✓ Correct!' : '✗ Not quite'}
@@ -334,7 +338,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '700',
+    letterSpacing: -0.5,
     marginBottom: 4,
     paddingHorizontal: 24,
   },
@@ -346,15 +351,15 @@ const styles = StyleSheet.create({
 
   // Pack cards
   packCard: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 16,
     marginHorizontal: 24,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowColor: '#B8845C',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     elevation: 2,
   },
   packHeader: {
@@ -395,7 +400,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   startBadgeText: {
-    color: '#fff',
+    color: '#FFF9F4',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -430,8 +435,8 @@ const styles = StyleSheet.create({
   },
   scenarioBox: {
     marginHorizontal: 24,
-    padding: 14,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     borderWidth: 1,
     marginBottom: 16,
   },
@@ -491,9 +496,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nextButtonText: {
-    color: '#fff',
+    color: '#FFF9F4',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // Summary
@@ -510,12 +515,13 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '700',
+    letterSpacing: -0.3,
     marginBottom: 8,
   },
   summaryScore: {
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: '700',
     marginBottom: 4,
   },
   summaryPercent: {
@@ -530,8 +536,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionButtonText: {
-    color: '#fff',
+    color: '#FFF9F4',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

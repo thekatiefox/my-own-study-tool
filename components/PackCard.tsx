@@ -3,6 +3,7 @@ import { StyleSheet, Pressable } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import * as Haptics from 'expo-haptics';
 
 interface PackCardProps {
   name: string;
@@ -27,9 +28,14 @@ export default function PackCard({
   const colors = Colors[colorScheme];
   const progress = totalCards > 0 ? learnedCards / totalCards : 0;
 
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  };
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.container,
         {
@@ -78,15 +84,15 @@ export default function PackCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 16,
     marginHorizontal: 24,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowColor: '#B8845C',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     elevation: 2,
   },
   header: {
@@ -104,8 +110,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   name: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.1,
     marginBottom: 2,
   },
   description: {
@@ -137,7 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   dueText: {
-    color: '#fff',
+    color: '#FFF9F4',
     fontSize: 12,
     fontWeight: '600',
   },

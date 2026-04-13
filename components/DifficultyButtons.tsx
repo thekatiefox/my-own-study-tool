@@ -4,6 +4,7 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Difficulty } from '@/types';
+import * as Haptics from 'expo-haptics';
 
 interface DifficultyButtonsProps {
   onRate: (difficulty: Difficulty) => void;
@@ -20,6 +21,11 @@ const BUTTONS: { difficulty: Difficulty; label: string; emoji: string; sublabel:
 export default function DifficultyButtons({ onRate, disabled }: DifficultyButtonsProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+
+  const handleRate = (difficulty: Difficulty) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onRate(difficulty);
+  };
 
   const getButtonColor = (difficulty: Difficulty) => {
     switch (difficulty) {
@@ -39,7 +45,7 @@ export default function DifficultyButtons({ onRate, disabled }: DifficultyButton
         {BUTTONS.map(({ difficulty, label, emoji, sublabel }) => (
           <Pressable
             key={difficulty}
-            onPress={() => onRate(difficulty)}
+            onPress={() => handleRate(difficulty)}
             disabled={disabled}
             style={({ pressed }) => [
               styles.button,
@@ -89,7 +95,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 4,

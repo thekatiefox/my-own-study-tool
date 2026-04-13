@@ -3,6 +3,7 @@ import { StyleSheet, Pressable } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { NewsStory, timeAgo } from '@/lib/news';
 import * as WebBrowser from 'expo-web-browser';
+import * as Haptics from 'expo-haptics';
 
 interface Props {
   story: NewsStory;
@@ -11,6 +12,7 @@ interface Props {
 
 export default function NewsCard({ story, colors }: Props) {
   const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     WebBrowser.openBrowserAsync(story.url);
   };
 
@@ -57,9 +59,9 @@ export default function NewsCard({ story, colors }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 14,
+    padding: 16,
     marginBottom: 10,
   },
   title: {

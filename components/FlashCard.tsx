@@ -4,15 +4,17 @@ import {
   Pressable,
   Animated,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { CardContent } from '@/types';
+import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
-const CARD_HEIGHT = CARD_WIDTH * 0.7;
+const CARD_HEIGHT = CARD_WIDTH * 0.85;
 
 interface FlashCardProps {
   card: CardContent;
@@ -44,8 +46,13 @@ export default function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
     outputRange: ['180deg', '360deg'],
   });
 
+  const handleFlip = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onFlip();
+  };
+
   return (
-    <Pressable onPress={onFlip} style={styles.container}>
+    <Pressable onPress={handleFlip} style={styles.container}>
       {/* Front of card */}
       <Animated.View
         style={[
@@ -81,9 +88,16 @@ export default function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
         ]}
       >
         <Text style={[styles.label, { color: colors.primary }]}>ANSWER</Text>
-        <Text style={[styles.cardText, styles.answerText, { color: colors.text }]}>
-          {card.back}
-        </Text>
+        <ScrollView
+          style={styles.answerScroll}
+          contentContainerStyle={styles.answerScrollContent}
+          showsVerticalScrollIndicator={true}
+          nestedScrollEnabled={true}
+        >
+          <Text style={[styles.cardText, styles.answerText, { color: colors.text }]}>
+            {card.back}
+          </Text>
+        </ScrollView>
       </Animated.View>
     </Pressable>
   );
@@ -98,16 +112,16 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     minHeight: CARD_HEIGHT,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 24,
+    padding: 28,
     justifyContent: 'center',
     alignItems: 'center',
     backfaceVisibility: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowColor: '#B8845C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
     elevation: 4,
   },
   cardBack: {
@@ -115,15 +129,23 @@ const styles = StyleSheet.create({
     top: 0,
   },
   label: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 2,
     marginBottom: 16,
   },
   cardText: {
     fontSize: 18,
     lineHeight: 26,
     textAlign: 'center',
+  },
+  answerScroll: {
+    flex: 1,
+    alignSelf: 'stretch',
+    maxHeight: CARD_HEIGHT - 80,
+  },
+  answerScrollContent: {
+    paddingBottom: 8,
   },
   answerText: {
     fontSize: 15,

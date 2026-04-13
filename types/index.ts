@@ -67,6 +67,7 @@ export interface ReviewCard {
   content: CardContent;
   progress: CardProgress | null; // null = new card
   isFlipped: boolean;
+  packId?: string; // For mixed reviews — which pack this card belongs to
 }
 
 export interface PackWithProgress {
