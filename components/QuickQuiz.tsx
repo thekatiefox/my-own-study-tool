@@ -134,6 +134,11 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
           <Text style={[styles.resultLabel, { color: isCorrect ? '#7B9E87' : '#C47D5A' }]}>
             {isCorrect ? 'Correct' : 'Not quite'}
           </Text>
+          {!isCorrect && selectedOption !== null && question.optionExplanations?.[selectedOption] && (
+            <Text style={[styles.resultText, { color: colors.text, marginBottom: 6 }]}>
+              {question.optionExplanations[selectedOption]}
+            </Text>
+          )}
           <Text style={[styles.resultText, { color: colors.text }]}>
             {question.explanation}
           </Text>

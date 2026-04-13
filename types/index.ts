@@ -84,6 +84,7 @@ export interface QuizQuestion {
   options: string[];      // 4 multiple choice options
   correctIndex: number;   // Index of the correct answer (0-based)
   explanation: string;    // Why the correct answer is right
+  optionExplanations?: string[]; // Why each wrong option is wrong (same indexes as options)
   category: string;       // Which topic area
   difficulty: 'beginner' | 'intermediate' | 'senior';
 }

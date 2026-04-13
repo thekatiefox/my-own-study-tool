@@ -363,6 +363,16 @@ export default function QuizScreen() {
           >
             {isCorrect ? '✓ Correct!' : '✗ Not quite'}
           </Text>
+          {!isCorrect && selectedOption !== null && question.optionExplanations?.[selectedOption] && (
+            <Text
+              style={[
+                styles.explanationText,
+                { color: colors.text, marginBottom: 8 },
+              ]}
+            >
+              {question.optionExplanations[selectedOption]}
+            </Text>
+          )}
           <Text
             style={[
               styles.explanationText,
@@ -401,11 +411,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   centeredContent: {
-    paddingTop: 20,
+    paddingTop: 40,
     paddingBottom: 40,
     alignItems: 'center',
-    justifyContent: 'center',
-    flexGrow: 1,
   },
   title: {
     fontSize: 22,
