@@ -62,12 +62,10 @@ export default function StatsScreen() {
       {/* Big stats */}
       <View style={styles.bigStatsRow}>
         <View style={[styles.bigStat, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.bigStatEmoji}>🔥</Text>
           <Text style={[styles.bigStatNumber, { color: colors.primary }]}>{streak}</Text>
           <Text style={[styles.bigStatLabel, { color: colors.textSecondary }]}>Day Streak</Text>
         </View>
         <View style={[styles.bigStat, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.bigStatEmoji}>🎯</Text>
           <Text style={[styles.bigStatNumber, { color: colors.accent }]}>{accuracy}%</Text>
           <Text style={[styles.bigStatLabel, { color: colors.textSecondary }]}>Accuracy</Text>
         </View>
@@ -115,17 +113,14 @@ export default function StatsScreen() {
 
       {/* Motivation */}
       <View style={[styles.motivationCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={styles.motivationEmoji}>
-          {streak >= 7 ? '🏆' : streak >= 3 ? '⭐' : '🌱'}
-        </Text>
         <Text style={[styles.motivationText, { color: colors.text }]}>
           {streak >= 7
-            ? 'Amazing dedication! A week-long streak!'
+            ? 'Amazing dedication — a week-long streak.'
             : streak >= 3
-            ? 'Great consistency! Keep the momentum going!'
+            ? 'Great consistency. Keep the momentum going.'
             : streak >= 1
-            ? 'Nice start! Every day counts towards mastery.'
-            : 'Start your first review to begin your streak!'}
+            ? 'Nice start. Every day counts towards mastery.'
+            : 'Start your first review to begin your streak.'}
         </Text>
       </View>
     </ScrollView>
@@ -141,9 +136,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    letterSpacing: -0.5,
+    fontSize: 24,
+    fontWeight: '600',
+    letterSpacing: -0.3,
     marginBottom: 24,
   },
   bigStatsRow: {
@@ -154,22 +149,19 @@ const styles = StyleSheet.create({
   },
   bigStat: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 20,
     alignItems: 'center',
   },
-  bigStatEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
   bigStatNumber: {
-    fontSize: 36,
-    fontWeight: '700',
+    fontSize: 32,
+    fontWeight: '600',
   },
   bigStatLabel: {
-    fontSize: 14,
+    fontSize: 13,
     marginTop: 4,
+    letterSpacing: 0.3,
   },
   chartCard: {
     borderRadius: 14,
@@ -219,18 +211,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   motivationCard: {
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 24,
     alignItems: 'center',
   },
-  motivationEmoji: {
-    fontSize: 40,
-    marginBottom: 12,
-  },
   motivationText: {
-    fontSize: 15,
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 21,
+    letterSpacing: 0.1,
   },
 });

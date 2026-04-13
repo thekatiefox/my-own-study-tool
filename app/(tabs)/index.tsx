@@ -1,47 +1,36 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, Pressable, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getStreak, getTotalDueCards, getDailyStats } from '@/lib/database';
+import { getTotalDueCards } from '@/lib/database';
 import { loadAllPacks } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
-import NewsCard from '@/components/NewsCard';
 import QuickQuiz from '@/components/QuickQuiz';
+import * as WebBrowser from 'expo-web-browser';
+import * as Haptics from 'expo-haptics';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const router = useRouter();
 
-  const [streak, setStreak] = useState(0);
   const [dueCards, setDueCards] = useState(0);
-  const [todayReviewed, setTodayReviewed] = useState(0);
   const [news, setNews] = useState<NewsStory[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const [expandedStory, setExpandedStory] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
       await loadAllPacks();
-      const today = new Date().toISOString().split('T')[0];
-      const [s, d, stats] = await Promise.all([
-        getStreak(),
-        getTotalDueCards(),
-        getDailyStats(today),
-      ]);
-      setStreak(s);
+      const d = await getTotalDueCards();
       setDueCards(d);
-      setTodayReviewed(stats?.cardsReviewed ?? 0);
     } catch (err) {
       console.error('Failed to load home data:', err);
-    } finally {
-      setIsLoading(false);
     }
 
-    // Fetch news in background (non-blocking)
     fetchTopTechNews(3)
       .then(setNews)
       .finally(() => setNewsLoading(false));
@@ -60,8 +49,9 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [loadData]);
 
-  const handleStartReview = () => {
-    router.push('/review/mix');
+  const toggleStory = (id: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setExpandedStory(expandedStory === id ? null : id);
   };
 
   return (
@@ -72,99 +62,81 @@ export default function HomeScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
       }
     >
-      {/* Greeting */}
+      {/* Hero — greeting + due count + primary CTA */}
       <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-        {getGreeting()} 👋
-      </Text>
-      <Text style={[styles.title, { color: colors.text }]}>
-        Ready to learn?
+        {getGreeting()}
       </Text>
 
-      {/* Stats row */}
-      <View style={styles.statsRow}>
-        <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.statEmoji}>🔥</Text>
-          <Text style={[styles.statNumber, { color: colors.primary }]}>{streak}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>day streak</Text>
-        </View>
-        <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.statEmoji}>📚</Text>
-          <Text style={[styles.statNumber, { color: colors.accent }]}>{dueCards}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>cards due</Text>
-        </View>
-        <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.statEmoji}>✅</Text>
-          <Text style={[styles.statNumber, { color: colors.text }]}>{todayReviewed}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>today</Text>
-        </View>
-      </View>
+      <Pressable
+        onPress={() => router.push('/review/mix')}
+        style={({ pressed }) => [
+          styles.heroCta,
+          {
+            backgroundColor: colors.primary,
+            opacity: pressed ? 0.9 : 1,
+          },
+        ]}
+      >
+        {dueCards > 0 ? (
+          <>
+            <Text style={styles.heroCount}>{dueCards}</Text>
+            <Text style={styles.heroLabel}>cards due — tap to review</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.heroLabel}>All caught up</Text>
+            <Text style={styles.heroSub}>Start a review to reinforce</Text>
+          </>
+        )}
+      </Pressable>
 
-      {/* Action buttons */}
-      <View style={styles.actionsRow}>
-        <Pressable
-          onPress={handleStartReview}
-          style={({ pressed }) => [
-            styles.actionCard,
-            {
-              backgroundColor: colors.primary,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Text style={styles.actionEmoji}>📚</Text>
-          <Text style={styles.actionLabel}>Daily Cards</Text>
-          <Text style={styles.actionSub}>
-            {dueCards > 0 ? `${dueCards} due` : 'Review'}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => router.push('/(tabs)/quiz')}
-          style={({ pressed }) => [
-            styles.actionCard,
-            {
-              backgroundColor: colors.accent,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Text style={styles.actionEmoji}>🧩</Text>
-          <Text style={styles.actionLabel}>Quiz Packs</Text>
-          <Text style={styles.actionSub}>Scenarios</Text>
-        </Pressable>
-      </View>
-
-      {/* Inline Quick Quiz */}
+      {/* Quick Quiz — compact inline */}
       <QuickQuiz colors={colors} colorScheme={colorScheme} />
 
-      {/* Motivational section */}
-      <View style={[styles.tipCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.tipTitle, { color: colors.primary }]}>💡 Daily Tip</Text>
-        <Text style={[styles.tipText, { color: colors.text }]}>
-          {getDailyTip()}
-        </Text>
-      </View>
-
-      {/* Tech News section */}
+      {/* News — compact headline list */}
       <View style={styles.newsSection}>
-        <Text style={[styles.newsSectionTitle, { color: colors.text }]}>
-          📰 Today in Tech
-        </Text>
-        <Text style={[styles.newsSectionSubtitle, { color: colors.textSecondary }]}>
-          Top stories from Hacker News
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          TODAY IN TECH
         </Text>
         {newsLoading ? (
-          <ActivityIndicator
-            size="small"
-            color={colors.primary}
-            style={{ marginTop: 16 }}
-          />
+          <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />
         ) : news.length > 0 ? (
           news.map((story) => (
-            <NewsCard key={story.id} story={story} colors={colors} />
+            <View key={story.id} style={[styles.newsItem, { borderColor: colors.border }]}>
+              <Pressable onPress={() => toggleStory(story.id)}>
+                <Text style={[styles.newsTitle, { color: colors.text }]} numberOfLines={2}>
+                  {story.title}
+                </Text>
+                <View style={styles.newsMeta}>
+                  <Text style={[styles.newsSource, { color: colors.primary }]}>{story.source}</Text>
+                  <Text style={[styles.newsDot, { color: colors.textSecondary }]}>·</Text>
+                  <Text style={[styles.newsMetaText, { color: colors.textSecondary }]}>
+                    {story.score} pts
+                  </Text>
+                </View>
+              </Pressable>
+              {expandedStory === story.id && story.summary ? (
+                <View style={[styles.summaryBox, { backgroundColor: colors.surface }]}>  
+                  {story.summary.split('\n').map((line, i) => (
+                    <Text key={i} style={[styles.summaryLine, { color: colors.textSecondary }]}>
+                      {line}
+                    </Text>
+                  ))}
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      WebBrowser.openBrowserAsync(story.url);
+                    }}
+                  >
+                    <Text style={[styles.readLink, { color: colors.primary }]}>Read article</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
           ))
         ) : (
           <Text style={[styles.newsEmpty, { color: colors.textSecondary }]}>
-            Couldn't load news — check your connection
+            Couldn't load news
           </Text>
         )}
       </View>
@@ -179,23 +151,6 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
-const TIPS = [
-  'Spaced repetition is most effective when you review daily — even 5 minutes helps!',
-  'Senior devs don\'t memorize everything — they build strong mental models of core concepts.',
-  'Understanding "why" something works is more valuable than memorizing "how".',
-  'Try explaining each card\'s answer out loud — teaching solidifies understanding.',
-  'Consistency beats intensity. Short daily sessions outperform weekly cram sessions.',
-  'If a card feels too easy, that\'s the spaced repetition working. Trust the algorithm!',
-  'Focus on patterns, not syntax. Patterns transfer across languages and frameworks.',
-];
-
-function getDailyTip(): string {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  return TIPS[dayOfYear % TIPS.length];
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -203,107 +158,95 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     paddingTop: 16,
+    paddingBottom: 40,
   },
   greeting: {
-    fontSize: 14,
-    letterSpacing: 0.5,
+    fontSize: 13,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginBottom: 8,
+    marginBottom: 16,
+    fontWeight: '500',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-    marginBottom: 28,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-    backgroundColor: 'transparent',
-  },
-  statBox: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 18,
+  heroCta: {
+    borderRadius: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
     alignItems: 'center',
-  },
-  statEmoji: {
-    fontSize: 24,
-    marginBottom: 6,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 12,
     marginBottom: 20,
-    backgroundColor: 'transparent',
   },
-  actionCard: {
-    flex: 1,
-    borderRadius: 14,
-    paddingVertical: 18,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    shadowColor: '#B8845C',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  actionEmoji: {
-    fontSize: 28,
-    marginBottom: 6,
-  },
-  actionLabel: {
-    color: '#FFF9F4',
-    fontSize: 16,
+  heroCount: {
+    fontSize: 36,
     fontWeight: '600',
-    letterSpacing: 0.2,
+    color: '#FFF9F4',
+    letterSpacing: -0.5,
   },
-  actionSub: {
-    color: 'rgba(255,249,244,0.7)',
-    fontSize: 12,
+  heroLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#FFF9F4',
+    letterSpacing: 0.2,
     marginTop: 2,
   },
-  tipCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 20,
+  heroSub: {
+    fontSize: 13,
+    color: 'rgba(255,249,244,0.6)',
+    marginTop: 4,
   },
-  tipTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 14,
-    lineHeight: 21,
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.5,
+    marginBottom: 12,
   },
   newsSection: {
-    marginTop: 24,
+    marginTop: 8,
     backgroundColor: 'transparent',
   },
-  newsSectionTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+  newsItem: {
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    backgroundColor: 'transparent',
+  },
+  newsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  newsMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  newsSource: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  newsDot: {
+    fontSize: 12,
+    marginHorizontal: 5,
+  },
+  newsMetaText: {
+    fontSize: 12,
+  },
+  summaryBox: {
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 10,
+  },
+  summaryLine: {
+    fontSize: 13,
+    lineHeight: 19,
     marginBottom: 2,
   },
-  newsSectionSubtitle: {
+  readLink: {
     fontSize: 13,
-    marginBottom: 14,
+    fontWeight: '600',
+    marginTop: 8,
   },
   newsEmpty: {
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 12,
   },
 });

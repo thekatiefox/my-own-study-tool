@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { QuizQuestion } from '@/types';
@@ -8,7 +8,6 @@ import codeReviewData from '@/data/quizzes/code-review-scenarios.json';
 import codeReviewAdvData from '@/data/quizzes/code-review-advanced.json';
 import systemDesignData from '@/data/quizzes/system-design-scenarios.json';
 
-// Gather all questions from all quiz packs
 const ALL_QUESTIONS: QuizQuestion[] = [
   ...codeReviewData.questions,
   ...codeReviewAdvData.questions,
@@ -16,8 +15,7 @@ const ALL_QUESTIONS: QuizQuestion[] = [
 ] as QuizQuestion[];
 
 function getRandomQuestion(): QuizQuestion {
-  const index = Math.floor(Math.random() * ALL_QUESTIONS.length);
-  return ALL_QUESTIONS[index];
+  return ALL_QUESTIONS[Math.floor(Math.random() * ALL_QUESTIONS.length)];
 }
 
 interface Props {
@@ -27,35 +25,48 @@ interface Props {
 
 export default function QuickQuiz({ colors, colorScheme }: Props) {
   const [question, setQuestion] = useState<QuizQuestion>(getRandomQuestion);
+  const [expanded, setExpanded] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
 
   const handleSelect = (index: number) => {
     if (showResult) return;
     setSelectedOption(index);
     setShowResult(true);
-    if (index === question.correctIndex) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    }
+    Haptics.notificationAsync(
+      index === question.correctIndex
+        ? Haptics.NotificationFeedbackType.Success
+        : Haptics.NotificationFeedbackType.Error
+    );
   };
 
-  const handleNewQuestion = () => {
+  const handleNext = () => {
     setQuestion(getRandomQuestion());
     setSelectedOption(null);
     setShowResult(false);
+    setExpanded(true);
   };
 
-  if (dismissed) {
+  // Collapsed state — compact teaser card
+  if (!expanded) {
     return (
       <Pressable
-        onPress={() => { setDismissed(false); handleNewQuestion(); }}
-        style={[styles.dismissedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        onPress={() => { setExpanded(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+        style={({ pressed }) => [
+          styles.teaser,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            opacity: pressed ? 0.85 : 1,
+          },
+        ]}
       >
-        <Text style={[styles.dismissedText, { color: colors.textSecondary }]}>
-          🔍 Tap for another quick quiz
+        <View style={styles.teaserRow}>
+          <Text style={[styles.teaserLabel, { color: colors.primary }]}>QUICK QUIZ</Text>
+          <Text style={[styles.teaserArrow, { color: colors.textSecondary }]}>›</Text>
+        </View>
+        <Text style={[styles.teaserQuestion, { color: colors.text }]} numberOfLines={1}>
+          {question.question}
         </Text>
       </Pressable>
     );
@@ -63,12 +74,13 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
 
   const isCorrect = selectedOption === question.correctIndex;
 
+  // Expanded state — full quiz interaction
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerLabel, { color: colors.primary }]}>🔍 Quick Quiz</Text>
-        <Pressable onPress={() => setDismissed(true)}>
-          <Text style={[styles.dismissBtn, { color: colors.textSecondary }]}>✕</Text>
+        <Text style={[styles.headerLabel, { color: colors.primary }]}>QUICK QUIZ</Text>
+        <Pressable onPress={() => setExpanded(false)} hitSlop={8}>
+          <Text style={[styles.collapseBtn, { color: colors.textSecondary }]}>Done</Text>
         </Pressable>
       </View>
 
@@ -119,8 +131,8 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
 
       {showResult && (
         <View style={[styles.result, { backgroundColor: isCorrect ? (colorScheme === 'dark' ? '#1E2D22' : '#EDF5EF') : (colorScheme === 'dark' ? '#2D1E1A' : '#F5EDEA') }]}>
-          <Text style={[styles.resultTitle, { color: isCorrect ? '#7B9E87' : '#C47D5A' }]}>
-            {isCorrect ? '✓ Correct!' : '✗ Not quite'}
+          <Text style={[styles.resultLabel, { color: isCorrect ? '#7B9E87' : '#C47D5A' }]}>
+            {isCorrect ? 'Correct' : 'Not quite'}
           </Text>
           <Text style={[styles.resultText, { color: colors.text }]} numberOfLines={3}>
             {question.explanation}
@@ -130,7 +142,7 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
 
       {showResult && (
         <Pressable
-          onPress={handleNewQuestion}
+          onPress={handleNext}
           style={[styles.nextBtn, { backgroundColor: colors.primary }]}
         >
           <Text style={styles.nextBtnText}>Next Question</Text>
@@ -141,40 +153,67 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: 14,
+  // Collapsed teaser
+  teaser: {
+    borderRadius: 12,
     borderWidth: 1,
-    padding: 16,
+    padding: 14,
+    marginBottom: 20,
+  },
+  teaserRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+    backgroundColor: 'transparent',
+  },
+  teaserLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+  },
+  teaserArrow: {
+    fontSize: 18,
+    fontWeight: '300',
+  },
+  teaserQuestion: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  // Expanded
+  container: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
     marginBottom: 20,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
     backgroundColor: 'transparent',
   },
   headerLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.2,
   },
-  dismissBtn: {
-    fontSize: 18,
-    padding: 4,
+  collapseBtn: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   question: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    lineHeight: 21,
-    marginBottom: 10,
+    lineHeight: 20,
+    marginBottom: 8,
   },
   scenario: {
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   scenarioText: {
     fontSize: 11,
@@ -187,7 +226,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     padding: 10,
-    marginBottom: 6,
+    marginBottom: 5,
   },
   optionLetter: {
     fontSize: 12,
@@ -204,12 +243,12 @@ const styles = StyleSheet.create({
   result: {
     borderRadius: 10,
     padding: 12,
-    marginTop: 6,
+    marginTop: 4,
   },
-  resultTitle: {
+  resultLabel: {
     fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontWeight: '600',
+    marginBottom: 3,
   },
   resultText: {
     fontSize: 12,
@@ -219,21 +258,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   nextBtnText: {
     color: '#FFF9F4',
     fontSize: 14,
     fontWeight: '600',
-  },
-  dismissedCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  dismissedText: {
-    fontSize: 14,
   },
 });

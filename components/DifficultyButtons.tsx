@@ -11,11 +11,11 @@ interface DifficultyButtonsProps {
   disabled?: boolean;
 }
 
-const BUTTONS: { difficulty: Difficulty; label: string; emoji: string; sublabel: string }[] = [
-  { difficulty: 'again', label: 'Again', emoji: '🔄', sublabel: '<1 min' },
-  { difficulty: 'hard', label: 'Hard', emoji: '😤', sublabel: '~1 day' },
-  { difficulty: 'good', label: 'Good', emoji: '👍', sublabel: '~3 days' },
-  { difficulty: 'easy', label: 'Easy', emoji: '🎯', sublabel: '~7 days' },
+const BUTTONS: { difficulty: Difficulty; label: string; sublabel: string }[] = [
+  { difficulty: 'again', label: 'Again', sublabel: '<1 min' },
+  { difficulty: 'hard', label: 'Hard', sublabel: '~1 day' },
+  { difficulty: 'good', label: 'Good', sublabel: '~3 days' },
+  { difficulty: 'easy', label: 'Easy', sublabel: '~7 days' },
 ];
 
 export default function DifficultyButtons({ onRate, disabled }: DifficultyButtonsProps) {
@@ -42,7 +42,7 @@ export default function DifficultyButtons({ onRate, disabled }: DifficultyButton
         How well did you know this?
       </Text>
       <View style={styles.buttonRow}>
-        {BUTTONS.map(({ difficulty, label, emoji, sublabel }) => (
+        {BUTTONS.map(({ difficulty, label, sublabel }) => (
           <Pressable
             key={difficulty}
             onPress={() => handleRate(difficulty)}
@@ -58,7 +58,6 @@ export default function DifficultyButtons({ onRate, disabled }: DifficultyButton
               },
             ]}
           >
-            <Text style={styles.emoji}>{emoji}</Text>
             <Text
               style={[
                 styles.buttonLabel,
@@ -101,10 +100,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emoji: {
-    fontSize: 24,
-    marginBottom: 4,
   },
   buttonLabel: {
     fontSize: 13,

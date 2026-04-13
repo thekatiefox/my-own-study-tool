@@ -14,6 +14,8 @@ import systemDesignFe from '@/data/packs/system-design-fe.json';
 import frontendArchitecture from '@/data/packs/frontend-architecture.json';
 import reactAdvanced from '@/data/packs/react-advanced.json';
 import codeReviewAdvanced from '@/data/packs/code-review-advanced.json';
+import authentication from '@/data/packs/authentication.json';
+import authenticationAdvanced from '@/data/packs/authentication-advanced.json';
 
 const ALL_PACKS: Pack[] = [
   jsFundamentals as Pack,
@@ -28,6 +30,8 @@ const ALL_PACKS: Pack[] = [
   systemDesignFe as Pack,
   frontendArchitecture as Pack,
   reactAdvanced as Pack,
+  authentication as Pack,
+  authenticationAdvanced as Pack,
 ];
 
 /**

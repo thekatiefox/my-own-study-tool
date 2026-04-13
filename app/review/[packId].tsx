@@ -113,9 +113,8 @@ export default function ReviewScreen() {
 
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={styles.completeEmoji}>🎉</Text>
         <Text style={[styles.completeTitle, { color: colors.text }]}>
-          {sessionStats.reviewed === 0 ? 'All caught up!' : 'Session Complete!'}
+          {sessionStats.reviewed === 0 ? 'All caught up' : 'Session complete'}
         </Text>
         {sessionStats.reviewed > 0 && (
           <>

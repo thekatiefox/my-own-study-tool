@@ -194,11 +194,8 @@ export default function QuizScreen() {
         contentContainerStyle={styles.centeredContent}
       >
         <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.summaryEmoji}>
-            {percentage >= 80 ? '🎉' : percentage >= 50 ? '👍' : '📚'}
-          </Text>
           <Text style={[styles.summaryTitle, { color: colors.text }]}>
-            Quiz Complete!
+            Quiz complete
           </Text>
           <Text style={[styles.summaryScore, { color: colors.primary }]}>
             {score} / {activeQuestions.length}

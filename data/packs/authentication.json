@@ -1,0 +1,129 @@
+{
+  "id": "authentication",
+  "name": "Auth Fundamentals",
+  "description": "Cookies, sessions, passwords, tokens, and web security basics every developer needs.",
+  "icon": "A",
+  "category": "Skills",
+  "cards": [
+    {
+      "id": "auth-001",
+      "front": "Why does authentication exist? What does it mean that HTTP is stateless?",
+      "back": "• HTTP is stateless — every request your browser sends is a complete stranger to the server\n• The server has no built-in memory of who you are between requests\n• Without auth, anyone could access anyone's data just by visiting the right URL\n• Authentication is how a server answers the question: \"Who is making this request?\"\n• Think of it like a hotel front desk — you check in once, get a keycard, and show it each visit\n• Authorization is the follow-up question: \"Is this person allowed to do this?\"\n• Every auth system is essentially a workaround for HTTP having no memory\n• This is why you need cookies, tokens, or sessions — they give HTTP a form of memory",
+      "tags": ["http", "stateless", "fundamentals"]
+    },
+    {
+      "id": "auth-002",
+      "front": "What is a password and why should you never store passwords as plaintext?",
+      "back": "• A password is a secret string only the user should know, used to prove their identity\n• Plaintext storage means saving the actual password as-is in your database (e.g., \"myPassword123\")\n• If your database is breached, attackers instantly have every user's real password\n• People reuse passwords — a leak from your site can compromise their bank, email, and social accounts\n• Even your own employees or database admins should never be able to read user passwords\n• Major companies like Adobe and LinkedIn suffered massive damage from plaintext or weak storage\n• The rule is simple: if you can read a user's password from your database, you are doing it wrong\n• Instead, you store a hashed version — a one-way transformation that cannot be reversed",
+      "tags": ["passwords", "plaintext", "security-basics"]
+    },
+    {
+      "id": "auth-003",
+      "front": "What is password hashing? What are salts, and why is bcrypt preferred over plain MD5 or SHA?",
+      "back": "• Hashing is a one-way function — it turns \"myPassword\" into a fixed-length scrambled string\n• You cannot reverse a hash back to the original password; you can only hash a guess and compare\n• MD5 and SHA are fast hashes — an attacker can try billions of guesses per second with modern GPUs\n• bcrypt is intentionally slow, making brute-force attacks take years instead of minutes\n• A salt is a random string added to each password before hashing, so identical passwords produce different hashes\n• Without salts, attackers use precomputed rainbow tables to look up common password hashes instantly\n• bcrypt automatically generates and stores a unique salt for each password\n• When a user logs in, you hash their input with the same salt and compare it to the stored hash\n• Other good options include Argon2 and scrypt — the key is using a slow, salted algorithm",
+      "tags": ["hashing", "bcrypt", "salts", "passwords"]
+    },
+    {
+      "id": "auth-004",
+      "front": "What does being \"logged in\" actually mean technically?",
+      "back": "• Being logged in means the server has a way to recognize your requests without asking for your password again\n• At login, you prove your identity once (usually with a password), and the server gives you a token or session ID\n• Your browser stores this token and attaches it to every subsequent request automatically\n• The server checks this token on each request to know who you are — this is your \"logged in\" state\n• There is no magic \"logged in\" flag — it is just the presence of a valid, unexpired credential\n• If the token expires or is deleted, you are \"logged out\" even though nothing changed about your account\n• Two common approaches: the server remembers you (sessions) or gives you a self-contained proof (JWTs)\n• Logging out means destroying that token — on the server side, client side, or both",
+      "tags": ["login", "sessions", "fundamentals"]
+    },
+    {
+      "id": "auth-005",
+      "front": "What is a cookie? How do browsers handle cookies?",
+      "back": "• A cookie is a small piece of data the server sends to the browser, which the browser stores locally\n• The browser automatically attaches matching cookies to every subsequent request to that domain\n• The server sets cookies using the Set-Cookie response header, e.g., Set-Cookie: sessionId=abc123\n• Cookies have attributes: expiration date, domain scope, path scope, and security flags\n• Session cookies disappear when you close the browser; persistent cookies survive until their expiry date\n• Cookies are scoped to a domain — cookies from example.com are never sent to other-site.com\n• This automatic sending behavior is what makes cookies ideal for auth — no JavaScript code required\n• Cookies have a size limit of about 4KB, so they typically store just an ID, not large data\n• You can see your cookies in browser DevTools under Application > Cookies",
+      "tags": ["cookies", "browser", "http-headers"]
+    },
+    {
+      "id": "auth-006",
+      "front": "How does session-based authentication work? Walk through the full flow.",
+      "back": "• Step 1: User submits username and password via a login form\n• Step 2: Server verifies credentials by hashing the input and comparing to the stored hash\n• Step 3: Server creates a session — an object stored on the server with a unique session ID\n• Step 4: Server sends the session ID to the browser in a Set-Cookie header\n• Step 5: Browser automatically includes that cookie in every future request to the server\n• Step 6: On each request, the server looks up the session ID and finds the user's data\n• Step 7: If the session exists and is valid, the request is treated as authenticated\n• Step 8: On logout, the server deletes the session and tells the browser to clear the cookie\n• The actual user data lives on the server — the browser only holds a meaningless ID string",
+      "tags": ["sessions", "cookies", "login-flow"]
+    },
+    {
+      "id": "auth-007",
+      "front": "What are the options for storing sessions on the server? What are the tradeoffs?",
+      "back": "• In-memory storage: sessions live in your server's RAM — fast but lost if the server restarts\n• In-memory also fails with multiple servers because each server has its own separate memory\n• Redis: an in-memory database shared across servers — fast, supports expiration, and survives restarts\n• Redis is the most popular choice for production session storage because it balances speed and reliability\n• Database storage (e.g., PostgreSQL): sessions are saved as rows in a table — durable but slower\n• Database storage adds a DB query to every single request, which can become a bottleneck at scale\n• File-based storage: sessions saved as files on disk — simple but slow and hard to share across servers\n• For a single-server app, in-memory or a simple database works fine\n• For production with multiple servers, Redis is the standard recommendation",
+      "tags": ["sessions", "redis", "scaling", "server"]
+    },
+    {
+      "id": "auth-008",
+      "front": "What is HTTPS and why is it critical for authentication?",
+      "back": "• HTTPS encrypts all data sent between the browser and server using TLS (Transport Layer Security)\n• Without HTTPS, passwords, cookies, and tokens are sent as readable text over the network\n• Anyone on the same Wi-Fi network (like a coffee shop) can intercept unencrypted HTTP traffic\n• This type of attack is called a man-in-the-middle attack — the attacker reads or modifies your data in transit\n• HTTPS prevents this by encrypting the connection so intercepted data is useless gibberish\n• The Secure flag on cookies means the browser will only send that cookie over HTTPS connections\n• Modern browsers mark HTTP sites as \"Not Secure\" in the address bar for good reason\n• Free HTTPS certificates are available from Let's Encrypt — there is no excuse to skip it\n• Rule: never send any authentication data over plain HTTP, even in development if possible",
+      "tags": ["https", "tls", "encryption", "security-basics"]
+    },
+    {
+      "id": "auth-009",
+      "front": "What is a JWT (JSON Web Token)? What are its three parts?",
+      "back": "• A JWT is a compact, self-contained token that carries user information in a verifiable format\n• It has three parts separated by dots: header.payload.signature\n• The Header specifies the token type (JWT) and the signing algorithm (e.g., HS256 or RS256)\n• The Payload contains claims — pieces of data like user ID, email, roles, and expiration time\n• The Signature is created by signing the header and payload with a secret key\n• The server can verify the signature to confirm the token was not tampered with\n• Both header and payload are Base64-encoded, meaning anyone can decode and read them — they are not encrypted\n• Never put sensitive data like passwords in a JWT payload because it is readable by anyone\n• The key advantage: the server does not need to store anything — it just verifies the signature on each request\n• You can paste any JWT into jwt.io to see its decoded contents",
+      "tags": ["jwt", "tokens", "stateless-auth"]
+    },
+    {
+      "id": "auth-010",
+      "front": "What are access tokens and refresh tokens? Why do we need both?",
+      "back": "• An access token is what you send with each API request to prove you are authenticated\n• Access tokens are short-lived — typically 5 to 60 minutes — to limit damage if one is stolen\n• A refresh token is a longer-lived token used only to get a new access token when the old one expires\n• Refresh tokens typically last days or weeks and are stored more securely\n• Without refresh tokens, users would have to log in again every time their short-lived access token expires\n• The flow: access token expires, your app sends the refresh token to get a new access token silently\n• If a refresh token is compromised, you can revoke it on the server to cut off access\n• Access tokens are sent frequently (every request), so keeping them short-lived reduces the attack window\n• Think of it like a day pass (access token) and a membership card (refresh token) at a gym",
+      "tags": ["jwt", "access-token", "refresh-token", "token-management"]
+    },
+    {
+      "id": "auth-011",
+      "front": "Where should you store tokens in a browser? localStorage vs cookies vs memory?",
+      "back": "• localStorage: easy to use from JavaScript, persists across tabs and page reloads\n• localStorage risk: any JavaScript on your page can read it, so an XSS attack can steal your tokens\n• HttpOnly cookies: the browser manages them and JavaScript cannot access them at all\n• HttpOnly cookies are generally the safest option for storing auth tokens in a browser\n• Cookies are sent automatically with requests, so you do not need to write code to attach them\n• In-memory (a JavaScript variable): safest from XSS because nothing persists, but lost on page refresh\n• In-memory is used in high-security apps but requires refresh tokens to restore state after reload\n• Never store tokens in sessionStorage or URL parameters — both have serious security issues\n• The recommended approach: store access tokens in memory or HttpOnly cookies, refresh tokens in HttpOnly cookies",
+      "tags": ["token-storage", "localstorage", "cookies", "xss", "frontend"]
+    },
+    {
+      "id": "auth-012",
+      "front": "What is XSS (Cross-Site Scripting) and how does it threaten authentication?",
+      "back": "• XSS is when an attacker injects malicious JavaScript into a web page that other users visit\n• Example: an attacker posts a comment containing a script tag that runs on every viewer's browser\n• The injected script runs with the same permissions as your legitimate JavaScript code\n• It can read anything JavaScript can access: localStorage tokens, DOM content, form inputs\n• An XSS attack can steal tokens from localStorage and send them to the attacker's server\n• It can also make authenticated API requests on behalf of the user without them knowing\n• HttpOnly cookies are immune to XSS because JavaScript cannot read them\n• Prevention: always sanitize and escape user input before rendering it in HTML\n• Use a framework like React or Vue — they escape output by default, which prevents most XSS\n• Content Security Policy (CSP) headers add another layer of defense by restricting script sources",
+      "tags": ["xss", "security", "injection", "frontend"]
+    },
+    {
+      "id": "auth-013",
+      "front": "What is CSRF (Cross-Site Request Forgery) and how does it work?",
+      "back": "• CSRF tricks your browser into making an unwanted request to a site where you are already logged in\n• Example: you are logged into your bank, then visit a malicious site with a hidden form that posts to your bank's transfer endpoint\n• Your browser automatically includes your bank's cookies with that request because that is how cookies work\n• The bank's server sees valid cookies and processes the request as if you made it intentionally\n• CSRF does not steal your credentials — it rides on your existing authenticated session\n• Protection method 1: CSRF tokens — the server includes a random token in forms that the attacker cannot guess\n• Protection method 2: SameSite cookie attribute — tells the browser not to send cookies with cross-site requests\n• Protection method 3: check the Origin or Referer header to verify the request came from your own site\n• CSRF mainly affects cookie-based auth because cookies are sent automatically by the browser",
+      "tags": ["csrf", "security", "cookies", "attack-vectors"]
+    },
+    {
+      "id": "auth-014",
+      "front": "What are the key cookie security attributes? (Secure, HttpOnly, SameSite)",
+      "back": "• Secure: the cookie is only sent over HTTPS connections, never over plain HTTP\n• Without Secure, someone sniffing network traffic on HTTP can see your session cookie\n• HttpOnly: JavaScript cannot access the cookie via document.cookie — only the browser sends it\n• HttpOnly is your main defense against XSS attacks stealing session cookies\n• SameSite=Strict: the cookie is never sent with cross-site requests — strongest CSRF protection\n• SameSite=Lax: the cookie is sent with top-level navigations (clicking a link) but not with form POSTs or AJAX\n• SameSite=None: the cookie is sent with all requests including cross-site — requires the Secure flag\n• A good default setup: Set-Cookie: sessionId=abc; Secure; HttpOnly; SameSite=Lax\n• Always set all three attributes on auth cookies — there is no reason to leave them off",
+      "tags": ["cookies", "security", "httponly", "samesite", "csrf"]
+    },
+    {
+      "id": "auth-015",
+      "front": "What is CORS? Why do you get CORS errors during authentication?",
+      "back": "• CORS (Cross-Origin Resource Sharing) controls which websites can make requests to your server\n• An origin is the combination of protocol, domain, and port — http://localhost:3000 is a different origin than http://localhost:5000\n• Browsers block cross-origin requests by default to prevent malicious sites from accessing your API\n• During development, your frontend (localhost:3000) and backend (localhost:5000) are different origins\n• The server must send Access-Control-Allow-Origin headers to tell the browser which origins are permitted\n• For auth with cookies, you also need Access-Control-Allow-Credentials: true on the server\n• On the frontend, you must set credentials: \"include\" in fetch or withCredentials: true in Axios\n• CORS errors only happen in browsers — they are a browser security feature, not a server issue\n• The fix is always on the server: configure it to allow your frontend's origin explicitly\n• Never use Access-Control-Allow-Origin: * with credentials — browsers will reject it",
+      "tags": ["cors", "cross-origin", "frontend", "api"]
+    },
+    {
+      "id": "auth-016",
+      "front": "What is Multi-Factor Authentication (MFA)? What are the common methods?",
+      "back": "• MFA requires two or more different types of proof before granting access\n• The three factor categories: something you know (password), something you have (phone), something you are (fingerprint)\n• Even if an attacker steals your password, they still cannot log in without the second factor\n• SMS codes: a one-time code texted to your phone — convenient but vulnerable to SIM-swapping attacks\n• Authenticator apps (Google Authenticator, Authy): generate time-based codes that change every 30 seconds\n• Hardware keys (YubiKey): a physical USB device you plug in — the most secure option\n• Email codes: a one-time code sent to your email — better than nothing but weaker than other methods\n• Biometrics (fingerprint, face scan): convenient but used mainly for device unlock rather than web auth\n• As a developer, you should offer MFA to users and require it for admin accounts at minimum",
+      "tags": ["mfa", "two-factor", "security", "authentication-methods"]
+    },
+    {
+      "id": "auth-017",
+      "front": "What are common password attacks? (brute force, credential stuffing, phishing)",
+      "back": "• Brute force: an attacker tries every possible password combination until one works\n• Defense against brute force: rate limiting (e.g., max 5 login attempts per minute) and account lockout\n• Dictionary attacks: a variation of brute force using lists of common passwords like \"password123\" or \"qwerty\"\n• Credential stuffing: attackers use username/password pairs leaked from other breached sites\n• Credential stuffing works because people reuse the same password across multiple sites\n• Defense: encourage unique passwords, support MFA, and check passwords against known breach lists\n• Phishing: attackers create fake login pages that look identical to real ones to trick users into entering credentials\n• Defense against phishing: train users to check URLs, use MFA, and implement hardware security keys\n• Rainbow table attacks: using precomputed hash lookups — defeated by salted hashing algorithms like bcrypt\n• As a developer, your job is to make all of these attacks as difficult as possible through layered defenses",
+      "tags": ["password-attacks", "brute-force", "phishing", "credential-stuffing", "security"]
+    },
+    {
+      "id": "auth-018",
+      "front": "What does 401 Unauthorized vs 403 Forbidden actually mean?",
+      "back": "• 401 Unauthorized really means \"unauthenticated\" — the server does not know who you are\n• You get a 401 when you send no credentials or your token is expired or invalid\n• The fix for a 401 is to log in or refresh your token — you need to prove your identity\n• 403 Forbidden means the server knows who you are but you do not have permission for this action\n• You get a 403 when a regular user tries to access an admin-only endpoint, for example\n• The fix for a 403 is not to log in again — you need a different account or elevated permissions\n• The naming is confusing: 401 should have been called \"Unauthenticated\" but the HTTP spec used \"Unauthorized\"\n• In your frontend code, handle these differently: 401 should redirect to login, 403 should show an access denied message\n• A well-designed API uses both correctly to help clients understand what went wrong",
+      "tags": ["http-status-codes", "401", "403", "api", "error-handling"]
+    },
+    {
+      "id": "auth-019",
+      "front": "Sessions vs JWTs — when should you use each? What are the honest tradeoffs?",
+      "back": "• Sessions: server stores user state, browser only holds a session ID in a cookie\n• Sessions advantage: easy to revoke — just delete the session on the server and the user is logged out instantly\n• Sessions disadvantage: the server must look up the session on every request, and you need shared storage across multiple servers\n• JWTs: the token itself contains user data, the server stores nothing and just verifies the signature\n• JWTs advantage: no server-side storage needed, works easily across multiple servers and microservices\n• JWTs disadvantage: hard to revoke — once issued, a JWT is valid until it expires unless you build a blocklist\n• Use sessions when: you have a traditional web app, need instant logout, or have a single server\n• Use JWTs when: you have a microservices architecture, mobile apps, or need stateless API authentication\n• Many production systems combine both: JWTs for short-lived access and server-side refresh token storage for revocation",
+      "tags": ["sessions", "jwt", "architecture", "tradeoffs"]
+    },
+    {
+      "id": "auth-020",
+      "front": "Auth security checklist for beginners — what is the minimum you should always do?",
+      "back": "• Always use HTTPS everywhere — never send auth data over plain HTTP\n• Hash passwords with bcrypt or Argon2 — never store plaintext or use fast hashes like MD5\n• Set Secure, HttpOnly, and SameSite attributes on all auth cookies\n• Implement rate limiting on login endpoints to block brute-force attacks\n• Use short-lived access tokens (15-60 minutes) and longer-lived refresh tokens\n• Validate and sanitize all user input to prevent XSS and injection attacks\n• Send proper CORS headers — never use wildcard origins with credentials\n• Return correct HTTP status codes: 401 for unauthenticated, 403 for unauthorized\n• Offer Multi-Factor Authentication, especially for admin and sensitive accounts\n• Never store tokens in localStorage if you can use HttpOnly cookies instead\n• Log authentication events (logins, failures, password changes) for monitoring",
+      "tags": ["checklist", "best-practices", "security", "beginner"]
+    }
+  ]
+}

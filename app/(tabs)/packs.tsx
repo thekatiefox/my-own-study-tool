@@ -21,13 +21,15 @@ const PACK_CATEGORIES: Record<string, string> = {
   'code-review-advanced': 'Senior Level',
   'system-design-fe': 'Senior Level',
   'frontend-architecture': 'Senior Level',
+  'authentication': 'Core Skills',
+  'authentication-advanced': 'Senior Level',
 };
 
 const CATEGORY_ORDER = ['Core Skills', 'Advanced', 'Senior Level'];
 const CATEGORY_ICONS: Record<string, string> = {
-  'Core Skills': '📘',
-  'Advanced': '🚀',
-  'Senior Level': '👑',
+  'Core Skills': '01',
+  'Advanced': '02',
+  'Senior Level': '03',
 };
 
 interface PackDisplay {
@@ -89,9 +91,14 @@ export default function PacksScreen() {
         if (categoryPacks.length === 0) return null;
         return (
           <View key={category} style={styles.categorySection}>
-            <Text style={[styles.categoryTitle, { color: colors.text }]}>
-              {CATEGORY_ICONS[category]} {category}
-            </Text>
+            <View style={styles.categoryHeader}>
+              <Text style={[styles.categoryNumber, { color: colors.primary }]}>
+                {CATEGORY_ICONS[category]}
+              </Text>
+              <Text style={[styles.categoryTitle, { color: colors.text }]}>
+                {category}
+              </Text>
+            </View>
             {categoryPacks.map((pack) => (
               <PackCard
                 key={pack.id}
@@ -142,14 +149,25 @@ const styles = StyleSheet.create({
   categorySection: {
     marginBottom: 8,
   },
-  categoryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 24,
-    marginBottom: 10,
     marginTop: 16,
+    marginBottom: 10,
+    backgroundColor: 'transparent',
+  },
+  categoryNumber: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginRight: 8,
+  },
+  categoryTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   emptyState: {
     marginHorizontal: 24,
