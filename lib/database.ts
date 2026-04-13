@@ -63,9 +63,18 @@ async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
       new_cards_seen INTEGER NOT NULL DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS quiz_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      pack_name TEXT NOT NULL,
+      score INTEGER NOT NULL,
+      total INTEGER NOT NULL,
+      date TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_cards_pack ON cards(pack_id);
     CREATE INDEX IF NOT EXISTS idx_progress_next_review ON card_progress(next_review_date);
     CREATE INDEX IF NOT EXISTS idx_progress_pack ON card_progress(pack_id);
+    CREATE INDEX IF NOT EXISTS idx_quiz_results_date ON quiz_results(date);
   `);
 }
 
@@ -347,6 +356,31 @@ export async function getTotalDueCards(): Promise<number> {
   return result?.count ?? 0;
 }
 
+export async function hasAnyReviewHistory(): Promise<boolean> {
+  if (isWeb) return memProgress.size > 0;
+  const database = await getDatabase();
+  const result = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM card_progress LIMIT 1'
+  );
+  return (result?.count ?? 0) > 0;
+}
+
+export async function getDueCardCount(today: string): Promise<number> {
+  if (isWeb) {
+    let count = 0;
+    for (const [, prog] of memProgress) {
+      if (prog.nextReviewDate <= today) count++;
+    }
+    return count;
+  }
+  const database = await getDatabase();
+  const result = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM card_progress WHERE next_review_date <= ?',
+    [today]
+  );
+  return result?.count ?? 0;
+}
+
 export async function getTotalNewCards(): Promise<number> {
   if (isWeb) {
     return Array.from(memCards.values()).filter(c => !memProgress.has(c.id)).length;
@@ -358,4 +392,91 @@ export async function getTotalNewCards(): Promise<number> {
      WHERE cp.card_id IS NULL`
   );
   return result?.count ?? 0;
+}
+
+// --- Quiz Results ---
+
+const memQuizResults: { packName: string; score: number; total: number; date: string }[] = [];
+
+export async function saveQuizResult(packName: string, score: number, total: number): Promise<void> {
+  const date = new Date().toISOString().split('T')[0];
+  if (isWeb) {
+    memQuizResults.push({ packName, score, total, date });
+    return;
+  }
+  const database = await getDatabase();
+  await database.runAsync(
+    'INSERT INTO quiz_results (pack_name, score, total, date) VALUES (?, ?, ?, ?)',
+    [packName, score, total, date]
+  );
+}
+
+export interface QuizResultRow {
+  pack_name: string;
+  score: number;
+  total: number;
+  date: string;
+}
+
+export async function getQuizResults(limit = 20): Promise<QuizResultRow[]> {
+  if (isWeb) {
+    return memQuizResults
+      .slice(-limit)
+      .reverse()
+      .map(r => ({ pack_name: r.packName, score: r.score, total: r.total, date: r.date }));
+  }
+  const database = await getDatabase();
+  return await database.getAllAsync<QuizResultRow>(
+    'SELECT pack_name, score, total, date FROM quiz_results ORDER BY id DESC LIMIT ?',
+    [limit]
+  );
+}
+
+export async function getQuizStats(): Promise<{
+  totalQuizzes: number;
+  avgAccuracy: number;
+  bestCategory: string | null;
+  worstCategory: string | null;
+}> {
+  if (isWeb) {
+    if (memQuizResults.length === 0) return { totalQuizzes: 0, avgAccuracy: 0, bestCategory: null, worstCategory: null };
+    const totalQuizzes = memQuizResults.length;
+    const avgAccuracy = memQuizResults.reduce((s, r) => s + r.score / r.total, 0) / totalQuizzes;
+    const byPack: Record<string, { total: number; correct: number }> = {};
+    for (const r of memQuizResults) {
+      if (!byPack[r.packName]) byPack[r.packName] = { total: 0, correct: 0 };
+      byPack[r.packName].total += r.total;
+      byPack[r.packName].correct += r.score;
+    }
+    let best: string | null = null, worst: string | null = null;
+    let bestAcc = -1, worstAcc = 2;
+    for (const [name, d] of Object.entries(byPack)) {
+      const acc = d.correct / d.total;
+      if (acc > bestAcc) { bestAcc = acc; best = name; }
+      if (acc < worstAcc) { worstAcc = acc; worst = name; }
+    }
+    return { totalQuizzes, avgAccuracy, bestCategory: best, worstCategory: worst };
+  }
+  const database = await getDatabase();
+  const countRow = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM quiz_results'
+  );
+  const totalQuizzes = countRow?.count ?? 0;
+  if (totalQuizzes === 0) return { totalQuizzes: 0, avgAccuracy: 0, bestCategory: null, worstCategory: null };
+  const avgRow = await database.getFirstAsync<{ avg_acc: number }>(
+    'SELECT AVG(CAST(score AS REAL) / total) as avg_acc FROM quiz_results'
+  );
+  const avgAccuracy = avgRow?.avg_acc ?? 0;
+  const bestRow = await database.getFirstAsync<{ pack_name: string }>(
+    'SELECT pack_name FROM quiz_results GROUP BY pack_name HAVING COUNT(*) >= 1 ORDER BY AVG(CAST(score AS REAL) / total) DESC LIMIT 1'
+  );
+  const worstRow = await database.getFirstAsync<{ pack_name: string }>(
+    'SELECT pack_name FROM quiz_results GROUP BY pack_name HAVING COUNT(*) >= 1 ORDER BY AVG(CAST(score AS REAL) / total) ASC LIMIT 1'
+  );
+  return {
+    totalQuizzes,
+    avgAccuracy,
+    bestCategory: bestRow?.pack_name ?? null,
+    worstCategory: worstRow?.pack_name ?? null,
+  };
 }

@@ -4,7 +4,7 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getTotalDueCards } from '@/lib/database';
+import { getTotalDueCards, hasAnyReviewHistory } from '@/lib/database';
 import { loadAllPacks, getAllPackData } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
 import QuickQuiz from '@/components/QuickQuiz';
@@ -18,6 +18,7 @@ export default function HomeScreen() {
 
   const [dueCards, setDueCards] = useState(0);
   const [totalCards, setTotalCards] = useState(0);
+  const [hasHistory, setHasHistory] = useState(false);
   const [news, setNews] = useState<NewsStory[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [expandedStory, setExpandedStory] = useState<number | null>(null);
@@ -28,6 +29,8 @@ export default function HomeScreen() {
       await loadAllPacks();
       const d = await getTotalDueCards();
       setDueCards(d);
+      const history = await hasAnyReviewHistory();
+      setHasHistory(history);
       const packs = getAllPackData();
       setTotalCards(packs.reduce((sum, p) => sum + p.cards.length, 0));
     } catch (err) {
@@ -71,7 +74,13 @@ export default function HomeScreen() {
       </Text>
 
       <Pressable
-        onPress={() => router.push('/review/mix')}
+        onPress={() => {
+          if (dueCards > 0) {
+            router.push('/review/mix');
+          } else if (!hasHistory) {
+            router.push('/(tabs)/packs');
+          }
+        }}
         style={({ pressed }) => [
           styles.heroCta,
           {
@@ -85,6 +94,11 @@ export default function HomeScreen() {
             <Text style={[styles.heroCount, { color: colors.primary }]}>{dueCards}</Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due for review</Text>
           </>
+        ) : hasHistory ? (
+          <>
+            <Text style={[styles.heroCount, { color: colors.accent }]}>0</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>all caught up — nice work</Text>
+          </>
         ) : (
           <>
             <Text style={[styles.heroCount, { color: colors.primary }]}>{totalCards}</Text>
@@ -92,6 +106,30 @@ export default function HomeScreen() {
           </>
         )}
       </Pressable>
+
+      {/* Secondary CTAs when caught up */}
+      {dueCards === 0 && hasHistory && (
+        <View style={styles.secondaryCtas}>
+          <Pressable
+            onPress={() => router.push('/(tabs)/quiz')}
+            style={({ pressed }) => [
+              styles.secondaryBtn,
+              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>Take a quiz</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/(tabs)/packs')}
+            style={({ pressed }) => [
+              styles.secondaryBtn,
+              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>Browse packs</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Quick Quiz — compact inline */}
       <QuickQuiz colors={colors} colorScheme={colorScheme} />
@@ -104,39 +142,51 @@ export default function HomeScreen() {
         {newsLoading ? (
           <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />
         ) : news.length > 0 ? (
-          news.map((story) => (
-            <View key={story.id} style={[styles.newsItem, { borderColor: colors.border }]}>
-              <Pressable onPress={() => toggleStory(story.id)}>
-                <Text style={[styles.newsTitle, { color: colors.text }]} numberOfLines={2}>
-                  {story.title}
-                </Text>
-                <View style={styles.newsMeta}>
-                  <Text style={[styles.newsSource, { color: colors.primary }]}>{story.source}</Text>
-                  <Text style={[styles.newsDot, { color: colors.textSecondary }]}>·</Text>
-                  <Text style={[styles.newsMetaText, { color: colors.textSecondary }]}>
-                    {story.score} pts
+          <>
+            {news.slice(0, 2).map((story) => (
+              <View key={story.id} style={[styles.newsItem, { borderColor: colors.border }]}>
+                <Pressable onPress={() => toggleStory(story.id)}>
+                  <Text style={[styles.newsTitle, { color: colors.text }]} numberOfLines={2}>
+                    {story.title}
                   </Text>
-                </View>
-              </Pressable>
-              {expandedStory === story.id && story.summary ? (
-                <View style={[styles.summaryBox, { backgroundColor: colors.surface }]}>  
-                  {story.summary.split('\n').map((line, i) => (
-                    <Text key={i} style={[styles.summaryLine, { color: colors.textSecondary }]}>
-                      {line}
+                  <View style={styles.newsMeta}>
+                    <Text style={[styles.newsSource, { color: colors.primary }]}>{story.source}</Text>
+                    <Text style={[styles.newsDot, { color: colors.textSecondary }]}>·</Text>
+                    <Text style={[styles.newsMetaText, { color: colors.textSecondary }]}>
+                      {story.score} pts
                     </Text>
-                  ))}
-                  <Pressable
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      WebBrowser.openBrowserAsync(story.url);
-                    }}
-                  >
-                    <Text style={[styles.readLink, { color: colors.primary }]}>Read article</Text>
-                  </Pressable>
-                </View>
-              ) : null}
-            </View>
-          ))
+                  </View>
+                </Pressable>
+                {expandedStory === story.id && story.summary ? (
+                  <View style={[styles.summaryBox, { backgroundColor: colors.surface }]}>  
+                    {story.summary.split('\n').map((line, i) => (
+                      <Text key={i} style={[styles.summaryLine, { color: colors.textSecondary }]}>
+                        {line}
+                      </Text>
+                    ))}
+                    <Pressable
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        WebBrowser.openBrowserAsync(story.url);
+                      }}
+                    >
+                      <Text style={[styles.readLink, { color: colors.primary }]}>Read article</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
+            ))}
+            {news.length > 2 && (
+              <Pressable onPress={() => {
+                // Show remaining stories inline
+                setNews(prev => prev); // already loaded, just expand
+              }}>
+                <Text style={[styles.readLink, { color: colors.primary, marginTop: 8 }]}>
+                  +{news.length - 2} more stories
+                </Text>
+              </Pressable>
+            )}
+          </>
         ) : (
           <Text style={[styles.newsEmpty, { color: colors.textSecondary }]}>
             Couldn't load news
@@ -188,6 +238,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     letterSpacing: 0.5,
     marginTop: 4,
+  },
+  secondaryCtas: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 24,
+    backgroundColor: 'transparent',
+  },
+  secondaryBtn: {
+    flex: 1,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  secondaryBtnText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    letterSpacing: 0.3,
   },
   sectionLabel: {
     fontSize: 11,

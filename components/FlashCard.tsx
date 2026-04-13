@@ -81,9 +81,14 @@ export default function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
         <Text style={[styles.cardText, { color: colors.text }]}>
           {card.front}
         </Text>
-        <Text style={[styles.tapHint, { color: colors.textSecondary }]}>
-          Tap to flip
-        </Text>
+        <Pressable
+          onPress={handleFlip}
+          style={[styles.showAnswerBtn, { borderColor: colors.primary }]}
+        >
+          <Text style={[styles.showAnswerText, { color: colors.primary }]}>
+            Show Answer
+          </Text>
+        </Pressable>
       </Animated.View>
 
       {/* Back of card */}
@@ -167,9 +172,16 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     alignSelf: 'stretch',
   },
-  tapHint: {
-    fontSize: 12,
+  showAnswerBtn: {
     marginTop: 20,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+  },
+  showAnswerText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
     letterSpacing: 0.3,
   },
 });

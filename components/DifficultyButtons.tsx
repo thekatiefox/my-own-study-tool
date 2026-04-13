@@ -4,23 +4,35 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Difficulty } from '@/types';
+import { previewIntervals, formatInterval, DEFAULT_EASE_FACTOR } from '@/lib/sm2';
 import * as Haptics from 'expo-haptics';
 
 interface DifficultyButtonsProps {
   onRate: (difficulty: Difficulty) => void;
   disabled?: boolean;
+  easeFactor?: number;
+  interval?: number;
+  repetitions?: number;
 }
 
-const BUTTONS: { difficulty: Difficulty; label: string; sublabel: string }[] = [
-  { difficulty: 'again', label: 'Again', sublabel: '<1 min' },
-  { difficulty: 'hard', label: 'Hard', sublabel: '~1 day' },
-  { difficulty: 'good', label: 'Good', sublabel: '~3 days' },
-  { difficulty: 'easy', label: 'Easy', sublabel: '~7 days' },
+const BUTTONS: { difficulty: Difficulty; label: string }[] = [
+  { difficulty: 'again', label: 'Again' },
+  { difficulty: 'hard', label: 'Hard' },
+  { difficulty: 'good', label: 'Good' },
+  { difficulty: 'easy', label: 'Easy' },
 ];
 
-export default function DifficultyButtons({ onRate, disabled }: DifficultyButtonsProps) {
+export default function DifficultyButtons({
+  onRate,
+  disabled,
+  easeFactor = DEFAULT_EASE_FACTOR,
+  interval = 0,
+  repetitions = 0,
+}: DifficultyButtonsProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+
+  const intervals = previewIntervals(easeFactor, interval, repetitions);
 
   const handleRate = (difficulty: Difficulty) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -42,7 +54,7 @@ export default function DifficultyButtons({ onRate, disabled }: DifficultyButton
         How well did you know this?
       </Text>
       <View style={styles.buttonRow}>
-        {BUTTONS.map(({ difficulty, label, sublabel }) => (
+        {BUTTONS.map(({ difficulty, label }) => (
           <Pressable
             key={difficulty}
             onPress={() => handleRate(difficulty)}
@@ -67,7 +79,7 @@ export default function DifficultyButtons({ onRate, disabled }: DifficultyButton
               {label}
             </Text>
             <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
-              {sublabel}
+              {formatInterval(intervals[difficulty])}
             </Text>
           </Pressable>
         ))}

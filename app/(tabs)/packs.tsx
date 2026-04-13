@@ -86,6 +86,36 @@ export default function PacksScreen() {
         Choose a pack to study
       </Text>
 
+      {/* Continue section — packs with due cards */}
+      {(() => {
+        const duePacks = packs.filter(p => p.dueCards > 0).sort((a, b) => b.dueCards - a.dueCards);
+        if (duePacks.length === 0) return null;
+        return (
+          <View style={styles.categorySection}>
+            <View style={styles.categoryHeader}>
+              <Text style={[styles.categoryNumber, { color: colors.danger }]}>
+                !!
+              </Text>
+              <Text style={[styles.categoryTitle, { color: colors.text }]}>
+                CONTINUE LEARNING
+              </Text>
+            </View>
+            {duePacks.map((pack) => (
+              <PackCard
+                key={`due-${pack.id}`}
+                name={pack.name}
+                description={`${pack.dueCards} cards due for review`}
+                icon={pack.icon}
+                totalCards={pack.totalCards}
+                learnedCards={pack.learnedCards}
+                dueCards={pack.dueCards}
+                onPress={() => router.push(`/review/${pack.id}`)}
+              />
+            ))}
+          </View>
+        );
+      })()}
+
       {CATEGORY_ORDER.map((category) => {
         const categoryPacks = packs.filter(p => PACK_CATEGORIES[p.id] === category);
         if (categoryPacks.length === 0) return null;

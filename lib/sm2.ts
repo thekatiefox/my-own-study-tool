@@ -83,4 +83,36 @@ export function createInitialProgress(
   };
 }
 
+/**
+ * Preview what interval each difficulty rating would produce
+ * WITHOUT mutating any state. Used for DifficultyButtons labels.
+ */
+export function previewIntervals(
+  easeFactor: number,
+  interval: number,
+  repetitions: number
+): Record<string, number> {
+  const results: Record<string, number> = {};
+  const qualities: Record<string, number> = {
+    again: 1,
+    hard: 3,
+    good: 4,
+    easy: 5,
+  };
+
+  for (const [key, quality] of Object.entries(qualities)) {
+    const out = calculateSM2({ quality, easeFactor, interval, repetitions });
+    results[key] = out.interval;
+  }
+  return results;
+}
+
+export function formatInterval(days: number): string {
+  if (days < 1) return '<1m';
+  if (days === 1) return '1d';
+  if (days < 30) return `${days}d`;
+  if (days < 365) return `${Math.round(days / 30)}mo`;
+  return `${(days / 365).toFixed(1)}y`;
+}
+
 export { DEFAULT_EASE_FACTOR, MIN_EASE_FACTOR };
