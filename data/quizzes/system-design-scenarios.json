@@ -9,10 +9,10 @@
       "scenario": "You're building a shopping cart for an e-commerce site. Users can add items, change quantities, and checkout. The cart must persist if the user refreshes the page.",
       "question": "Where should the cart state live?",
       "options": [
-        "Only in React component state (useState)",
-        "Server state with React Query, no local state",
-        "Client state synced to localStorage, pushed to server on checkout",
-        "Only in a cookie"
+        "Server state managed by React Query that syncs to the database on each quantity change",
+        "A global Redux store that dispatches API calls for every individual cart modification",
+        "Client state synced to localStorage for persistence, pushed to server on checkout only",
+        "Browser sessionStorage combined with IndexedDB backup for offline-first resilience"
       ],
       "correctIndex": 2,
       "explanation": "A shopping cart needs to persist across refreshes (localStorage) but doesn't need constant server sync until checkout. Keep it in client state (Context/Zustand + localStorage) and sync to the server when the user checks out.",
@@ -24,12 +24,12 @@
       "scenario": "Your app has a table showing 50,000 order records. Users need to search, sort, and browse all records. The API supports pagination.",
       "question": "What pagination approach would you choose?",
       "options": [
-        "Load all 50,000 records at once for instant filtering",
-        "Server-side cursor-based pagination with virtual scrolling",
-        "Client-side pagination after loading all data",
-        "Infinite scroll loading 10 records at a time"
+        "Server-side cursor pagination combined with virtual scrolling rendering only visible rows",
+        "Load all records upfront into a Web Worker for instant client-side sort and filter operations",
+        "Offset-based pagination with client-side caching of all previously fetched page data ranges",
+        "Infinite scroll with intersection observer loading progressive batches of 500 records each"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "With 50K records, loading all data is impractical. Cursor-based server pagination with virtual scrolling renders only visible rows, keeping memory low and performance high. The server handles sorting/filtering.",
       "category": "Data Loading",
       "difficulty": "senior"
@@ -39,12 +39,12 @@
       "scenario": "Your app shows a user profile on many screens. The profile data rarely changes (maybe once a week). Each screen currently makes its own API call to fetch it.",
       "question": "What caching strategy should you use?",
       "options": [
-        "No caching — always fetch fresh data",
-        "Cache with a long staleTime (e.g., 30 min), revalidate on focus",
-        "Store in localStorage permanently, never refetch",
-        "Use a service worker to intercept all requests"
+        "Fetch fresh data on every page mount but batch concurrent duplicate requests with deduplication",
+        "Store the profile data in a service worker cache with a network-first refresh strategy on load",
+        "Write profile data to IndexedDB on the first fetch and use background sync API to revalidate",
+        "Cache with a long staleTime in React Query or SWR, then revalidate on window focus events"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "Since profile data rarely changes, use a data-fetching library (React Query/SWR) with a long staleTime. The data is served from cache instantly, and revalidated in the background on window focus to stay fresh.",
       "category": "Caching",
       "difficulty": "intermediate"
@@ -54,10 +54,10 @@
       "scenario": "Users can 'like' a post in your social feed. The API takes 200-500ms to respond. You want the UI to feel instant.",
       "question": "How should you implement the like button?",
       "options": [
-        "Disable the button until the API responds",
-        "Use optimistic updates — update UI immediately, roll back on error",
-        "Show a loading spinner on the button",
-        "Queue likes and send them in batch every 5 seconds"
+        "Debounce the like action by 300ms to batch rapid taps into a single API request",
+        "Use optimistic updates to reflect the change instantly and roll back on API failure",
+        "Queue the like in a local buffer and sync with the server every few seconds in batch",
+        "Disable the button and show a micro-spinner until the server confirms the like was saved"
       ],
       "correctIndex": 1,
       "explanation": "Optimistic updates make the UI feel instant: update the like count and heart icon immediately, send the API request in the background, and only roll back if it fails. This is standard for social interactions.",
@@ -69,12 +69,12 @@
       "scenario": "You're building a real-time chat feature. Messages should appear instantly when sent by other users. The app has ~1,000 concurrent users.",
       "question": "What communication approach should you use?",
       "options": [
-        "Poll the server every 500ms for new messages",
-        "WebSocket connection for real-time bidirectional communication",
-        "Long polling with 30-second timeouts",
-        "Users manually refresh to see new messages"
+        "Server-Sent Events with an automatic fallback to long polling for older browser compatibility",
+        "Short polling at 500ms intervals combined with client-side message deduplication and buffering",
+        "WebSocket connection providing real-time bidirectional communication between client and server",
+        "HTTP/2 server push combined with a message queue consumer running inside a shared Web Worker"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "WebSockets provide real-time bidirectional communication, ideal for chat. Unlike polling, there's no wasted requests when idle, and messages arrive instantly. At 1K users, a single WebSocket server handles the load easily.",
       "category": "Real-time",
       "difficulty": "intermediate"
@@ -84,12 +84,12 @@
       "scenario": "Your React app has 20+ pages. Each page needs different data from the API. Some data is shared across pages. You need to decide where data fetching lives.",
       "question": "Where should data fetching logic go?",
       "options": [
-        "In each component's useEffect directly",
-        "Custom hooks per data domain using a fetching library (React Query/SWR)",
-        "A single global store that fetches everything on app load",
-        "In getServerSideProps for every page"
+        "Custom hooks per data domain using React Query or SWR for caching and request deduplication",
+        "A centralized data layer that prefetches all route data in parallel during app initialization",
+        "Co-located fetch calls in each component's useEffect with a shared global AbortController",
+        "A single Redux store with thunk middleware that loads data on demand and caches in slices"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "Custom hooks per domain (useUser, useOrders) using React Query/SWR give you automatic caching, deduplication, and revalidation. Shared data is fetched once and cached. Each page only fetches what it needs.",
       "category": "Architecture",
       "difficulty": "intermediate"
@@ -99,12 +99,12 @@
       "scenario": "You need a search autocomplete that queries an API as the user types. Results should appear fast, but you don't want to overload the server with requests on every keystroke.",
       "question": "What's the best implementation approach?",
       "options": [
-        "Fire an API call on every keystroke",
-        "Debounce input (300ms), cancel previous requests, cache recent results",
-        "Only search when the user presses Enter",
-        "Preload all possible results on page load"
+        "Throttle keystroke events at a fixed interval and queue overflow requests in a priority buffer",
+        "Fire a request on every keystroke but rely on a server-side rate limiter to drop excess calls",
+        "Preload the top 1000 most common search queries on mount and filter them locally on the client",
+        "Debounce input by 300ms, cancel in-flight requests with AbortController, and cache recent results"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "Debouncing waits until the user pauses typing, reducing API calls. Cancel in-flight requests (AbortController) to avoid race conditions. Cache recent queries so revisiting a term is instant.",
       "category": "UX Patterns",
       "difficulty": "intermediate"
@@ -114,12 +114,12 @@
       "scenario": "Your team wants to gradually roll out a new checkout flow. Some users should see the old flow, some the new one. You need to be able to toggle it without a deploy.",
       "question": "How should you implement this?",
       "options": [
-        "Create a separate branch and deploy it to a different URL",
-        "Use a feature flag service to control which users see the new flow",
-        "Use A/B testing with Math.random() in the component",
-        "Deploy both versions and let users choose in settings"
+        "Deploy both flows behind separate route paths and use a server redirect to control access",
+        "Use a runtime configuration file that maps specific user segments to their assigned UI flow",
+        "Use a feature flag service to control which flow each user sees without requiring a deploy",
+        "Implement A/B testing using a hashed user ID to deterministically assign each user a variant"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "A feature flag service (LaunchDarkly, Unleash, or a simple config API) lets you target users by percentage, segment, or ID. You can toggle the flag instantly without deploying, and roll back if issues arise.",
       "category": "DevOps",
       "difficulty": "intermediate"
@@ -129,12 +129,12 @@
       "scenario": "Your React app has many nested routes. Some routes have complex data loading. You want to catch rendering errors gracefully without crashing the whole app.",
       "question": "Where should you place error boundaries?",
       "options": [
-        "One error boundary at the root of the app only",
-        "At route boundaries and around critical UI sections like data widgets",
-        "Around every single component",
-        "Error boundaries aren't needed — use try/catch everywhere"
+        "At route boundaries and around critical UI sections that may fail independently of each other",
+        "Inside a top-level Suspense wrapper that handles both loading states and errors in one place",
+        "Around every async component individually to ensure maximum fine-grained error isolation",
+        "Only around third-party library components since your own code should use try/catch instead"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "Place error boundaries at route boundaries so a crash in one page doesn't break others. Add them around critical widgets (charts, data tables) that might fail independently. Too many boundaries adds complexity without benefit.",
       "category": "Error Handling",
       "difficulty": "senior"
@@ -144,12 +144,12 @@
       "scenario": "Your SPA needs authentication. After login, the user gets a JWT access token (expires in 15 min) and a refresh token (expires in 7 days). You need to store them securely.",
       "question": "Where should you store the tokens?",
       "options": [
-        "Both tokens in localStorage",
-        "Access token in memory, refresh token in an httpOnly cookie",
-        "Both tokens in a regular cookie",
-        "Access token in sessionStorage, refresh token in localStorage"
+        "Both tokens in an encrypted localStorage entry protected by a client-side encryption key",
+        "Access token in a secure cookie with SameSite flag, refresh token scoped to a Web Worker",
+        "Both tokens in sessionStorage since it clears automatically when the browser tab is closed",
+        "Access token held in memory only, refresh token stored in a secure httpOnly cookie"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "Storing the access token in memory (JS variable) protects it from XSS. The refresh token in an httpOnly cookie is inaccessible to JavaScript. On page refresh, use the refresh token cookie to get a new access token silently.",
       "category": "Security",
       "difficulty": "senior"

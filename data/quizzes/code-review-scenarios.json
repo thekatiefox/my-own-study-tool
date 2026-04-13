@@ -9,12 +9,12 @@
       "scenario": "const UserList = ({ users }) => (\n  <ul>\n    {users.map((user) => (\n      <li>{user.name}</li>\n    ))}\n  </ul>\n);",
       "question": "What issue would you flag in this code review?",
       "options": [
-        "Missing key prop on the <li> element inside .map()",
-        "Should use <ol> instead of <ul>",
-        "The component should be a class component",
-        "user.name should be wrapped in a <Text> component"
+        "The component should destructure users with a default empty array to prevent crashes",
+        "Rendering list items without a wrapper fragment causes React hydration mismatch errors",
+        "Each <li> rendered inside .map() is missing a unique key prop needed for reconciliation",
+        "The user.name property access requires optional chaining to handle null values safely"
       ],
-      "correctIndex": 0,
+      "correctIndex": 2,
       "explanation": "React requires a unique 'key' prop on elements rendered inside .map() to efficiently track list changes. Without it, React may re-render the entire list unnecessarily.",
       "category": "React",
       "difficulty": "beginner"
@@ -24,12 +24,12 @@
       "scenario": "const [count, setCount] = useState(0);\n\nuseEffect(() => {\n  document.title = `Count: ${count}`;\n}, []);",
       "question": "What's the problem with this useEffect?",
       "options": [
-        "useEffect should not access document.title",
-        "The dependency array is missing 'count'",
-        "useState should be initialized to null",
-        "useEffect needs a cleanup function"
+        "The useEffect callback should be defined as a named async function for proper teardown",
+        "The document.title assignment should use a ref to avoid triggering unwanted side effects",
+        "The useState initialization value should match the current document title on first render",
+        "The dependency array is empty but references count, so the title won't update on changes"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "The effect uses 'count' but the dependency array is empty []. This means the title only updates on mount, not when count changes. Add 'count' to the dependency array.",
       "category": "React Hooks",
       "difficulty": "beginner"
@@ -39,12 +39,12 @@
       "scenario": "const [items, setItems] = useState(['a', 'b']);\n\nconst addItem = () => {\n  items.push('c');\n  setItems(items);\n};",
       "question": "Why won't this trigger a re-render?",
       "options": [
-        "push() doesn't work on state arrays",
-        "State is mutated directly — same reference is passed to setItems",
-        "setItems should be called before push",
-        "useState can't hold arrays"
+        "The array is mutated in place so setItems receives the same reference and skips re-render",
+        "The push method returns the new length instead of the array, causing setItems to store a number",
+        "Calling setItems inside a synchronous handler blocks React's reconciliation batching cycle",
+        "The useState initializer with an array literal creates a new reference on every render pass"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "Calling items.push() mutates the existing array. Since setItems receives the same reference, React doesn't detect a change. Use setItems([...items, 'c']) to create a new array.",
       "category": "React State",
       "difficulty": "beginner"
@@ -54,12 +54,12 @@
       "scenario": "<button onClick={() => handleClick(id)}>\n  Delete\n</button>",
       "question": "What potential performance issue exists here?",
       "options": [
-        "handleClick should be async",
-        "Inline arrow function creates a new reference each render, causing unnecessary re-renders of child components",
-        "onClick should use onPress instead",
-        "The button is missing a type attribute"
+        "The arrow function captures stale closure variables from the parent component scope",
+        "Inline handlers bypass React's synthetic event pooling mechanism and reduce performance",
+        "A new function reference is created each render, breaking memoization of child components",
+        "Passing a callback with arguments prevents proper event delegation on the DOM element"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "The inline arrow function creates a new function reference on every render. If this button is in a memoized child component, it will break memoization. Use useCallback or extract the handler.",
       "category": "React Performance",
       "difficulty": "intermediate"
@@ -69,12 +69,12 @@
       "scenario": "useEffect(() => {\n  const sub = api.subscribe(data => {\n    setMessages(data);\n  });\n}, []);",
       "question": "What critical issue is in this useEffect?",
       "options": [
-        "subscribe should be called outside useEffect",
-        "Missing cleanup — subscription is never unsubscribed, causing a memory leak",
-        "setMessages should use a callback form",
-        "The dependency array should include 'api'"
+        "The subscription is never cleaned up on unmount, causing a memory leak and stale updates",
+        "The subscribe callback should use the functional form of setMessages to avoid stale state",
+        "Placing an async subscription inside useEffect without await causes unhandled rejections",
+        "The dependency array should include api and setMessages to track all external references"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "The subscription is never cleaned up. When the component unmounts, the callback still fires, causing memory leaks and state updates on unmounted components. Return a cleanup: return () => sub.unsubscribe();",
       "category": "React Hooks",
       "difficulty": "intermediate"
@@ -84,12 +84,12 @@
       "scenario": "const fetchUser = async (id: any) => {\n  const res: any = await fetch(`/api/${id}`);\n  const data: any = res.json();\n  return data;\n};",
       "question": "What TypeScript issue would you flag?",
       "options": [
-        "fetch should use axios instead",
-        "Excessive use of 'any' type defeats the purpose of TypeScript — use proper types",
-        "async functions can't return data",
-        "The function should be a class method"
+        "The function return type should be explicitly annotated as Promise<User> for contracts",
+        "Template literal URL construction should use a URL builder to prevent type-unsafe paths",
+        "The res variable should be typed as Response instead of relying on implicit inference",
+        "Using 'any' annotations on all types removes the type safety that TypeScript provides"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "Using 'any' everywhere removes all type safety. Define an interface for the user, type the parameter as string/number, and type the response. Also, res.json() needs 'await'.",
       "category": "TypeScript",
       "difficulty": "beginner"
@@ -99,12 +99,12 @@
       "scenario": ".header { color: red !important; }\n.header.active { color: blue !important; }\n.main .header { color: green !important; }",
       "question": "What CSS code smell is present?",
       "options": [
-        "Colors should use hex values",
-        "Overuse of !important creates a specificity war that's hard to maintain",
-        "Classes should use camelCase",
-        "Each rule should be in a separate file"
+        "Cascading !important declarations create specificity conflicts that are very hard to maintain",
+        "The selectors use increasingly complex combinators that reduce overall CSS parsing performance",
+        "Named color values like red, blue, and green render inconsistently across different browsers",
+        "Each class override should be scoped inside a CSS module to prevent global style leakage"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "When !important is used on every rule, you end up fighting specificity with more specificity. Refactor to use a clear, low-specificity naming convention like BEM instead.",
       "category": "CSS",
       "difficulty": "intermediate"
@@ -114,12 +114,12 @@
       "scenario": "const loadData = async () => {\n  const res = await fetch('/api/data');\n  const json = await res.json();\n  setData(json);\n};",
       "question": "What's missing from this async function?",
       "options": [
-        "It should use XMLHttpRequest instead",
-        "No error handling — a failed request will silently break the UI",
-        "setData should be called before res.json()",
-        "The function should return the data"
+        "The function should validate the response status code before attempting to parse JSON",
+        "The setData call should be wrapped in startTransition to prevent UI jank on slow networks",
+        "There is no try/catch or error handling, so a failed request silently breaks the UI state",
+        "The fetch call needs an AbortController signal to cancel the request on component unmount"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "There's no try/catch or .catch() handling. If the network request fails or returns a non-OK status, the error is unhandled and the UI may break silently. Always add error handling for async operations.",
       "category": "Error Handling",
       "difficulty": "beginner"
@@ -129,12 +129,12 @@
       "scenario": "<App>\n  <Layout user={user}>\n    <Sidebar user={user}>\n      <NavMenu user={user}>\n        <Avatar user={user} />\n      </NavMenu>\n    </Sidebar>\n  </Layout>\n</App>",
       "question": "What architectural issue does this component tree show?",
       "options": [
-        "Too many components",
-        "Excessive prop drilling — 'user' is passed through every level unnecessarily",
-        "Components should be class-based",
-        "The tree is too shallow"
+        "The deeply nested component tree slows down React's reconciliation and diffing passes",
+        "Each component should fetch its own user data instead of relying on a passed-down prop",
+        "Layout and Sidebar should be combined into a single compound component to reduce nesting",
+        "The user prop is drilled through every level even though intermediary components don't use it"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "The 'user' prop is drilled through 4 levels. Use React Context, composition (children pattern), or a state management library to avoid passing props through intermediary components that don't use them.",
       "category": "Architecture",
       "difficulty": "intermediate"
@@ -144,10 +144,10 @@
       "scenario": "<img src={product.image} />\n<button onclick={handleBuy}>\n  <svg viewBox=\"0 0 24 24\">...</svg>\n</button>",
       "question": "What accessibility issues are present?",
       "options": [
-        "SVG should be a PNG instead",
-        "Missing alt text on image and missing aria-label on icon-only button",
-        "onclick should be onClick",
-        "The button needs a CSS class"
+        "The SVG element inside the button should have a role attribute defining its semantic purpose",
+        "The image is missing alt text and the icon-only button has no accessible label for screen readers",
+        "Using lowercase onclick instead of onClick prevents the handler from binding correctly in JSX",
+        "The button element needs an explicit tabIndex attribute to be reachable via keyboard navigation"
       ],
       "correctIndex": 1,
       "explanation": "The <img> needs an alt attribute for screen readers. The icon-only button has no accessible label — add aria-label='Buy' so assistive technologies can describe its purpose.",

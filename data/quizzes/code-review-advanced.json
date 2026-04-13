@@ -9,12 +9,12 @@
       "scenario": "```jsx\nfunction useUserSearch(query) {\n  const [results, setResults] = useState([]);\n\n  useEffect(() => {\n    if (!query) return;\n    fetch(`/api/users?q=${query}`)\n      .then(res => res.json())\n      .then(data => setResults(data));\n  }, [query]);\n\n  return results;\n}\n```",
       "question": "What race condition exists in this custom hook?",
       "options": [
-        "Fast typing can cause out-of-order responses — an earlier request may resolve after a later one, showing stale results",
-        "The useState initializer runs on every render causing unnecessary allocations",
-        "The fetch call is missing a Content-Type header which will cause CORS failures",
-        "The dependency array should include setResults to avoid stale closure issues"
+        "The useState initializer creates a new empty array reference on every component render cycle",
+        "The fetch call is missing required Content-Type and Accept headers causing silent CORS failures",
+        "Rapid query changes cause out-of-order responses where stale results can overwrite fresh ones",
+        "The dependency array should include setResults to prevent stale closure reference access bugs"
       ],
-      "correctIndex": 0,
+      "correctIndex": 2,
       "explanation": "Without an AbortController or a request ID check, rapid query changes can cause responses to arrive out of order. The last-fired request may not be the last to resolve, so stale results overwrite fresh ones. The fix is to use an AbortController in the useEffect cleanup, or track a request sequence number.",
       "category": "Race Conditions",
       "difficulty": "advanced"
@@ -24,12 +24,12 @@
       "scenario": "```jsx\nfunction useFormField(initialValue) {\n  const [value, setValue] = useState(initialValue);\n  const [error, setError] = useState(null);\n\n  const onChange = (e) => {\n    setValue(e.target.value);\n    setError(null);\n  };\n\n  const validate = (validator) => {\n    const err = validator(value);\n    setError(err);\n    return !err;\n  };\n\n  return { value, error, onChange, validate };\n}\n```",
       "question": "What stability issue would you flag in this custom hook's return value?",
       "options": [
-        "The initialValue parameter should be wrapped in useRef to prevent reinitialization",
-        "onChange and validate are recreated every render, causing unnecessary re-renders in consumers that use them as deps or pass them to memoized children",
-        "The hook should use useReducer instead of two separate useState calls",
-        "setError(null) in onChange should be debounced to avoid excessive state updates"
+        "onChange and validate are recreated every render, breaking memoization of consuming components",
+        "The initialValue parameter should be stored in a useRef to prevent reinitialization on updates",
+        "Using two separate useState calls causes excessive batched re-renders during validation flow",
+        "The setError(null) call inside onChange creates a race condition with the validate function"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "onChange and validate are new function references on every render. Any component using these in a useEffect dependency array or passing them to React.memo children will re-render unnecessarily. Wrapping them in useCallback fixes referential stability. This is a critical review catch for shared hooks.",
       "category": "Custom Hooks",
       "difficulty": "advanced"
@@ -39,12 +39,12 @@
       "scenario": "```js\n// api/client.js\nexport async function apiCall(endpoint, options = {}) {\n  const response = await fetch(`${BASE_URL}${endpoint}`, {\n    ...options,\n    headers: {\n      'Content-Type': 'application/json',\n      'Authorization': `Bearer ${localStorage.getItem('token')}`,\n      ...options.headers,\n    },\n  });\n\n  if (!response.ok) {\n    throw new Error(`API Error: ${response.status}`);\n  }\n\n  return response.json();\n}\n```",
       "question": "What is the most critical issue in this API layer design?",
       "options": [
-        "The function should use XMLHttpRequest for better browser compatibility",
-        "Error handling throws a generic Error losing the response body — the caller can't distinguish between a 401 (needs re-auth), 404 (not found), and 500 (server error) to handle each appropriately",
-        "Using template literals for URL construction is a security risk",
-        "The Content-Type header should only be set for POST/PUT requests"
+        "Spreading options.headers can silently override the required Authorization header from callers",
+        "Using template literals for URL construction opens the endpoint to path traversal injections",
+        "The hardcoded Content-Type header breaks multipart form-data and file upload request types",
+        "The thrown Error only includes the status code, losing the response body needed for recovery"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "Throwing a generic Error with just the status code discards the response body and makes it impossible for callers to implement proper error recovery. A 401 should trigger token refresh, a 422 should show validation errors, a 429 should trigger retry-after. Senior reviewers flag this because poor error discrimination cascades into bad UX throughout the entire app.",
       "category": "API Layer Design",
       "difficulty": "advanced"
@@ -54,12 +54,12 @@
       "scenario": "```jsx\nfunction UploadFlow({ file }) {\n  const [isUploading, setIsUploading] = useState(false);\n  const [isSuccess, setIsSuccess] = useState(false);\n  const [isError, setIsError] = useState(false);\n  const [isRetrying, setIsRetrying] = useState(false);\n  const [progress, setProgress] = useState(0);\n\n  const handleUpload = async () => {\n    setIsUploading(true);\n    setIsError(false);\n    setIsSuccess(false);\n    setIsRetrying(false);\n    // ... upload logic\n  };\n```",
       "question": "What architectural concern would you raise in your review?",
       "options": [
-        "The progress state should use useRef instead of useState to avoid re-renders",
-        "Multiple boolean flags create impossible states — the component needs a state machine (e.g., idle | uploading | retrying | success | error) to prevent bugs like isUploading + isSuccess both being true",
-        "The handler should be wrapped in useCallback since it's likely passed as a prop",
-        "useState should be replaced with useReducer for better performance with many state values"
+        "Multiple boolean flags create impossible states — a single status enum or state machine is safer",
+        "The progress state should use useRef instead of useState to reduce unnecessary render cycles",
+        "The handleUpload function should be wrapped in useCallback to maintain a stable prop reference",
+        "Using separate useState calls for each flag adds overhead — useReducer would perform better"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "Four independent booleans create 2^4 = 16 possible states, most of which are invalid (e.g., uploading AND success AND error simultaneously). A single status enum or state machine like XState makes impossible states unrepresentable. This is one of the most common senior-level review catches — boolean flag soup always leads to subtle bugs as requirements grow.",
       "category": "State Management",
       "difficulty": "advanced"
@@ -69,12 +69,12 @@
       "scenario": "```js\n// components/index.js (barrel export)\nexport { Button } from './Button';\nexport { Input } from './Input';\nexport { Modal } from './Modal';\nexport { DataGrid } from './DataGrid';\nexport { RichTextEditor } from './RichTextEditor';\nexport { ChartWidget } from './ChartWidget';\nexport { DatePicker } from './DatePicker';\n\n// Usage in a page:\nimport { Button } from '@/components';\n```",
       "question": "What bundle size concern would you flag in this PR?",
       "options": [
-        "Named exports are slower than default exports and should be avoided",
-        "Barrel exports can defeat tree-shaking — importing just Button may pull in DataGrid, RichTextEditor, and ChartWidget into the bundle depending on the bundler configuration",
-        "The @ path alias adds overhead compared to relative imports",
-        "Each component should be in its own npm package for proper code splitting"
+        "Named exports add bundler overhead compared to default exports during module resolution steps",
+        "The path alias import adds an extra resolution step that slows down production build times",
+        "Barrel exports can defeat tree-shaking, pulling heavy unused components into the final bundle",
+        "Each re-exported component should use dynamic imports to enable automatic code splitting"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "Barrel files (index.js re-exports) can break tree-shaking in Webpack 4 and some configurations of Webpack 5. Importing Button may cause the bundler to include the entire module graph of all exported components, including heavy ones like RichTextEditor and ChartWidget. The fix is direct imports (import { Button } from '@/components/Button') or configuring sideEffects: false in package.json.",
       "category": "Bundle Size",
       "difficulty": "advanced"
@@ -84,10 +84,10 @@
       "scenario": "```jsx\nfunction TeamDashboard({ teamId }) {\n  const { data: team } = useQuery(['team', teamId], fetchTeam);\n  const { data: members } = useQuery(\n    ['members', teamId],\n    () => fetchMembers(teamId)\n  );\n\n  return (\n    <div>\n      <h1>{team?.name}</h1>\n      {members?.map(member => (\n        <MemberCard\n          key={member.id}\n          member={member}\n          // Each card fetches its own stats\n        />\n      ))}\n    </div>\n  );\n}\n\nfunction MemberCard({ member }) {\n  const { data: stats } = useQuery(\n    ['stats', member.id],\n    () => fetchMemberStats(member.id)\n  );\n  return <div>{member.name}: {stats?.commits} commits</div>;\n}\n```",
       "question": "What performance anti-pattern would you flag in this PR?",
       "options": [
-        "useQuery should be replaced with useSWR for better caching behavior",
-        "N+1 request waterfall — rendering 20 members fires 20 individual stats requests sequentially, and they can't even start until the members query resolves",
-        "The team and members queries should be combined into a single query to reduce re-renders",
-        "MemberCard should be wrapped in React.memo to prevent re-renders when stats update"
+        "The useQuery hooks should be replaced with useSWR for better built-in cache invalidation",
+        "N+1 request waterfall — each member card fires its own stats request after members resolve",
+        "The team and members queries should be merged into a single combined GraphQL operation",
+        "MemberCard should be wrapped in React.memo to prevent re-renders when other stats update"
       ],
       "correctIndex": 1,
       "explanation": "This is the frontend equivalent of an N+1 database query. The stats requests can't start until members load (waterfall), and then each member triggers its own HTTP request. With 50 members, that's 52 sequential network calls. The fix is a batch endpoint (fetchAllMemberStats(teamId)) or a GraphQL query that fetches everything in one request.",
@@ -99,12 +99,12 @@
       "scenario": "```ts\n// PR: \"Migrate user settings from v1 API to v2 API\"\n// Old endpoint returns: { theme: 'dark', lang: 'en' }\n// New endpoint returns: { preferences: { theme: 'dark', locale: 'en-US' } }\n\nexport async function getUserSettings() {\n  const res = await fetch('/api/v2/settings');\n  const data = await res.json();\n  return {\n    theme: data.preferences.theme,\n    lang: data.preferences.locale,\n  };\n}\n```",
       "question": "What migration concern would you raise in review?",
       "options": [
-        "The function should accept a version parameter instead of hardcoding v2",
-        "There is no fallback to v1 — if v2 isn't deployed to all environments yet, or the rollout is gradual, this change will break users on older backends. The migration needs a transition period supporting both APIs",
-        "The locale field mapping is incorrect — 'en-US' is not the same as 'en'",
-        "The function should validate the response shape with a runtime type check like Zod"
+        "The function should accept a version parameter to support dynamic API version switching",
+        "The locale field mapping is lossy because 'en-US' and 'en' are not semantically equivalent",
+        "The response shape should be validated at runtime with a schema library before being used",
+        "There is no v1 fallback, so environments that haven't deployed v2 yet will break entirely"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "API migrations need backwards compatibility during the transition. If the backend rolls out v2 gradually, or if the frontend deploys before the backend, users will get errors. A safe migration pattern: try v2 first, fall back to v1, log which version was used. Once v2 adoption hits 100%, remove the v1 fallback in a follow-up PR.",
       "category": "Migration PRs",
       "difficulty": "advanced"
@@ -114,12 +114,12 @@
       "scenario": "```jsx\nfunction App() {\n  return (\n    <ErrorBoundary fallback={<p>Something went wrong</p>}>\n      <Routes>\n        <Route path=\"/dashboard\" element={<Dashboard />} />\n        <Route path=\"/settings\" element={<Settings />} />\n        <Route path=\"/reports\" element={<Reports />} />\n      </Routes>\n    </ErrorBoundary>\n  );\n}\n```",
       "question": "What would you flag about this error boundary implementation?",
       "options": [
-        "ErrorBoundary should be a class component — function components can't catch errors",
-        "A single top-level error boundary means any crash in any route kills the entire app with no way to recover — each route (or critical section) should have its own boundary with route-specific recovery",
-        "The fallback should use a Suspense boundary instead for better loading states",
-        "Error boundaries don't work with React Router and will cause hydration mismatches"
+        "A single top-level boundary means any route crash kills the entire app with no recovery path",
+        "ErrorBoundary must be a class component because function components cannot catch render errors",
+        "The fallback should use a Suspense boundary instead to provide consistent loading and error UX",
+        "Error boundaries interfere with React Router's outlet rendering and cause hydration mismatches"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "One error boundary for the whole app means a crash in the Reports page also takes down Dashboard and Settings. Users lose all functionality. Granular error boundaries per route or feature let the rest of the app keep working. The fallback should also include a retry mechanism (remount the route) rather than a dead-end error message.",
       "category": "Error Boundaries",
       "difficulty": "advanced"
@@ -129,12 +129,12 @@
       "scenario": "```tsx\n// Shared component library PR\ninterface CardProps {\n  title: string;\n  subtitle?: string;\n  image?: string;\n  imagePosition?: 'top' | 'left' | 'right' | 'background';\n  actions?: ReactNode;\n  onClick?: () => void;\n  href?: string;\n  variant?: 'elevated' | 'outlined' | 'filled';\n  size?: 'sm' | 'md' | 'lg';\n  badge?: string;\n  badgeColor?: string;\n  isLoading?: boolean;\n  isSelected?: boolean;\n  isDisabled?: boolean;\n  animateOnHover?: boolean;\n  className?: string;\n  testId?: string;\n}\n```",
       "question": "What would you flag in this shared component's API?",
       "options": [
-        "The component should use generic types instead of explicit prop definitions",
-        "The API surface is too large — 17 props creates high maintenance burden and makes the component hard to use correctly. It should be split into composition-based patterns or several focused variants",
-        "Using ReactNode for actions is too permissive and should be typed more strictly",
-        "The component needs a ref forwarding prop for imperative handle access"
+        "The component should use generic types to let consumers extend the props interface flexibly",
+        "Using ReactNode for the actions prop is too permissive and needs a stricter type contract",
+        "A 17-prop API surface is too large — it should be split into composable, focused variants",
+        "The component needs forwardRef support to allow imperative handle access from parent code"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "A component with 17 props is a code smell in a shared library. It signals the component is trying to handle too many use cases, making it hard to maintain, document, and use correctly. Better patterns: compound components (Card.Image, Card.Actions), variant-specific wrappers (LinkCard, SelectableCard), or composition slots. The prop count directly correlates with bug surface area in a shared library.",
       "category": "Component Libraries",
       "difficulty": "advanced"
@@ -144,12 +144,12 @@
       "scenario": "```jsx\nfunction CommentSection({ postId }) {\n  const [comments, setComments] = useState([]);\n\n  useEffect(() => {\n    fetch(`/api/posts/${postId}/comments`)\n      .then(res => res.json())\n      .then(setComments);\n  }, [postId]);\n\n  return (\n    <div>\n      {comments.map(c => (\n        <div key={c.id}>\n          <p dangerouslySetInnerHTML={{ __html: c.body }} />\n          <span>{c.author}</span>\n        </div>\n      ))}\n    </div>\n  );\n}\n```",
       "question": "What security vulnerability would you flag in this PR?",
       "options": [
-        "The API endpoint is vulnerable to SQL injection via the postId parameter",
-        "Using dangerouslySetInnerHTML with user-generated comment content is a stored XSS vulnerability — an attacker can inject malicious scripts via comment body that execute for every user viewing the post",
-        "The fetch call should use POST instead of GET to prevent CSRF attacks",
-        "The author field should be escaped to prevent clickjacking attacks"
+        "Using dangerouslySetInnerHTML with user-generated comment content enables stored XSS attacks",
+        "The API endpoint is susceptible to SQL injection through the unvalidated postId path parameter",
+        "The fetch call should use POST instead of GET to mitigate cross-site request forgery attacks",
+        "The author display field needs HTML entity encoding to prevent UI-based clickjacking exploits"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "dangerouslySetInnerHTML with user-generated content (c.body) is a textbook stored XSS vulnerability. An attacker posts a comment containing <script>stealCookies()</script>, which then executes for every user who views that post. The fix is to use a sanitization library (like DOMPurify) before rendering, or better yet, render markdown instead of raw HTML.",
       "category": "Security",
       "difficulty": "advanced"
@@ -159,12 +159,12 @@
       "scenario": "```yaml\n# .github/workflows/deploy.yml PR diff:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - run: npm ci\n      - run: npm run build\n-     - run: npm test\n      - run: npx serverless deploy --stage production\n+     - run: npm test\n```",
       "question": "What CI/CD issue would you flag in this config change?",
       "options": [
-        "The checkout action should be pinned to a specific SHA instead of a version tag",
-        "Tests were moved to run AFTER the production deploy — if tests fail, broken code is already in production. Tests must run before deploy to serve as a gate",
-        "npm ci should be replaced with npm install for faster dependency resolution",
-        "The serverless deploy command should use a matrix strategy for parallel deployments"
+        "The checkout action should be pinned to a specific commit SHA rather than a mutable version tag",
+        "The npm ci step should include a frozen lockfile flag to guarantee fully reproducible installs",
+        "The serverless deploy command should use a matrix strategy for parallel multi-region rollouts",
+        "Tests now run after the production deploy, so broken code ships before failures are caught"
       ],
-      "correctIndex": 1,
+      "correctIndex": 3,
       "explanation": "Moving the test step after deploy means broken code ships to production before tests catch it. This is a critical review catch — CI pipeline ordering defines your safety guarantees. Tests must always be a gate that blocks deployment, not a post-deploy verification. This subtle reordering might look like a simple cleanup but fundamentally breaks the deployment safety model.",
       "category": "CI/CD Review",
       "difficulty": "advanced"
@@ -174,12 +174,12 @@
       "scenario": "```sql\n-- Migration PR: Add user preferences table\nALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}';\n\n-- New query used by the frontend:\nSELECT u.*, p.team_name\nFROM users u\nJOIN projects p ON p.owner_id = u.id\nWHERE u.preferences->>'theme' = 'dark';\n```",
       "question": "What would you flag reviewing this schema change from a frontend perspective?",
       "options": [
-        "JSONB columns are not supported by most ORMs and will cause type errors in the frontend",
-        "The query filters on a JSONB field without an index — this will be a full table scan that gets progressively slower as users grow, eventually causing frontend timeouts on pages that use this data",
-        "The JOIN should use a LEFT JOIN to handle users without projects",
-        "The DEFAULT '{}' should be DEFAULT NULL to save storage space"
+        "JSONB columns require specialized ORM configuration that commonly causes type mapping errors",
+        "The JOIN should be a LEFT JOIN to correctly handle users who have no associated projects yet",
+        "Filtering on a JSONB field without a GIN index causes a full table scan that degrades over time",
+        "The DEFAULT '{}' should be DEFAULT NULL to reduce storage overhead and simplify null handling"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "Filtering on preferences->>'theme' without a GIN or expression index means a full sequential scan of the users table. With 10K users this is fine; with 1M users, this query will time out and your frontend will show spinners forever. As a frontend reviewer, you should flag: 'Does this query have an index? What's the expected table size?' A missing index on a frequently-queried field is a production incident waiting to happen.",
       "category": "Schema Review",
       "difficulty": "advanced"
@@ -189,10 +189,10 @@
       "scenario": "```jsx\nfunction ProductList({ products }) {\n  const sortedProducts = useMemo(\n    () => [...products].sort((a, b) => a.name.localeCompare(b.name)),\n    [products]\n  );\n\n  const formatPrice = useMemo(\n    () => (price) => `$${price.toFixed(2)}`,\n    []\n  );\n\n  const containerStyle = useMemo(\n    () => ({ display: 'flex', gap: '16px' }),\n    []\n  );\n\n  return (\n    <div style={containerStyle}>\n      {sortedProducts.map(p => (\n        <span key={p.id}>{p.name}: {formatPrice(p.price)}</span>\n      ))}\n    </div>\n  );\n}\n```",
       "question": "What memoization anti-pattern would you flag?",
       "options": [
-        "useMemo should be replaced with useCallback for the function values",
-        "Two of the three useMemos are wasteful — memoizing a static object literal and a pure function with no deps adds complexity and memory overhead without any render savings. Only the sort is justified",
-        "All three useMemos are necessary because React re-renders on every prop change",
-        "The products dependency should be a deep comparison using a custom hook"
+        "The useMemo calls should be replaced with useCallback since they wrap function return values",
+        "Two of the three useMemos are wasteful — only the sort computation actually benefits from it",
+        "All three useMemos are necessary because React re-renders fully whenever parent props change",
+        "The products dependency requires a deep comparison hook to prevent false memoization misses"
       ],
       "correctIndex": 1,
       "explanation": "formatPrice wraps a pure function with no dependencies — it will never change and the useMemo just adds overhead. containerStyle memoizes a static object — move it outside the component as a constant. Only sortedProducts benefits from memoization since sorting is O(n log n). Over-memoization is a common code smell: it adds cognitive complexity, memory overhead, and signals the author doesn't understand when memoization actually helps.",
@@ -204,12 +204,12 @@
       "scenario": "```tsx\nfunction PricingPage() {\n  const showNewPricing = localStorage.getItem('ff_new_pricing') === 'true';\n\n  if (showNewPricing) {\n    return <NewPricingLayout />;\n  }\n  return <LegacyPricingLayout />;\n}\n\n// In another file:\nfunction enableNewPricing(userId: string) {\n  localStorage.setItem('ff_new_pricing', 'true');\n  analytics.track('feature_flag_enabled', { flag: 'new_pricing', userId });\n}\n```",
       "question": "What feature flag implementation issue would you flag?",
       "options": [
-        "The analytics tracking should be in the PricingPage component, not the enabler function",
-        "Feature flags stored in localStorage are not server-controlled — they can't be toggled remotely for incidents, they persist across sessions unexpectedly, and users can enable any flag via DevTools. Use a proper feature flag service with server-side evaluation",
-        "The flag should use a boolean instead of a string comparison",
-        "NewPricingLayout and LegacyPricingLayout should be lazy-loaded with React.lazy"
+        "localStorage flags can't be toggled remotely for incidents and users can bypass via DevTools",
+        "The analytics tracking call should be co-located in PricingPage for proper event attribution",
+        "The string comparison should use a parsed boolean value to avoid type coercion edge cases",
+        "Both layout components should be lazy-loaded with React.lazy to reduce initial bundle size"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "Client-side localStorage flags have serious problems: (1) Can't kill a broken feature remotely during an incident — you have to deploy a code fix. (2) Users can toggle any flag via DevTools, bypassing rollout controls. (3) Flags persist across sessions, making gradual rollouts unreliable. (4) No way to target specific user segments. Use a feature flag service (LaunchDarkly, Unleash, etc.) with server-side evaluation and real-time kill switches.",
       "category": "Feature Flags",
       "difficulty": "advanced"
@@ -219,12 +219,12 @@
       "scenario": "```tsx\nfunction ProductCard({ product }: { product: Product }) {\n  return (\n    <div className=\"card\">\n      <h3>{product.name}</h3>\n      <p>{product.description}</p>\n      <span className=\"price\">\n        {product.currency} {product.price}\n      </span>\n      <button>Add to cart</button>\n      <p className=\"stock\">\n        {product.stock === 0 ? 'Out of stock' : `${product.stock} left`}\n      </p>\n    </div>\n  );\n}\n```",
       "question": "What internationalization (i18n) issues would you flag in this component?",
       "options": [
-        "The component should accept a language prop to support multiple locales",
-        "Multiple i18n violations: hardcoded English strings ('Add to cart', 'Out of stock', 'left'), currency formatted as raw string instead of Intl.NumberFormat, number display not locale-aware, and no RTL layout consideration. All user-visible strings need translation keys",
-        "The className strings should be locale-specific for proper styling",
-        "The Product type should have locale-specific fields for name and description"
+        "The component should accept an explicit locale prop to dynamically support multiple languages",
+        "Using className strings without CSS logical properties breaks layout in RTL language contexts",
+        "Hardcoded English strings and raw currency/number formatting violate i18n standards throughout",
+        "The Product type should define locale-specific fields for translated name and description values"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "This component has at least 4 i18n issues: (1) 'Add to cart', 'Out of stock', and 'left' are hardcoded English — use t('addToCart') translation keys. (2) Currency formatting (product.currency + price) breaks for currencies with different symbol positions (¥100 vs $100 vs 100€). Use Intl.NumberFormat. (3) Number formatting (product.stock) should be locale-aware (1,000 vs 1.000). (4) The layout may break in RTL languages. Senior reviewers catch these because fixing i18n retroactively is extremely expensive.",
       "category": "Internationalization",
       "difficulty": "advanced"
