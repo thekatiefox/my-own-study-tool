@@ -1,0 +1,99 @@
+{
+  "id": "code-review-advanced",
+  "name": "Advanced Code Review",
+  "description": "Senior-level review techniques — architecture decisions, performance tradeoffs, and team dynamics in code review.",
+  "icon": "⚡",
+  "category": "Skills",
+  "cards": [
+    {
+      "id": "cra-fc-001",
+      "front": "How do you review architecture decisions in a PR? What should you look for?",
+      "back": "• Check if there's an ADR (Architecture Decision Record) linked — if a big decision was made, it should be documented somewhere, not just buried in code\n• Identify the tradeoffs: what did this approach gain, and what did it sacrifice? (e.g., simplicity vs flexibility, consistency vs performance)\n• Ask: 'What alternatives were considered?' — if the author can't name any, the design space wasn't explored\n• Evaluate reversibility: is this easy to change later, or does it lock us in? Prefer reversible decisions\n• Check if the architecture matches the team's existing patterns — deviation needs justification\n• Look for premature abstraction: is this solving today's problem or an imagined future one?",
+      "tags": ["architecture", "ADR", "tradeoffs"]
+    },
+    {
+      "id": "cra-fc-002",
+      "front": "How do you review a PR for backwards compatibility? What breaks should you watch for?",
+      "back": "• API contract changes: renamed fields, removed properties, changed types — any consumer calling the old shape will break\n• Database schema: column renames or type changes without a migration path break existing queries and running services\n• URL/route changes: old bookmarks, external links, and SEO rankings break without redirects\n• Event/message format changes: other services consuming these events will parse incorrectly\n• Config/env var renames: deployment configs reference old names and will silently use defaults\n• The golden rule: can this deploy independently? If frontend and backend must deploy simultaneously, it's not backwards compatible\n• Safe pattern: add new → migrate consumers → remove old (three-phase migration)",
+      "tags": ["backwards-compatibility", "migrations", "API"]
+    },
+    {
+      "id": "cra-fc-003",
+      "front": "When should you push back on a PR vs approve and move on?",
+      "back": "• Push back on: security vulnerabilities, data loss risks, broken backwards compatibility, missing error handling on critical paths, and architectural decisions that are hard to reverse\n• Let it go on: style preferences not covered by linters, minor naming disagreements, 'I would have done it differently but this also works' situations\n• Use the 'Would I mass-revert this at 2am?' test — if a production incident from this code would be severe, push back firmly\n• Distinguish blocking vs non-blocking feedback: prefix with 'nit:' or 'suggestion:' for non-blocking, be explicit about what must change before approval\n• Consider the author's context: is this a time-sensitive hotfix? A learning PR from a junior? Adjust your bar accordingly\n• If you've left 3+ rounds of review on the same PR, consider pairing instead — async review has diminishing returns",
+      "tags": ["review-culture", "feedback", "judgment"]
+    },
+    {
+      "id": "cra-fc-004",
+      "front": "How do you effectively review code in a domain you don't fully understand?",
+      "back": "• Start with the PR description and linked tickets — understand the 'why' before reading the 'how'\n• Read the tests first — they describe intended behavior in executable form and are easier to understand than implementation\n• Focus on what you CAN review: error handling, edge cases, naming clarity, test coverage, API design, performance patterns\n• Ask genuine questions: 'I'm not familiar with X — can you explain why this approach vs Y?' — this often surfaces assumptions the author hasn't examined\n• Check the blast radius: even without domain knowledge, you can assess 'how many things does this change touch?' and 'is there a rollback plan?'\n• Review the integration points: how does this code interact with parts you DO understand?\n• Don't rubber-stamp: saying 'I'm not the best reviewer for this domain logic, but the error handling and test coverage look solid' is valuable and honest",
+      "tags": ["review-skills", "learning", "communication"]
+    },
+    {
+      "id": "cra-fc-005",
+      "front": "What should you check when reviewing for operational readiness?",
+      "back": "• Logging: are errors logged with enough context to debug? (user ID, request ID, input parameters — NOT sensitive data like passwords or tokens)\n• Monitoring: will you know if this feature breaks in production? Are there health checks, metrics, or alerts?\n• Feature flags: can you turn this off without a deploy? New features behind flags = safe rollout\n• Graceful degradation: what happens when the dependency (API, database, third-party service) is down? Does the UI show a useful error or just a blank screen?\n• Rollback plan: can you revert this PR cleanly? Does it include a database migration that's hard to undo?\n• Rate limiting/backpressure: if traffic spikes 10x, does this code handle it or does it cascade-fail?\n• Documentation: is there a runbook or on-call notes for when this breaks at 3am?",
+      "tags": ["operations", "logging", "monitoring", "feature-flags"]
+    },
+    {
+      "id": "cra-fc-006",
+      "front": "How should you adjust your code review feedback when reviewing senior engineers vs juniors?",
+      "back": "• For juniors: be more prescriptive — explain WHY something is a problem, link to docs, suggest the specific fix. They're learning patterns\n• For juniors: focus on one or two key learnings per review, not every possible improvement — overwhelming feedback causes shutdown\n• For seniors: focus on the 'what' not the 'how' — they know how to implement, they need to know what you disagree with architecturally\n• For seniors: ask questions rather than prescribe: 'Have you considered the impact on X?' trusts their judgment while surfacing concerns\n• For everyone: separate 'must fix' from 'nice to have' — be explicit about what blocks approval\n• For everyone: acknowledge what's done well — 'Great test coverage on the edge cases' costs nothing and builds trust\n• Anti-pattern: reviewing junior code like a senior (terse, assumes context) or senior code like a junior (over-explaining, prescriptive on style)",
+      "tags": ["feedback", "mentoring", "communication"]
+    },
+    {
+      "id": "cra-fc-007",
+      "front": "What should you look for when reviewing database migration PRs?",
+      "back": "• Reversibility: does this migration have a corresponding 'down' migration? Can you roll back without data loss?\n• Lock time: will ALTER TABLE on a large table lock it for minutes? That's downtime. Check if the ORM handles online schema changes\n• Data backfill: if adding a NOT NULL column, what populates existing rows? A default value? A backfill script? Neither means deploy failures\n• Index impact: adding an index on a 100M-row table takes time and I/O — should this run in off-peak hours?\n• Query compatibility: do existing queries (including those from other services) still work after this change?\n• Deployment ordering: must the migration run before or after the code deploy? Document the sequence\n• Zero-downtime pattern: add column → deploy code that writes to both → backfill → deploy code that reads from new → remove old column",
+      "tags": ["database", "migrations", "deployment"]
+    },
+    {
+      "id": "cra-fc-008",
+      "front": "How do you spot scope creep in a PR?",
+      "back": "• Check the PR title/ticket vs the actual diff — does the code change match what was described, or does it do more?\n• Count the files changed: a 'rename this variable' PR touching 15 files might be fine, but a 'small feature' touching 15 files is suspicious\n• Look for unrelated refactors bundled in: 'While I was here, I also reorganized the imports and renamed some functions' — these should be separate PRs\n• Multiple concerns signal: if you can't describe what the PR does in one sentence, it's probably doing too much\n• Watch for yak-shaving chains: 'I needed to add a button, which required refactoring the component, which required updating the design system, which required...'\n• Polite nudge: 'Could we split this into two PRs? One for the refactor, one for the feature? It'll be easier to review and safer to deploy'\n• Why it matters: large PRs get worse reviews (reviewer fatigue), are harder to revert, and have more merge conflicts",
+      "tags": ["PR-hygiene", "scope", "process"]
+    },
+    {
+      "id": "cra-fc-009",
+      "front": "How do you review error handling strategy holistically, not just individual try-catch blocks?",
+      "back": "• Map the error flow: where do errors originate (API, user input, third-party), where are they caught, and where are they displayed? Gaps in this chain = silent failures\n• Check error granularity: does the code distinguish between 'network down', 'server error', 'not authorized', and 'invalid input'? Generic catch-all errors create terrible UX\n• Verify errors don't leak: stack traces, internal IDs, or SQL errors shown to users are security and UX failures\n• Check recovery paths: after an error, can the user retry? Are they stuck? Is there a clear action they can take?\n• Look for swallowed errors: catch blocks with just console.log or empty catch {} — the error happened but nobody will ever know\n• Boundary strategy: are error boundaries/try-catches at the right granularity? Too broad = entire page crashes. Too narrow = duplicated error handling everywhere\n• Test the unhappy path: are there tests for error scenarios, not just the happy path?",
+      "tags": ["error-handling", "resilience", "UX"]
+    },
+    {
+      "id": "cra-fc-010",
+      "front": "What's your performance review checklist for frontend PRs? (render, network, bundle)",
+      "back": "• RENDER: unnecessary re-renders from unstable references (new objects/functions in render), missing keys in lists, expensive computations not memoized\n• RENDER: layout thrashing — reading DOM measurements then immediately writing styles in a loop\n• NETWORK: request waterfalls (sequential requests that could be parallel), missing caching headers, no abort on unmount, no loading/error states\n• NETWORK: N+1 patterns — rendering a list where each item fetches its own data instead of batching\n• BUNDLE: large dependencies for small features (moment.js for one date format), barrel imports defeating tree-shaking, missing code splitting on routes\n• BUNDLE: images not optimized (no lazy loading, no srcset, massive uncompressed PNGs)\n• MEASURE: don't guess — ask 'was this profiled?' before demanding optimization. Premature optimization is also a review concern\n• QUICK WINS: check if React DevTools Profiler or Lighthouse was run — data beats intuition",
+      "tags": ["performance", "rendering", "network", "bundle"]
+    },
+    {
+      "id": "cra-fc-011",
+      "front": "How do you review refactoring PRs? (same behavior, better structure)",
+      "back": "• First question: 'Are there tests that prove behavior is unchanged?' — no tests = risky refactor, full stop\n• Verify the refactor actually improves something measurable: readability, performance, maintainability, testability. 'Different' is not 'better'\n• Check that tests weren't changed to match new behavior — that's a behavior change disguised as a refactor\n• Review in two passes: (1) Does the old behavior survive? (2) Is the new structure actually better?\n• Watch for hidden behavior changes: renamed error messages (breaks error monitoring), reordered operations (changes race condition behavior), changed defaults\n• Large refactors should be behind a feature flag or done incrementally — 'big bang' rewrites are high-risk\n• Verify no dead code was introduced and no dead code was accidentally made live again\n• Ask: 'Why now?' — refactoring without a near-term benefit is risk with no reward",
+      "tags": ["refactoring", "testing", "risk"]
+    },
+    {
+      "id": "cra-fc-012",
+      "front": "What's your mental model for security review of frontend code?",
+      "back": "• INPUT: never trust user input — check for XSS in dynamic HTML rendering (dangerouslySetInnerHTML, v-html, innerHTML), SQL/NoSQL injection in any query builders\n• OUTPUT: never expose sensitive data — check API responses for over-fetching (returning password hashes, internal IDs, admin flags the frontend doesn't need)\n• AUTH: token storage (localStorage is XSS-vulnerable, prefer httpOnly cookies), token transmission (always HTTPS, never in URL params), token expiry handling\n• DEPS: check new dependencies — who maintains them? How many weekly downloads? Any known CVEs? One malicious dependency compromises everything\n• SECRETS: no API keys, tokens, or credentials in client-side code or git history — even env vars in frontend bundles are public\n• CSRF: state-changing requests need CSRF tokens or SameSite cookies — check that new POST/PUT/DELETE endpoints are protected\n• HEADERS: Content-Security-Policy, X-Frame-Options, Strict-Transport-Security — changes to these headers need careful review",
+      "tags": ["security", "XSS", "auth", "dependencies"]
+    },
+    {
+      "id": "cra-fc-013",
+      "front": "How do you review test quality, not just test presence?",
+      "back": "• Check WHAT is tested: are tests verifying behavior (user clicks button, form submits) or implementation details (setState was called, internal method was invoked)? Behavior tests survive refactors\n• Check edge cases: does the test suite cover empty states, error states, boundary values, and concurrent operations? Happy-path-only tests are a false safety net\n• Check assertions: tests that never assert are worse than no tests — they give false confidence. Watch for 'expect(true).toBe(true)' or missing assertions\n• Check independence: do tests depend on execution order or shared mutable state? Can you run any test in isolation?\n• Check readability: can you understand what the test verifies without reading the implementation? Good test names are documentation\n• Check flakiness signals: timeouts, sleep/wait calls, date-dependent logic — these will become flaky tests that erode team trust in the suite\n• Check coverage gaps: not line coverage (that's misleading), but scenario coverage — 'what could go wrong that these tests wouldn't catch?'",
+      "tags": ["testing", "quality", "assertions"]
+    },
+    {
+      "id": "cra-fc-014",
+      "front": "How do you handle bike-shedding in code reviews? (excessive debate on trivial matters)",
+      "back": "• Recognize it: if the debate is about naming conventions, brace styles, or import ordering — and the team has no existing standard — it's bike-shedding\n• Automate it: the best solution to style debates is a formatter/linter. If it can be automated, it shouldn't be in a review comment. Push for Prettier, ESLint rules, etc.\n• Time-box it: if a thread has 4+ back-and-forth replies about a minor point, someone should say 'Let's pick one and move on — we can revisit if it becomes a pattern'\n• Use the 'two-way door' test: if the decision is easily reversible, don't block the PR. Save your energy for one-way doors (architecture, public APIs, data models)\n• Call it out gently: 'I think we're bike-shedding here — both approaches work, let's go with the author's preference and ship'\n• Prevention: team style guides and ADRs reduce the surface area for these debates. Invest in conventions upfront\n• Self-check: if you find yourself writing a long comment about a small thing, pause and ask 'does this actually matter?'",
+      "tags": ["process", "communication", "team-dynamics"]
+    },
+    {
+      "id": "cra-fc-015",
+      "front": "When should you pair program instead of doing async code review?",
+      "back": "• When the PR is on its 3rd+ review round with major changes each time — async iteration is failing, real-time collaboration will be faster\n• When the domain is complex and the reviewer lacks context — 30 minutes of pairing teaches more than 10 comment threads\n• When the PR is exploratory or experimental — design decisions are better made together than debated in comments after the code is written\n• When there's a significant skill gap — a senior and junior pairing on a tricky feature produces better code than the junior writing + senior reviewing\n• When the change is high-risk (payments, auth, data migrations) — two pairs of eyes in real-time catch more than sequential async review\n• When emotions are running high — if review comments are getting tense, switch to a call. Tone is lost in text\n• Rule of thumb: if you're about to write a review comment longer than 5 sentences explaining an alternative approach, just schedule a 15-minute pairing session instead",
+      "tags": ["pairing", "collaboration", "process"]
+    }
+  ]
+}

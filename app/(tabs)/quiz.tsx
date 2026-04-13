@@ -7,19 +7,24 @@ import { QuizPack, QuizQuestion } from '@/types';
 import * as Haptics from 'expo-haptics';
 
 import codeReviewData from '@/data/quizzes/code-review-scenarios.json';
+import codeReviewAdvData from '@/data/quizzes/code-review-advanced.json';
 import systemDesignData from '@/data/quizzes/system-design-scenarios.json';
 
-const quizPacks: QuizPack[] = [codeReviewData, systemDesignData] as QuizPack[];
+const quizPacks: QuizPack[] = [codeReviewData, codeReviewAdvData, systemDesignData] as QuizPack[];
 
 export default function QuizScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
 
-  const [activeQuiz, setActiveQuiz] = useState<QuizPack | null>(null);
+  const [selectedPack, setSelectedPack] = useState<QuizPack | null>(null);
+  const [activeQuestions, setActiveQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
+  const [choosingCount, setChoosingCount] = useState(false);
+
+  const QUESTION_COUNTS = [3, 5, 10];
 
   const resetQuiz = () => {
     setCurrentIndex(0);
@@ -29,12 +34,23 @@ export default function QuizScreen() {
   };
 
   const handleSelectPack = (pack: QuizPack) => {
+    setSelectedPack(pack);
+    setChoosingCount(true);
+  };
+
+  const handleStartWithCount = (count: number) => {
+    if (!selectedPack) return;
     resetQuiz();
-    setActiveQuiz(pack);
+    // Shuffle and pick N questions
+    const shuffled = [...selectedPack.questions].sort(() => Math.random() - 0.5);
+    setActiveQuestions(shuffled.slice(0, Math.min(count, shuffled.length)));
+    setChoosingCount(false);
   };
 
   const handleBackToList = () => {
-    setActiveQuiz(null);
+    setSelectedPack(null);
+    setActiveQuestions([]);
+    setChoosingCount(false);
     resetQuiz();
   };
 
@@ -42,7 +58,7 @@ export default function QuizScreen() {
     if (showResult) return;
     setSelectedOption(index);
     setShowResult(true);
-    if (index === activeQuiz!.questions[currentIndex].correctIndex) {
+    if (index === activeQuestions[currentIndex].correctIndex) {
       setScore((s) => s + 1);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
@@ -56,10 +72,11 @@ export default function QuizScreen() {
     setCurrentIndex((i) => i + 1);
   };
 
-  const isFinished = activeQuiz ? currentIndex >= activeQuiz.questions.length : false;
+  const isFinished = activeQuestions.length > 0 && currentIndex >= activeQuestions.length;
+  const isPlaying = activeQuestions.length > 0 && !choosingCount;
 
   // --- Pack List ---
-  if (!activeQuiz) {
+  if (!isPlaying && !choosingCount) {
     return (
       <ScrollView
         style={[styles.screen, { backgroundColor: colors.background }]}
@@ -111,9 +128,66 @@ export default function QuizScreen() {
     );
   }
 
+  // --- Question Count Picker ---
+  if (choosingCount && selectedPack) {
+    const maxQ = selectedPack.questions.length;
+    return (
+      <ScrollView
+        style={[styles.screen, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.centeredContent}
+      >
+        <Pressable onPress={handleBackToList} style={styles.backContainer}>
+          <Text style={[styles.backText, { color: colors.primary }]}>← Back</Text>
+        </Pressable>
+        <Text style={styles.countIcon}>{selectedPack.icon}</Text>
+        <Text style={[styles.countTitle, { color: colors.text }]}>{selectedPack.name}</Text>
+        <Text style={[styles.countSubtitle, { color: colors.textSecondary }]}>
+          How many questions?
+        </Text>
+        <View style={styles.countRow}>
+          {QUESTION_COUNTS.filter(c => c <= maxQ).map((count) => (
+            <Pressable
+              key={count}
+              onPress={() => handleStartWithCount(count)}
+              style={({ pressed }) => [
+                styles.countBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.countBtnNumber, { color: colors.primary }]}>{count}</Text>
+              <Text style={[styles.countBtnLabel, { color: colors.textSecondary }]}>
+                {count === 3 ? 'Quick' : count === 5 ? 'Standard' : 'Full'}
+              </Text>
+            </Pressable>
+          ))}
+          {maxQ > 10 && (
+            <Pressable
+              onPress={() => handleStartWithCount(maxQ)}
+              style={({ pressed }) => [
+                styles.countBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.countBtnNumber, { color: colors.primary }]}>All</Text>
+              <Text style={[styles.countBtnLabel, { color: colors.textSecondary }]}>{maxQ}</Text>
+            </Pressable>
+          )}
+        </View>
+      </ScrollView>
+    );
+  }
+
   // --- Score Summary ---
   if (isFinished) {
-    const percentage = Math.round((score / activeQuiz.questions.length) * 100);
+    const percentage = Math.round((score / activeQuestions.length) * 100);
     return (
       <ScrollView
         style={[styles.screen, { backgroundColor: colors.background }]}
@@ -127,7 +201,7 @@ export default function QuizScreen() {
             Quiz Complete!
           </Text>
           <Text style={[styles.summaryScore, { color: colors.primary }]}>
-            {score} / {activeQuiz.questions.length}
+            {score} / {activeQuestions.length}
           </Text>
           <Text style={[styles.summaryPercent, { color: colors.textSecondary }]}>
             {percentage}% correct
@@ -135,7 +209,7 @@ export default function QuizScreen() {
 
           <Pressable
             onPress={() => {
-              resetQuiz();
+              if (selectedPack) handleStartWithCount(activeQuestions.length);
             }}
             style={({ pressed }) => [
               styles.actionButton,
@@ -167,7 +241,7 @@ export default function QuizScreen() {
   }
 
   // --- Quiz Player ---
-  const question: QuizQuestion = activeQuiz.questions[currentIndex];
+  const question: QuizQuestion = activeQuestions[currentIndex];
   const isCorrect = selectedOption === question.correctIndex;
 
   return (
@@ -181,7 +255,7 @@ export default function QuizScreen() {
           <Text style={[styles.backButton, { color: colors.primary }]}>← Back</Text>
         </Pressable>
         <Text style={[styles.progress, { color: colors.textSecondary }]}>
-          Question {currentIndex + 1} of {activeQuiz.questions.length}
+          Question {currentIndex + 1} of {activeQuestions.length}
         </Text>
       </View>
 
@@ -192,7 +266,7 @@ export default function QuizScreen() {
             styles.progressFill,
             {
               backgroundColor: colors.primary,
-              width: `${((currentIndex + 1) / activeQuiz.questions.length) * 100}%`,
+              width: `${((currentIndex + 1) / activeQuestions.length) * 100}%`,
             },
           ]}
         />
@@ -313,7 +387,7 @@ export default function QuizScreen() {
           ]}
         >
           <Text style={styles.nextButtonText}>
-            {currentIndex < activeQuiz.questions.length - 1 ? 'Next Question' : 'See Results'}
+            {currentIndex < activeQuestions.length - 1 ? 'Next Question' : 'See Results'}
           </Text>
         </Pressable>
       )}
@@ -402,6 +476,52 @@ const styles = StyleSheet.create({
   startBadgeText: {
     color: '#FFF9F4',
     fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Count picker
+  countIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  countTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  countSubtitle: {
+    fontSize: 15,
+    marginBottom: 28,
+  },
+  countRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    backgroundColor: 'transparent',
+  },
+  countBtn: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 22,
+    alignItems: 'center',
+  },
+  countBtnNumber: {
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  countBtnLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  backContainer: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  backText: {
+    fontSize: 16,
     fontWeight: '600',
   },
 

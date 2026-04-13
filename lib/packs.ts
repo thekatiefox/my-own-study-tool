@@ -13,6 +13,7 @@ import codeReview from '@/data/packs/code-review.json';
 import systemDesignFe from '@/data/packs/system-design-fe.json';
 import frontendArchitecture from '@/data/packs/frontend-architecture.json';
 import reactAdvanced from '@/data/packs/react-advanced.json';
+import codeReviewAdvanced from '@/data/packs/code-review-advanced.json';
 
 const ALL_PACKS: Pack[] = [
   jsFundamentals as Pack,
@@ -23,6 +24,7 @@ const ALL_PACKS: Pack[] = [
   buildTools as Pack,
   typescriptAdvanced as Pack,
   codeReview as Pack,
+  codeReviewAdvanced as Pack,
   systemDesignFe as Pack,
   frontendArchitecture as Pack,
   reactAdvanced as Pack,

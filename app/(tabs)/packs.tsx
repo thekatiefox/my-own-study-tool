@@ -18,6 +18,7 @@ const PACK_CATEGORIES: Record<string, string> = {
   'typescript-advanced': 'Advanced',
   'build-tools': 'Advanced',
   'code-review': 'Senior Level',
+  'code-review-advanced': 'Senior Level',
   'system-design-fe': 'Senior Level',
   'frontend-architecture': 'Senior Level',
 };

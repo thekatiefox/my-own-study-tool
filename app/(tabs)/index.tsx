@@ -8,6 +8,7 @@ import { getStreak, getTotalDueCards, getDailyStats } from '@/lib/database';
 import { loadAllPacks } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
 import NewsCard from '@/components/NewsCard';
+import QuickQuiz from '@/components/QuickQuiz';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -98,21 +99,42 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Start Review Button */}
-      <Pressable
-        onPress={handleStartReview}
-        style={({ pressed }) => [
-          styles.startButton,
-          {
-            backgroundColor: colors.primary,
-            opacity: pressed ? 0.85 : 1,
-          },
-        ]}
-      >
-        <Text style={styles.startButtonText}>
-          {dueCards > 0 ? `Start Mixed Review (${dueCards} due)` : 'Start Learning'}
-        </Text>
-      </Pressable>
+      {/* Action buttons */}
+      <View style={styles.actionsRow}>
+        <Pressable
+          onPress={handleStartReview}
+          style={({ pressed }) => [
+            styles.actionCard,
+            {
+              backgroundColor: colors.primary,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+        >
+          <Text style={styles.actionEmoji}>📚</Text>
+          <Text style={styles.actionLabel}>Daily Cards</Text>
+          <Text style={styles.actionSub}>
+            {dueCards > 0 ? `${dueCards} due` : 'Review'}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/(tabs)/quiz')}
+          style={({ pressed }) => [
+            styles.actionCard,
+            {
+              backgroundColor: colors.accent,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+        >
+          <Text style={styles.actionEmoji}>🧩</Text>
+          <Text style={styles.actionLabel}>Quiz Packs</Text>
+          <Text style={styles.actionSub}>Scenarios</Text>
+        </Pressable>
+      </View>
+
+      {/* Inline Quick Quiz */}
+      <QuickQuiz colors={colors} colorScheme={colorScheme} />
 
       {/* Motivational section */}
       <View style={[styles.tipCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -219,22 +241,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  startButton: {
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+    backgroundColor: 'transparent',
+  },
+  actionCard: {
+    flex: 1,
     borderRadius: 14,
     paddingVertical: 18,
+    paddingHorizontal: 12,
     alignItems: 'center',
-    marginBottom: 28,
     shadowColor: '#B8845C',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  startButtonText: {
+  actionEmoji: {
+    fontSize: 28,
+    marginBottom: 6,
+  },
+  actionLabel: {
     color: '#FFF9F4',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+  },
+  actionSub: {
+    color: 'rgba(255,249,244,0.7)',
+    fontSize: 12,
+    marginTop: 2,
   },
   tipCard: {
     borderRadius: 14,
