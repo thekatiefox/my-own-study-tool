@@ -118,9 +118,8 @@ export default function PacksScreen() {
             { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Text style={styles.surpriseEmoji}>🎲</Text>
-          <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-            <Text style={styles.surpriseTitle}>Surprise Me</Text>
+          <View style={styles.surpriseTextWrap}>
+            <Text style={styles.surpriseTitle}>Surprise me</Text>
             <Text style={styles.surpriseDesc}>Pick a pack for me and start studying</Text>
           </View>
         </Pressable>
@@ -226,9 +225,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
   },
-  surpriseEmoji: {
-    fontSize: 24,
-    marginRight: 14,
+  surpriseTextWrap: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   surpriseTitle: {
     color: '#FFF9F4',

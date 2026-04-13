@@ -147,13 +147,13 @@ export default function HomeScreen() {
       {/* Streak indicator */}
       {(streak > 0 || todayActive) && (
         <View style={[styles.streakRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.streakFire}>{streak >= 7 ? '🔥' : '⚡'}</Text>
-          <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+          <Text style={[styles.streakNumber, { color: colors.primary }]}>{streak}</Text>
+          <View style={styles.streakTextWrap}>
             <Text style={[styles.streakCount, { color: colors.text }]}>
-              {streak} day streak{streak !== 1 ? '' : ''}
+              day streak
             </Text>
             <Text style={[styles.streakHint, { color: todayActive ? colors.accent : colors.textSecondary }]}>
-              {todayActive ? '✓ active today' : 'Study or quiz to keep it going!'}
+              {todayActive ? 'Active today' : 'Study or quiz to keep it going'}
             </Text>
           </View>
         </View>
@@ -163,10 +163,10 @@ export default function HomeScreen() {
       {!hasHistory && (
         <View style={[styles.getStarted, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.getStartedTitle, { color: colors.text }]}>
-            Ready to level up? 🚀
+            Ready to start learning?
           </Text>
           <Text style={[styles.getStartedSub, { color: colors.textSecondary }]}>
-            Pick how you want to learn today
+            Pick how you want to begin
           </Text>
           <View style={styles.getStartedActions}>
             <Pressable
@@ -176,8 +176,7 @@ export default function HomeScreen() {
                 { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={styles.getStartedBtnIcon}>🎲</Text>
-              <Text style={styles.getStartedBtnLabel}>Surprise Me</Text>
+              <Text style={styles.getStartedBtnLabel}>Surprise me</Text>
               <Text style={[styles.getStartedBtnHint, { color: 'rgba(255,255,255,0.8)' }]}>Pick a random pack</Text>
             </Pressable>
             <Pressable
@@ -187,14 +186,13 @@ export default function HomeScreen() {
                 { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={styles.getStartedBtnIcon}>🧠</Text>
-              <Text style={styles.getStartedBtnLabel}>Take a Quiz</Text>
+              <Text style={styles.getStartedBtnLabel}>Take a quiz</Text>
               <Text style={[styles.getStartedBtnHint, { color: 'rgba(255,255,255,0.8)' }]}>Test what you know</Text>
             </Pressable>
           </View>
           <Pressable onPress={() => router.push('/(tabs)/packs')}>
             <Text style={[styles.browsePacks, { color: colors.primary }]}>
-              Or browse all {totalCards} cards by topic →
+              Or browse all {totalCards} cards by topic
             </Text>
           </Pressable>
         </View>
@@ -216,11 +214,11 @@ export default function HomeScreen() {
 
       {hasHistory && dueCards === 0 && (
         <View style={[styles.caughtUp, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.caughtUpText, { color: colors.accent }]}>✓ All caught up — nice work</Text>
+          <Text style={[styles.caughtUpText, { color: colors.accent }]}>All caught up</Text>
         </View>
       )}
 
-      {/* Surprise Me — always visible for returning users */}
+      {/* Actions — always visible for returning users */}
       {hasHistory && (
         <View style={styles.actionRow}>
           <Pressable
@@ -230,8 +228,7 @@ export default function HomeScreen() {
               { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={{ fontSize: 20 }}>🎲</Text>
-            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Surprise Me</Text>
+            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Surprise me</Text>
             <Text style={[styles.actionCardHint, { color: colors.textSecondary }]}>Random cards</Text>
           </Pressable>
           <Pressable
@@ -241,8 +238,7 @@ export default function HomeScreen() {
               { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={{ fontSize: 20 }}>🧠</Text>
-            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Take a Quiz</Text>
+            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Take a quiz</Text>
             <Text style={[styles.actionCardHint, { color: colors.textSecondary }]}>Test yourself</Text>
           </Pressable>
           <Pressable
@@ -252,8 +248,7 @@ export default function HomeScreen() {
               { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={{ fontSize: 20 }}>📚</Text>
-            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Browse Packs</Text>
+            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Browse packs</Text>
             <Text style={[styles.actionCardHint, { color: colors.textSecondary }]}>Pick a topic</Text>
           </Pressable>
         </View>
@@ -271,15 +266,14 @@ export default function HomeScreen() {
             { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'transparent' }}>
-            <Text style={{ fontSize: 22 }}>🔄</Text>
-            <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+          <View style={styles.dailyReviewRow}>
+            <View style={styles.dailyReviewTextWrap}>
               <Text style={[styles.dailyReviewTitle, { color: colors.text }]}>Daily Review</Text>
               <Text style={[styles.dailyReviewSub, { color: colors.textSecondary }]}>
                 {dailyReviewCount} question{dailyReviewCount !== 1 ? 's' : ''} to reinforce
               </Text>
             </View>
-            <Text style={{ fontSize: 16, color: colors.primary, fontFamily: 'Inter-SemiBold' }}>Start →</Text>
+            <Text style={[styles.dailyReviewAction, { color: colors.primary }]}>Start</Text>
           </View>
         </Pressable>
       )}
@@ -388,12 +382,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 12,
   },
-  streakFire: {
-    fontSize: 28,
+  streakNumber: {
+    fontSize: 24,
+    fontFamily: 'Inter-Light',
+    letterSpacing: -0.5,
+    minWidth: 32,
+    textAlign: 'center',
+  },
+  streakTextWrap: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   streakCount: {
-    fontSize: 17,
-    fontFamily: 'Inter-SemiBold',
+    fontSize: 15,
+    fontFamily: 'Inter-Medium',
   },
   streakHint: {
     fontSize: 13,
@@ -406,14 +408,28 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
+  dailyReviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'transparent',
+  },
+  dailyReviewTextWrap: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   dailyReviewTitle: {
     fontSize: 15,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
   },
   dailyReviewSub: {
     fontSize: 13,
     fontFamily: 'Inter-Regular',
     marginTop: 2,
+  },
+  dailyReviewAction: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
   },
   heroCta: {
     borderRadius: 10,
@@ -444,7 +460,7 @@ const styles = StyleSheet.create({
   },
   caughtUpText: {
     fontSize: 15,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
   },
   getStarted: {
     borderRadius: 12,
@@ -455,7 +471,7 @@ const styles = StyleSheet.create({
   },
   getStartedTitle: {
     fontSize: 20,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
     marginBottom: 4,
   },
   getStartedSub: {
@@ -475,13 +491,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
-  getStartedBtnIcon: {
-    fontSize: 28,
-    marginBottom: 6,
-  },
   getStartedBtnLabel: {
     fontSize: 15,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
     color: '#fff',
   },
   getStartedBtnHint: {
@@ -511,7 +523,7 @@ const styles = StyleSheet.create({
   },
   actionCardLabel: {
     fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
     textAlign: 'center',
   },
   actionCardHint: {

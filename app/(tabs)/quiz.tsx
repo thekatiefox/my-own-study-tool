@@ -52,7 +52,7 @@ export default function QuizScreen() {
           setSelectedPack({
             id: 'daily-review',
             name: 'Daily Review',
-            icon: '🔄',
+            icon: '',
             description: 'Questions to reinforce from previous sessions',
             questions: reviewQs,
           } as QuizPack);
@@ -67,7 +67,7 @@ export default function QuizScreen() {
   const handleSurpriseMe = async () => {
     const allQuestions = quizPacks.flatMap(p => p.questions) as QuizQuestion[];
     const smart = await selectSmartQuestions(allQuestions, 5);
-    setSelectedPack({ id: 'surprise', name: 'Surprise Mix', icon: '🎲', description: 'A random mix from all packs', questions: smart } as QuizPack);
+    setSelectedPack({ id: 'surprise', name: 'Surprise Mix', icon: '', description: 'A random mix from all packs', questions: smart } as QuizPack);
     resetQuiz();
     setActiveQuestions(smart);
     setChoosingCount(false);
@@ -154,9 +154,8 @@ export default function QuizScreen() {
             { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Text style={styles.surpriseEmoji}>🎲</Text>
-          <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-            <Text style={styles.surpriseTitle}>Surprise Me</Text>
+          <View style={styles.surpriseTextWrap}>
+            <Text style={styles.surpriseTitle}>Surprise me</Text>
             <Text style={styles.surpriseDesc}>5 smart-picked questions from all packs</Text>
           </View>
         </Pressable>
@@ -165,10 +164,10 @@ export default function QuizScreen() {
         <Text style={[styles.mixSectionLabel, { color: colors.textSecondary }]}>MIX BY AREA</Text>
         <View style={styles.mixRow}>
           {[
-            { label: 'Core Skills', icon: '🟢', ids: ['code-review-scenarios', 'best-practices'] },
-            { label: 'Advanced', icon: '🟡', ids: ['code-review-advanced', 'debugging-scenarios'] },
-            { label: 'Senior', icon: '🔴', ids: ['system-design-scenarios'] },
-          ].map(({ label, icon, ids }) => {
+            { label: 'Core Skills', ids: ['code-review-scenarios', 'best-practices'] },
+            { label: 'Advanced', ids: ['code-review-advanced', 'debugging-scenarios'] },
+            { label: 'Senior', ids: ['system-design-scenarios'] },
+          ].map(({ label, ids }) => {
             const poolPacks = quizPacks.filter(p => ids.includes(p.id));
             const total = poolPacks.reduce((s, p) => s + p.questions.length, 0);
             if (total === 0) return null;
@@ -178,7 +177,7 @@ export default function QuizScreen() {
                 onPress={async () => {
                   const pool = poolPacks.flatMap(p => p.questions) as QuizQuestion[];
                   const smart = await selectSmartQuestions(pool, Math.min(10, pool.length));
-                  setSelectedPack({ id: `mix-${label}`, name: `${label} Mix`, icon, description: `Questions from ${label}`, questions: smart } as QuizPack);
+                  setSelectedPack({ id: `mix-${label}`, name: `${label} Mix`, icon: '', description: `Questions from ${label}`, questions: smart } as QuizPack);
                   resetQuiz();
                   setActiveQuestions(smart);
                   setChoosingCount(false);
@@ -188,7 +187,6 @@ export default function QuizScreen() {
                   { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
                 ]}
               >
-                <Text style={{ fontSize: 16 }}>{icon}</Text>
                 <Text style={[styles.mixChipLabel, { color: colors.text }]}>{label}</Text>
                 <Text style={[styles.mixChipCount, { color: colors.textSecondary }]}>{total}q</Text>
               </Pressable>
@@ -431,7 +429,7 @@ export default function QuizScreen() {
               { color: isCorrect ? '#7B9E87' : '#C47D5A' },
             ]}
           >
-            {isCorrect ? '✓ Correct!' : '✗ Not quite'}
+            {isCorrect ? 'Correct' : 'Not quite'}
           </Text>
           <Text
             style={[
@@ -483,7 +481,7 @@ export default function QuizScreen() {
                 { borderColor: colors.primary, opacity: pressed ? 0.7 : 1 },
               ]}
             >
-              <Text style={[styles.eli5ButtonText, { color: colors.primary }]}>💡 Explain simpler</Text>
+              <Text style={[styles.eli5ButtonText, { color: colors.primary }]}>Explain simpler</Text>
             </Pressable>
           )}
           {eli5Loading && (
@@ -496,7 +494,7 @@ export default function QuizScreen() {
           )}
           {eli5Text && (
             <View style={[styles.eli5Box, { backgroundColor: colorScheme === 'dark' ? '#1A2335' : '#EDF2FA', borderColor: colors.primary + '40' }]}>
-              <Text style={[styles.eli5Label, { color: colors.primary }]}>💡 ELI5 Explanation</Text>
+              <Text style={[styles.eli5Label, { color: colors.primary }]}>ELI5 Explanation</Text>
               <Text style={[styles.eli5Content, { color: colors.text }]}>{eli5Text}</Text>
             </View>
           )}
@@ -558,9 +556,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
   },
-  surpriseEmoji: {
-    fontSize: 24,
-    marginRight: 14,
+  surpriseTextWrap: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   surpriseTitle: {
     color: '#FFF9F4',
@@ -600,7 +598,7 @@ const styles = StyleSheet.create({
   },
   mixChipLabel: {
     fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
   },
   mixChipCount: {
     fontSize: 10,
@@ -791,7 +789,7 @@ const styles = StyleSheet.create({
   },
   eli5ButtonText: {
     fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
   },
   eli5Loading: {
     flexDirection: 'row',
@@ -812,7 +810,7 @@ const styles = StyleSheet.create({
   },
   eli5Label: {
     fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Medium',
     marginBottom: 6,
   },
   eli5Content: {
