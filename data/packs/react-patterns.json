@@ -1,0 +1,129 @@
+{
+  "id": "react-patterns",
+  "name": "React Patterns & Concepts",
+  "description": "Senior-level React knowledge — hooks, rendering, performance, architecture patterns, and common pitfalls.",
+  "icon": "⚛️",
+  "category": "React",
+  "cards": [
+    {
+      "id": "react-001",
+      "front": "Explain the React reconciliation algorithm (diffing).",
+      "back": "React compares the previous and new virtual DOM trees to determine minimal DOM updates:\n\n1. Different element types → tear down old tree, build new one\n2. Same element type → keep node, update changed attributes\n3. Keys help React identify which items in a list changed, moved, or were removed\n\nKey optimizations:\n• O(n) complexity by comparing trees level-by-level (not O(n³))\n• Assumes elements of different types produce different trees\n• Keys provide hints for stable identity in lists",
+      "tags": ["reconciliation", "virtual-dom"]
+    },
+    {
+      "id": "react-002",
+      "front": "When does a React component re-render?",
+      "back": "A component re-renders when:\n1. Its state changes (setState/useState setter)\n2. Its parent re-renders (even if props haven't changed!)\n3. Context value it consumes changes\n4. forceUpdate() is called (class components)\n\nCommon misconception: Props changing does NOT directly cause re-render — the parent re-rendering does.\n\nTo prevent unnecessary re-renders:\n• React.memo() for functional components\n• useMemo/useCallback to stabilize values\n• Proper context splitting",
+      "tags": ["rendering", "performance"]
+    },
+    {
+      "id": "react-003",
+      "front": "What's the difference between useEffect, useLayoutEffect, and useMemo?",
+      "back": "• useEffect: Runs AFTER paint. For side effects (data fetching, subscriptions). Non-blocking.\n\n• useLayoutEffect: Runs AFTER DOM mutation but BEFORE paint. For DOM measurements and synchronous visual updates. Blocking.\n\n• useMemo: Runs DURING render. Caches a computed value. Not for side effects.\n\nOrder: render → useMemo → DOM update → useLayoutEffect → paint → useEffect\n\nRule of thumb: Use useEffect unless you see a visual flicker, then try useLayoutEffect.",
+      "tags": ["hooks", "lifecycle"]
+    },
+    {
+      "id": "react-004",
+      "front": "What is the difference between controlled and uncontrolled components?",
+      "back": "Controlled: React state is the single source of truth. Every input change goes through setState.\n<input value={name} onChange={e => setName(e.target.value)} />\n\nUncontrolled: The DOM is the source of truth. Access values via refs.\n<input ref={inputRef} defaultValue=\"hello\" />\n\nControlled = more predictable, easier to validate, works well with React's data flow.\nUncontrolled = simpler for simple forms, better for integrating non-React code.\n\nReact Hook Form uses uncontrolled components + refs for performance.",
+      "tags": ["forms", "patterns"]
+    },
+    {
+      "id": "react-005",
+      "front": "Explain the useCallback hook. When should you use it?",
+      "back": "useCallback memoizes a function reference so it doesn't change between renders:\n\nconst handleClick = useCallback(() => {\n  doSomething(id);\n}, [id]);\n\nUse when:\n• Passing callbacks to memoized child components (React.memo)\n• Callback is a dependency of useEffect\n• Callback is used in a context provider value\n\nDON'T use for every function — the memoization itself has a cost. Only use when preventing re-renders of expensive children or breaking effect dependency loops.",
+      "tags": ["hooks", "performance"]
+    },
+    {
+      "id": "react-006",
+      "front": "What is React.memo and when should you use it?",
+      "back": "React.memo is a HOC that memoizes a component — it only re-renders if props change (shallow comparison).\n\nconst ExpensiveList = React.memo(function List({ items }) {\n  return items.map(item => <Item key={item.id} {...item} />);\n});\n\nUse when:\n• Component renders often with the same props\n• Component is expensive to render\n• Parent re-renders frequently but child props don't change\n\nDon't use blindly — shallow comparison has a cost. Profile first to confirm a render bottleneck exists.",
+      "tags": ["performance", "memoization"]
+    },
+    {
+      "id": "react-007",
+      "front": "What are React Error Boundaries?",
+      "back": "Error Boundaries are class components that catch JavaScript errors in their child component tree during rendering, lifecycle methods, and constructors.\n\nThey use:\n• static getDerivedStateFromError(error) → update state to show fallback\n• componentDidCatch(error, info) → log error\n\nLimitations:\n• Must be class components (no hook equivalent yet)\n• Don't catch errors in: event handlers, async code, SSR, or the boundary itself\n\nBest practice: Wrap major UI sections with error boundaries to prevent full-app crashes.",
+      "tags": ["error-handling", "patterns"]
+    },
+    {
+      "id": "react-008",
+      "front": "What is the Context API and when should you avoid it?",
+      "back": "Context provides a way to pass data through the tree without prop drilling.\n\nconst ThemeContext = createContext('light');\n<ThemeContext.Provider value={theme}>...\nconst theme = useContext(ThemeContext);\n\nAvoid Context when:\n• Data changes frequently (every consumer re-renders on ANY change)\n• You need complex state logic (use state management library instead)\n• You're only passing data 2-3 levels (composition/props are simpler)\n\nTip: Split contexts by update frequency. Don't put everything in one giant context.",
+      "tags": ["context", "state-management"]
+    },
+    {
+      "id": "react-009",
+      "front": "What is the difference between composition and inheritance in React?",
+      "back": "React strongly favors COMPOSITION over inheritance.\n\nComposition: Build components by combining smaller components\n• children prop for generic containers\n• Render props for sharing behavior\n• Hooks for reusable logic\n• 'Slots' via named props (left, right, header)\n\n<Layout sidebar={<Sidebar />}>\n  <MainContent />\n</Layout>\n\nInheritance in React is almost never needed. The React team has \"not found any use cases where we would recommend creating component inheritance hierarchies.\"",
+      "tags": ["patterns", "architecture"]
+    },
+    {
+      "id": "react-010",
+      "front": "What is a custom hook and what are the rules of hooks?",
+      "back": "A custom hook is a function starting with 'use' that composes other hooks:\n\nfunction useLocalStorage(key, initial) {\n  const [value, setValue] = useState(() => {\n    const stored = localStorage.getItem(key);\n    return stored ? JSON.parse(stored) : initial;\n  });\n  useEffect(() => {\n    localStorage.setItem(key, JSON.stringify(value));\n  }, [key, value]);\n  return [value, setValue];\n}\n\nRules of Hooks:\n1. Only call hooks at the top level (not inside loops/conditions)\n2. Only call hooks from React functions (components or custom hooks)",
+      "tags": ["hooks", "patterns"]
+    },
+    {
+      "id": "react-011",
+      "front": "Explain React Suspense and lazy loading.",
+      "back": "Suspense lets components 'wait' for something before rendering, showing a fallback.\n\nCode splitting with lazy:\nconst Settings = lazy(() => import('./Settings'));\n\n<Suspense fallback={<Spinner />}>\n  <Settings />\n</Suspense>\n\nSuspense can also work with data fetching (via libraries like React Query, SWR, or the experimental 'use' hook).\n\nBenefits:\n• Smaller initial bundle size\n• Better loading UX with declarative fallbacks\n• Nested Suspense boundaries for granular loading states",
+      "tags": ["suspense", "performance"]
+    },
+    {
+      "id": "react-012",
+      "front": "What is the key prop and why is it important?",
+      "back": "The key prop helps React identify which items in a list have changed, been added, or removed.\n\nRules:\n• Keys must be unique among siblings\n• Keys should be stable (not random or index-based for dynamic lists)\n• Use data IDs, not array indices\n\nUsing index as key causes bugs when:\n• Items are reordered, inserted, or deleted\n• Components have local state (state gets attached to wrong item)\n\nAnti-pattern: key={Math.random()} — forces remount every render, destroying state and causing performance issues.",
+      "tags": ["lists", "rendering"]
+    },
+    {
+      "id": "react-013",
+      "front": "What is prop drilling and how do you solve it?",
+      "back": "Prop drilling is passing data through many intermediate components that don't use it, just to reach a deeply nested component.\n\nSolutions (from simplest to most complex):\n1. Component composition — restructure to avoid nesting\n2. children prop — pass rendered components instead of data\n3. Context API — for truly shared state\n4. State management library (Zustand, Redux) — for complex global state\n\nOften the best fix is restructuring your component tree, not reaching for Context or Redux.",
+      "tags": ["patterns", "state-management"]
+    },
+    {
+      "id": "react-014",
+      "front": "What is the useReducer hook and when prefer it over useState?",
+      "back": "useReducer manages state with a reducer function (like Redux):\n\nconst [state, dispatch] = useReducer(reducer, initialState);\n\nfunction reducer(state, action) {\n  switch (action.type) {\n    case 'increment': return { count: state.count + 1 };\n    default: return state;\n  }\n}\n\nPrefer useReducer when:\n• State logic is complex (multiple sub-values)\n• Next state depends on previous state\n• You want to centralize update logic\n• Multiple actions affect the same state\n• You need to pass dispatch down (stable reference, unlike setState closures)",
+      "tags": ["hooks", "state-management"]
+    },
+    {
+      "id": "react-015",
+      "front": "What is a render prop pattern?",
+      "back": "A render prop is a function prop that returns React elements, letting a component share its internal logic:\n\n<Mouse render={({ x, y }) => (\n  <Cursor position={{ x, y }} />\n)}/>\n\nclass Mouse extends React.Component {\n  state = { x: 0, y: 0 };\n  render() {\n    return this.props.render(this.state);\n  }\n}\n\nMostly replaced by custom hooks in modern React, but still useful in libraries and when you need to share behavior between class and function components.",
+      "tags": ["patterns", "advanced"]
+    },
+    {
+      "id": "react-016",
+      "front": "How does React batching work?",
+      "back": "React batches multiple state updates into a single re-render for performance.\n\nReact 18+ automatic batching:\n• ALL state updates are batched — in event handlers, timeouts, promises, native events\n• setState calls in the same event are grouped into one render\n\nfunction handleClick() {\n  setCount(c => c + 1);  // doesn't re-render yet\n  setFlag(f => !f);       // doesn't re-render yet\n  // React re-renders ONCE with both updates\n}\n\nTo opt out: flushSync(() => setState(val)) forces immediate render (rarely needed).",
+      "tags": ["rendering", "performance"]
+    },
+    {
+      "id": "react-017",
+      "front": "What is the useRef hook used for?",
+      "back": "useRef returns a mutable ref object with a .current property that persists across renders WITHOUT causing re-renders when changed.\n\nUse cases:\n1. DOM references: const inputRef = useRef(null);\n   <input ref={inputRef} /> → inputRef.current.focus()\n\n2. Storing mutable values: previous props/state, timers, instance variables\n   const timerRef = useRef(null);\n\n3. Avoiding stale closures in effects\n\nKey difference from state: changing ref.current does NOT trigger a re-render. It's like an instance variable on a class component.",
+      "tags": ["hooks", "dom"]
+    },
+    {
+      "id": "react-018",
+      "front": "What are React Server Components (RSC)?",
+      "back": "Server Components render on the server and send serialized UI to the client. They can:\n• Access databases, file systems, and APIs directly\n• Import server-only libraries without adding to client bundle\n• Be async (await in the component body)\n\nKey rules:\n• No useState, useEffect, or browser APIs\n• No event handlers (onClick, etc.)\n• Can render Client Components as children\n• Client Components cannot import Server Components\n\nBenefit: Smaller bundles, faster loads, direct backend access. Used in Next.js App Router.",
+      "tags": ["server-components", "architecture"]
+    },
+    {
+      "id": "react-019",
+      "front": "What is the StrictMode component and what does it do?",
+      "back": "StrictMode is a development-only tool that highlights potential problems:\n\n<StrictMode>\n  <App />\n</StrictMode>\n\nIt intentionally:\n• Double-invokes render, effects, and state updaters to find impure renders\n• Warns about deprecated APIs\n• Detects unexpected side effects\n\nReact 18+: Effects mount → unmount → mount in development to simulate future features (like reusable state on navigation).\n\nHas NO impact on production builds — it's purely a dev-time diagnostic tool.",
+      "tags": ["debugging", "best-practices"]
+    },
+    {
+      "id": "react-020",
+      "front": "How do you optimize a React app's performance?",
+      "back": "Systematic approach:\n\n1. MEASURE first — React DevTools Profiler, Chrome Performance tab\n2. Reduce re-renders:\n   • React.memo for pure components\n   • useMemo/useCallback for expensive values/callbacks\n   • Split context by update frequency\n3. Reduce bundle size:\n   • Code splitting with lazy/Suspense\n   • Tree-shaking, dynamic imports\n4. Virtualize long lists (react-window, @tanstack/virtual)\n5. Debounce/throttle frequent updates\n6. Use proper keys in lists\n7. Avoid inline object/array creation in JSX props\n\nGolden rule: Don't optimize prematurely. Profile, then fix bottlenecks.",
+      "tags": ["performance", "optimization"]
+    }
+  ]
+}

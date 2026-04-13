@@ -1,0 +1,129 @@
+{
+  "id": "js-fundamentals",
+  "name": "JavaScript Fundamentals",
+  "description": "Core JavaScript concepts every senior dev should know cold — closures, prototypes, event loop, and more.",
+  "icon": "🟨",
+  "category": "JavaScript",
+  "cards": [
+    {
+      "id": "js-001",
+      "front": "What is a closure in JavaScript?",
+      "back": "A closure is a function that retains access to variables from its outer (enclosing) scope, even after the outer function has returned. It 'closes over' the variables it references.\n\nExample:\nfunction outer() {\n  let count = 0;\n  return function inner() {\n    return ++count;\n  };\n}\nconst counter = outer();\ncounter(); // 1\ncounter(); // 2",
+      "tags": ["closures", "scope"]
+    },
+    {
+      "id": "js-002",
+      "front": "Explain the JavaScript event loop.",
+      "back": "The event loop is the mechanism that allows JavaScript to perform non-blocking operations despite being single-threaded.\n\n1. Call stack executes synchronous code\n2. Web APIs handle async operations (setTimeout, fetch)\n3. Completed callbacks go to the task queue (macrotasks) or microtask queue\n4. Microtasks (Promises) run before macrotasks (setTimeout)\n5. The event loop checks if the call stack is empty, then pulls from queues",
+      "tags": ["event-loop", "async"]
+    },
+    {
+      "id": "js-003",
+      "front": "What's the difference between var, let, and const?",
+      "back": "• var: function-scoped, hoisted (initialized as undefined), can be redeclared\n• let: block-scoped, hoisted but NOT initialized (temporal dead zone), cannot be redeclared\n• const: block-scoped, must be initialized at declaration, binding cannot be reassigned (but object properties can be mutated)\n\nBest practice: Use const by default, let when rebinding is needed, avoid var.",
+      "tags": ["variables", "scope"]
+    },
+    {
+      "id": "js-004",
+      "front": "What is prototypal inheritance?",
+      "back": "Every JavaScript object has a hidden [[Prototype]] link to another object. When you access a property that doesn't exist on the object, JS walks up the prototype chain.\n\n• Object.create(proto) creates an object with proto as its prototype\n• Classes are syntactic sugar over prototypal inheritance\n• Object.getPrototypeOf(obj) returns the prototype\n• The chain ends at Object.prototype → null",
+      "tags": ["prototypes", "inheritance"]
+    },
+    {
+      "id": "js-005",
+      "front": "What are Promises and how do they differ from callbacks?",
+      "back": "A Promise represents the eventual result of an async operation. Unlike callbacks:\n\n• Promises chain with .then() — avoids 'callback hell'\n• Promises have 3 states: pending, fulfilled, rejected\n• Errors propagate through the chain to .catch()\n• Promise.all() runs multiple promises in parallel\n• async/await is syntactic sugar over Promises\n\nCallbacks can lead to inversion of control issues; Promises give the caller control back.",
+      "tags": ["promises", "async"]
+    },
+    {
+      "id": "js-006",
+      "front": "What is the 'this' keyword and how is its value determined?",
+      "back": "The value of 'this' depends on HOW a function is called:\n\n1. Global context: window (browser) or undefined (strict mode)\n2. Object method: the object before the dot\n3. new keyword: the newly created object\n4. call/apply/bind: explicitly set 'this'\n5. Arrow functions: inherit 'this' from enclosing lexical scope (no own 'this')\n\nCommon gotcha: passing an object method as a callback loses 'this' context.",
+      "tags": ["this", "scope"]
+    },
+    {
+      "id": "js-007",
+      "front": "Explain the difference between == and ===.",
+      "back": "• == (loose equality): performs type coercion before comparing. '5' == 5 is true.\n• === (strict equality): no type coercion — both value AND type must match. '5' === 5 is false.\n\nCoercion rules are complex and error-prone:\n• null == undefined is true\n• '' == 0 is true\n• [] == false is true\n\nBest practice: Always use === to avoid unexpected behavior.",
+      "tags": ["equality", "coercion"]
+    },
+    {
+      "id": "js-008",
+      "front": "What is the difference between shallow and deep copy?",
+      "back": "Shallow copy: copies the top-level properties. Nested objects still share references.\n• Object.assign({}, obj)\n• { ...obj } (spread)\n• Array.from(arr) or [...arr]\n\nDeep copy: recursively copies all nested objects.\n• structuredClone(obj) (modern, recommended)\n• JSON.parse(JSON.stringify(obj)) (loses functions, dates, undefined)\n\nKnowing when you need deep vs shallow copy prevents subtle mutation bugs.",
+      "tags": ["objects", "copying"]
+    },
+    {
+      "id": "js-009",
+      "front": "What are generators in JavaScript?",
+      "back": "Generators are functions that can pause and resume execution using the yield keyword.\n\nfunction* counter() {\n  yield 1;\n  yield 2;\n  yield 3;\n}\n\nconst gen = counter();\ngen.next(); // { value: 1, done: false }\ngen.next(); // { value: 2, done: false }\n\nUse cases: lazy evaluation, infinite sequences, implementing iterables, controlling async flow (before async/await).",
+      "tags": ["generators", "iterators"]
+    },
+    {
+      "id": "js-010",
+      "front": "What is debouncing vs throttling?",
+      "back": "Both limit how often a function executes:\n\nDebounce: Waits until a pause in calls. Fires once after the last call + delay.\n• Use for: search input, resize handlers, form validation\n\nThrottle: Fires at most once per time interval, regardless of how often it's called.\n• Use for: scroll handlers, rate limiting API calls\n\nExample: Typing in a search box — debounce waits until you stop typing. Throttle would fire every 300ms while typing.",
+      "tags": ["performance", "patterns"]
+    },
+    {
+      "id": "js-011",
+      "front": "What is the Temporal Dead Zone (TDZ)?",
+      "back": "The TDZ is the period between entering a scope and the variable's declaration being executed. During this time, accessing a let or const variable throws a ReferenceError.\n\n{\n  // TDZ starts\n  console.log(x); // ReferenceError!\n  let x = 5; // TDZ ends\n}\n\nvar doesn't have a TDZ — it's hoisted and initialized to undefined. The TDZ helps catch bugs from using variables before they're defined.",
+      "tags": ["scope", "hoisting"]
+    },
+    {
+      "id": "js-012",
+      "front": "Explain WeakMap and WeakSet. When would you use them?",
+      "back": "WeakMap/WeakSet hold 'weak' references to objects — they don't prevent garbage collection.\n\nWeakMap: keys must be objects, not enumerable\nWeakSet: values must be objects, not enumerable\n\nUse cases:\n• Private data associated with objects (the data is GC'd when the object is)\n• Caching computed values without causing memory leaks\n• Tracking DOM elements without preventing cleanup\n\nKey difference from Map/Set: no size property, no iteration, entries are automatically removed when the key object is GC'd.",
+      "tags": ["collections", "memory"]
+    },
+    {
+      "id": "js-013",
+      "front": "What is event delegation and why is it useful?",
+      "back": "Event delegation attaches a single event listener to a parent element instead of individual listeners on each child.\n\nHow it works: Events bubble up the DOM. The parent listener checks event.target to determine which child triggered the event.\n\ndocument.querySelector('ul').addEventListener('click', (e) => {\n  if (e.target.matches('li')) { /* handle click */ }\n});\n\nBenefits:\n• Fewer event listeners = less memory\n• Automatically works for dynamically added children\n• Simpler cleanup",
+      "tags": ["dom", "events"]
+    },
+    {
+      "id": "js-014",
+      "front": "What are the different ways to handle errors in async code?",
+      "back": "1. try/catch with async/await:\nasync function fetch() {\n  try { await api.get(); }\n  catch (err) { handle(err); }\n}\n\n2. .catch() on Promises:\napi.get().catch(err => handle(err));\n\n3. Global handlers:\nwindow.addEventListener('unhandledrejection', handler);\nprocess.on('unhandledRejection', handler);\n\n4. Error boundaries (React-specific)\n\nBest practice: Always handle errors at the appropriate level. Don't swallow errors silently.",
+      "tags": ["errors", "async"]
+    },
+    {
+      "id": "js-015",
+      "front": "What is the difference between map, filter, and reduce?",
+      "back": "All three are array methods that return new arrays (except reduce):\n\n• map: transforms each element → new array of same length\n[1,2,3].map(x => x * 2) → [2,4,6]\n\n• filter: keeps elements that pass a test → new array (possibly shorter)\n[1,2,3].filter(x => x > 1) → [2,3]\n\n• reduce: accumulates values into a single result\n[1,2,3].reduce((sum, x) => sum + x, 0) → 6\n\nreduce is the most powerful — you can implement map and filter with it.",
+      "tags": ["arrays", "functional"]
+    },
+    {
+      "id": "js-016",
+      "front": "What is optional chaining (?.) and nullish coalescing (??)?",
+      "back": "Optional chaining (?.) safely accesses nested properties without throwing if a value is null/undefined:\nuser?.address?.street // undefined if any part is null/undefined\n\nNullish coalescing (??) provides a default for null/undefined only (not '' or 0):\ncount ?? 10 // 10 only if count is null/undefined\ncount || 10 // 10 if count is null, undefined, 0, '', false\n\n?? is more precise than || because it doesn't treat falsy values as 'missing'.",
+      "tags": ["operators", "es2020"]
+    },
+    {
+      "id": "js-017",
+      "front": "What is a pure function?",
+      "back": "A pure function has two properties:\n1. Same inputs always produce the same output (deterministic)\n2. No side effects (doesn't modify external state)\n\nPure: const add = (a, b) => a + b;\nImpure: let total = 0; const add = (x) => { total += x; return total; };\n\nBenefits: easier to test, reason about, cache (memoize), and parallelize. Foundation of functional programming and critical for React (pure components, reducers).",
+      "tags": ["functional", "patterns"]
+    },
+    {
+      "id": "js-018",
+      "front": "Explain the module systems: CommonJS vs ES Modules.",
+      "back": "CommonJS (CJS): Node.js default\n• require() / module.exports\n• Synchronous loading\n• Dynamic (can require conditionally)\n\nES Modules (ESM): Modern standard\n• import / export\n• Static analysis (tree-shaking possible)\n• Async loading by default\n• Named exports + default export\n\nKey differences:\n• ESM imports are hoisted and read-only bindings\n• CJS exports are value copies; ESM exports are live bindings\n• Most modern projects use ESM; Node supports both",
+      "tags": ["modules", "bundling"]
+    },
+    {
+      "id": "js-019",
+      "front": "What is memoization?",
+      "back": "Memoization is an optimization that caches the results of expensive function calls and returns the cached result for repeated inputs.\n\nfunction memoize(fn) {\n  const cache = new Map();\n  return function(...args) {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) return cache.get(key);\n    const result = fn(...args);\n    cache.set(key, result);\n    return result;\n  };\n}\n\nIn React: useMemo() and React.memo() are memoization tools. Use when computation is expensive, not by default.",
+      "tags": ["performance", "optimization"]
+    },
+    {
+      "id": "js-020",
+      "front": "What is the difference between synchronous and asynchronous iteration?",
+      "back": "Synchronous iteration: for...of loop with Symbol.iterator\nfor (const item of [1, 2, 3]) { ... }\n\nAsynchronous iteration: for await...of with Symbol.asyncIterator\nfor await (const chunk of readableStream) { ... }\n\nAsync iterators are useful for:\n• Reading files or streams chunk by chunk\n• Paginated API calls\n• Real-time data feeds\n\nYou can create async generators with async function*() { yield await fetchPage(); }",
+      "tags": ["async", "iterators"]
+    }
+  ]
+}
