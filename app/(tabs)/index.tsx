@@ -40,7 +40,7 @@ export default function HomeScreen() {
     }
 
     // Fetch news in background (non-blocking)
-    fetchTopTechNews(5)
+    fetchTopTechNews(3)
       .then(setNews)
       .finally(() => setNewsLoading(false));
   }, []);

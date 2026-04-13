@@ -30,9 +30,13 @@ export default function NewsCard({ story, colors }: Props) {
         {story.title}
       </Text>
       {story.summary ? (
-        <Text style={[styles.summary, { color: colors.textSecondary }]} numberOfLines={3}>
-          {story.summary}
-        </Text>
+        <View style={styles.summaryBox}>
+          {story.summary.split('\n').map((line, i) => (
+            <Text key={i} style={[styles.bullet, { color: colors.textSecondary }]}>
+              {line}
+            </Text>
+          ))}
+        </View>
       ) : null}
       <View style={styles.meta}>
         <Text style={[styles.source, { color: colors.primary }]}>
@@ -68,6 +72,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 8,
+  },
+  summaryBox: {
+    marginBottom: 8,
+    backgroundColor: 'transparent',
+  },
+  bullet: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 2,
   },
   meta: {
     flexDirection: 'row',

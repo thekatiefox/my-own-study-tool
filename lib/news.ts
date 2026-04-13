@@ -1,7 +1,7 @@
 const HN_TOP_STORIES = 'https://hacker-news.firebaseio.com/v0/topstories.json';
 const HN_ITEM = 'https://hacker-news.firebaseio.com/v0/item';
 
-import { summarizeHeadlines } from './summarizer';
+import { summarizeArticles } from './summarizer';
 
 export interface NewsStory {
   id: number;
@@ -56,7 +56,7 @@ async function fetchStory(id: number): Promise<NewsStory | null> {
  * Summaries are generated via Gemini (if API key is configured).
  * Results are cached for 2 hours.
  */
-export async function fetchTopTechNews(count: number = 5): Promise<NewsStory[]> {
+export async function fetchTopTechNews(count: number = 3): Promise<NewsStory[]> {
   if (cache && Date.now() - cache.fetchedAt < CACHE_DURATION_MS) {
     return cache.stories.slice(0, count);
   }
@@ -73,9 +73,9 @@ export async function fetchTopTechNews(count: number = 5): Promise<NewsStory[]> 
       .filter((s): s is NewsStory => s !== null)
       .slice(0, count);
 
-    // Generate summaries via LLM in a single batch call
-    const summaries = await summarizeHeadlines(
-      stories.map(s => ({ title: s.title, source: s.source }))
+    // Generate summaries from actual article content via LLM
+    const summaries = await summarizeArticles(
+      stories.map(s => ({ title: s.title, url: s.url, source: s.source }))
     );
     for (const story of stories) {
       story.summary = summaries.get(story.title) ?? '';
