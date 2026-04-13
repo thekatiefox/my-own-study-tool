@@ -63,3 +63,55 @@ export async function selectSmartQuestions(
 
   return withNoise.slice(0, Math.min(count, withNoise.length)).map((s) => s.question);
 }
+
+/**
+ * Get questions due for daily review — ones you got wrong recently
+ * or haven't reinforced at spaced intervals (1, 3, 7, 14, 30 days).
+ * Returns only questions from the provided pool.
+ */
+export async function getDailyReviewQuestions(
+  allQuestions: QuizQuestion[],
+  maxCount: number = 10
+): Promise<QuizQuestion[]> {
+  const progressMap = await getQuizQuestionProgressMap();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const reviewIntervals = [1, 3, 7, 14, 30];
+
+  const candidates: { question: QuizQuestion; priority: number }[] = [];
+
+  for (const q of allQuestions) {
+    const prog = progressMap.get(q.id);
+    if (!prog || prog.timesSeen === 0) continue; // never seen = not for review
+
+    const daysSince = prog.lastSeenDate
+      ? Math.floor((today.getTime() - new Date(prog.lastSeenDate).getTime()) / 86400000)
+      : 999;
+
+    // Got it wrong last time — top priority review
+    if (prog.streak === 0 && daysSince >= 1) {
+      candidates.push({ question: q, priority: 1 });
+      continue;
+    }
+
+    // Due for spaced review: seen N days ago where N is a review interval
+    const dueForReview = reviewIntervals.some(
+      interval => daysSince >= interval && daysSince < interval + 2
+    );
+    if (dueForReview && prog.streak < 5) {
+      candidates.push({ question: q, priority: 10 + prog.streak * 5 });
+      continue;
+    }
+
+    // Stale but not mastered
+    if (daysSince >= 7 && prog.streak < 3) {
+      candidates.push({ question: q, priority: 20 });
+    }
+  }
+
+  // Sort by priority (lower = more urgent), add noise for variety
+  candidates.sort((a, b) => (a.priority + Math.random() * 3) - (b.priority + Math.random() * 3));
+
+  return candidates.slice(0, maxCount).map(c => c.question);
+}

@@ -133,3 +133,58 @@ Respond with ONLY numbered entries. Use bullet points (•) within each:
   return result;
 }
 
+/**
+ * Generate an ELI5 (Explain Like I'm 5) breakdown for a quiz question.
+ * Returns a beginner-friendly explanation of the concept.
+ */
+export async function explainSimpler(
+  question: string,
+  options: string[],
+  correctIndex: number,
+  existingExplanation?: string
+): Promise<string> {
+  if (!isConfigured) return 'API key not configured. Unable to generate explanation.';
+
+  const prompt = `You're a patient, encouraging mentor explaining a coding concept to someone who just started learning to code. Use an ELI5 (Explain Like I'm 5) style with a real-world analogy.
+
+Quiz question: "${question}"
+
+Options:
+${options.map((o, i) => `${String.fromCharCode(65 + i)}. ${o}${i === correctIndex ? ' ✅ (correct)' : ''}`).join('\n')}
+
+${existingExplanation ? `Original explanation: ${existingExplanation}` : ''}
+
+Write a SHORT (80 words max), beginner-friendly explanation that:
+1. Uses a real-world analogy to explain the core concept
+2. Explains WHY the correct answer makes sense (not just that it IS correct)
+3. Uses simple language — no jargon, no acronyms without definitions
+4. Feels warm and encouraging, not textbook-y
+
+Start directly with the analogy — no "Great question!" preamble.`;
+
+  try {
+    const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 300,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn('Gemini ELI5 error:', res.status);
+      return 'Could not generate explanation right now. Try again later!';
+    }
+
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? 'No explanation generated.';
+  } catch (err) {
+    console.warn('ELI5 generation failed:', err);
+    return 'Could not generate explanation right now. Try again later!';
+  }
+}
+

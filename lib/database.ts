@@ -67,7 +67,8 @@ async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
       date TEXT PRIMARY KEY,
       cards_reviewed INTEGER NOT NULL DEFAULT 0,
       cards_correct INTEGER NOT NULL DEFAULT 0,
-      new_cards_seen INTEGER NOT NULL DEFAULT 0
+      new_cards_seen INTEGER NOT NULL DEFAULT 0,
+      quizzes_completed INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS quiz_results (
@@ -91,6 +92,15 @@ async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_progress_pack ON card_progress(pack_id);
     CREATE INDEX IF NOT EXISTS idx_quiz_results_date ON quiz_results(date);
   `);
+
+  // Migration: add quizzes_completed column if missing
+  try {
+    await database.runAsync(
+      `ALTER TABLE daily_stats ADD COLUMN quizzes_completed INTEGER NOT NULL DEFAULT 0`
+    );
+  } catch {
+    // Column already exists — ignore
+  }
 }
 
 // --- Pack Operations ---
@@ -310,6 +320,7 @@ export async function getDailyStats(date: string): Promise<DailyStats | null> {
     cards_reviewed: number;
     cards_correct: number;
     new_cards_seen: number;
+    quizzes_completed: number;
   }>('SELECT * FROM daily_stats WHERE date = ?', [date]);
 
   if (!row) return null;
@@ -319,13 +330,14 @@ export async function getDailyStats(date: string): Promise<DailyStats | null> {
     cardsReviewed: row.cards_reviewed,
     cardsCorrect: row.cards_correct,
     newCardsSeen: row.new_cards_seen,
+    quizzesCompleted: row.quizzes_completed ?? 0,
   };
 }
 
 export async function getStreak(): Promise<number> {
   if (isWeb) {
     const dates = Array.from(memStats.values())
-      .filter(s => s.cardsReviewed > 0)
+      .filter(s => s.cardsReviewed > 0 || (s.quizzesCompleted ?? 0) > 0)
       .map(s => s.date)
       .sort()
       .reverse();
@@ -343,7 +355,7 @@ export async function getStreak(): Promise<number> {
   }
   const database = await getDatabase();
   const rows = await database.getAllAsync<{ date: string }>(
-    'SELECT date FROM daily_stats WHERE cards_reviewed > 0 ORDER BY date DESC'
+    'SELECT date FROM daily_stats WHERE cards_reviewed > 0 OR quizzes_completed > 0 ORDER BY date DESC'
   );
 
   if (rows.length === 0) return 0;
@@ -456,11 +468,20 @@ export async function saveQuizResult(packName: string, score: number, total: num
   const date = new Date().toISOString().split('T')[0];
   if (isWeb) {
     memQuizResults.push({ packName, score, total, date });
+    const existing = memStats.get(date) ?? { date, cardsReviewed: 0, cardsCorrect: 0, newCardsSeen: 0, quizzesCompleted: 0 };
+    existing.quizzesCompleted = (existing.quizzesCompleted ?? 0) + 1;
+    memStats.set(date, existing);
   } else {
     const database = await getDatabase();
     await database.runAsync(
       'INSERT INTO quiz_results (pack_name, score, total, date) VALUES (?, ?, ?, ?)',
       [packName, score, total, date]
+    );
+    await database.runAsync(
+      `INSERT INTO daily_stats (date, cards_reviewed, cards_correct, new_cards_seen, quizzes_completed)
+       VALUES (?, 0, 0, 0, 1)
+       ON CONFLICT(date) DO UPDATE SET quizzes_completed = quizzes_completed + 1`,
+      [date]
     );
   }
   // Background cloud sync

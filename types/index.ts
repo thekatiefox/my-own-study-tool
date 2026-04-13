@@ -31,6 +31,7 @@ export interface DailyStats {
   cardsReviewed: number;
   cardsCorrect: number;
   newCardsSeen: number;
+  quizzesCompleted?: number;
 }
 
 export interface SM2Input {

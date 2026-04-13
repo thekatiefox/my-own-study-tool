@@ -4,9 +4,11 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getTotalDueCards, hasAnyReviewHistory } from '@/lib/database';
+import { getTotalDueCards, hasAnyReviewHistory, getStreak, getDailyStats } from '@/lib/database';
 import { loadAllPacks, getAllPackData } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
+import { getDailyReviewQuestions } from '@/lib/quizSelection';
+import { QuizQuestion } from '@/types';
 import QuickQuiz from '@/components/QuickQuiz';
 import * as WebBrowser from 'expo-web-browser';
 import * as Haptics from 'expo-haptics';
@@ -19,6 +21,9 @@ export default function HomeScreen() {
   const [dueCards, setDueCards] = useState(0);
   const [totalCards, setTotalCards] = useState(0);
   const [hasHistory, setHasHistory] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [todayActive, setTodayActive] = useState(false);
+  const [dailyReviewCount, setDailyReviewCount] = useState(0);
   const [news, setNews] = useState<NewsStory[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [expandedStory, setExpandedStory] = useState<number | null>(null);
@@ -34,6 +39,31 @@ export default function HomeScreen() {
       setHasHistory(history);
       const packs = getAllPackData();
       setTotalCards(packs.reduce((sum, p) => sum + p.cards.length, 0));
+      const s = await getStreak();
+      setStreak(s);
+      const today = new Date().toISOString().split('T')[0];
+      const todayStats = await getDailyStats(today);
+      setTodayActive(
+        todayStats !== null &&
+        ((todayStats.cardsReviewed ?? 0) > 0 || (todayStats.quizzesCompleted ?? 0) > 0)
+      );
+
+      // Load daily review count from all quiz packs
+      try {
+        let allQuizQuestions: QuizQuestion[] = [];
+        const quizFiles = [
+          require('@/data/quizzes/code-review.json'),
+          require('@/data/quizzes/code-review-advanced.json'),
+          require('@/data/quizzes/system-design.json'),
+        ];
+        try { quizFiles.push(require('@/data/quizzes/debugging-scenarios.json')); } catch {}
+        try { quizFiles.push(require('@/data/quizzes/best-practices.json')); } catch {}
+        for (const file of quizFiles) {
+          if (file?.questions) allQuizQuestions = [...allQuizQuestions, ...file.questions];
+        }
+        const reviewQs = await getDailyReviewQuestions(allQuizQuestions, 10);
+        setDailyReviewCount(reviewQs.length);
+      } catch {}
     } catch (err) {
       console.error('Failed to load home data:', err);
     }
@@ -73,6 +103,21 @@ export default function HomeScreen() {
       <Text style={[styles.greeting, { color: colors.textSecondary }]}>
         {getGreeting()}
       </Text>
+
+      {/* Streak indicator */}
+      {(streak > 0 || todayActive) && (
+        <View style={[styles.streakRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={styles.streakFire}>{streak >= 7 ? '🔥' : '⚡'}</Text>
+          <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+            <Text style={[styles.streakCount, { color: colors.text }]}>
+              {streak} day streak{streak !== 1 ? '' : ''}
+            </Text>
+            <Text style={[styles.streakHint, { color: todayActive ? colors.accent : colors.textSecondary }]}>
+              {todayActive ? '✓ active today' : 'Study or quiz to keep it going!'}
+            </Text>
+          </View>
+        </View>
+      )}
 
       <Pressable
         onPress={() => {
@@ -134,6 +179,28 @@ export default function HomeScreen() {
 
       {/* Quick Quiz — compact inline */}
       <QuickQuiz colors={colors} colorScheme={colorScheme} />
+
+      {/* Daily Review — missed questions to revisit */}
+      {dailyReviewCount > 0 && (
+        <Pressable
+          onPress={() => router.push({ pathname: '/(tabs)/quiz', params: { mode: 'review' } })}
+          style={({ pressed }) => [
+            styles.dailyReview,
+            { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'transparent' }}>
+            <Text style={{ fontSize: 22 }}>🔄</Text>
+            <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+              <Text style={[styles.dailyReviewTitle, { color: colors.text }]}>Daily Review</Text>
+              <Text style={[styles.dailyReviewSub, { color: colors.textSecondary }]}>
+                {dailyReviewCount} question{dailyReviewCount !== 1 ? 's' : ''} to reinforce
+              </Text>
+            </View>
+            <Text style={{ fontSize: 16, color: colors.primary, fontFamily: 'Inter-SemiBold' }}>Start →</Text>
+          </View>
+        </Pressable>
+      )}
 
       {/* News — compact headline list */}
       <View style={styles.newsSection}>
@@ -229,6 +296,42 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 20,
     fontFamily: 'Inter-Regular',
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 12,
+  },
+  streakFire: {
+    fontSize: 28,
+  },
+  streakCount: {
+    fontSize: 17,
+    fontFamily: 'Inter-SemiBold',
+  },
+  streakHint: {
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+    marginTop: 2,
+  },
+  dailyReview: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 16,
+  },
+  dailyReviewTitle: {
+    fontSize: 15,
+    fontFamily: 'Inter-SemiBold',
+  },
+  dailyReviewSub: {
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+    marginTop: 2,
   },
   heroCta: {
     borderRadius: 10,

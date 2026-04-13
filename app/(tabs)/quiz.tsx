@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import { StyleSheet, ScrollView, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { QuizPack, QuizQuestion } from '@/types';
 import * as Haptics from 'expo-haptics';
 import { saveQuizResult, recordQuizQuestionResult } from '@/lib/database';
-import { selectSmartQuestions } from '@/lib/quizSelection';
+import { selectSmartQuestions, getDailyReviewQuestions } from '@/lib/quizSelection';
+import { explainSimpler } from '@/lib/summarizer';
+import { useLocalSearchParams } from 'expo-router';
 
 import codeReviewData from '@/data/quizzes/code-review-scenarios.json';
 import codeReviewAdvData from '@/data/quizzes/code-review-advanced.json';
@@ -28,6 +30,7 @@ const quizPacks: QuizPack[] = [
 export default function QuizScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  const params = useLocalSearchParams<{ mode?: string }>();
 
   const [selectedPack, setSelectedPack] = useState<QuizPack | null>(null);
   const [activeQuestions, setActiveQuestions] = useState<QuizQuestion[]>([]);
@@ -36,6 +39,30 @@ export default function QuizScreen() {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [choosingCount, setChoosingCount] = useState(false);
+  const [eli5Text, setEli5Text] = useState<string | null>(null);
+  const [eli5Loading, setEli5Loading] = useState(false);
+
+  // Handle deep link from home for daily review
+  useEffect(() => {
+    if (params.mode === 'review') {
+      (async () => {
+        const allQuestions = quizPacks.flatMap(p => p.questions) as QuizQuestion[];
+        const reviewQs = await getDailyReviewQuestions(allQuestions, 10);
+        if (reviewQs.length > 0) {
+          setSelectedPack({
+            id: 'daily-review',
+            name: 'Daily Review',
+            icon: '🔄',
+            description: 'Questions to reinforce from previous sessions',
+            questions: reviewQs,
+          } as QuizPack);
+          resetQuiz();
+          setActiveQuestions(reviewQs);
+          setChoosingCount(false);
+        }
+      })();
+    }
+  }, [params.mode]);
 
   const handleSurpriseMe = async () => {
     const allQuestions = quizPacks.flatMap(p => p.questions) as QuizQuestion[];
@@ -53,6 +80,8 @@ export default function QuizScreen() {
     setSelectedOption(null);
     setShowResult(false);
     setScore(0);
+    setEli5Text(null);
+    setEli5Loading(false);
   };
 
   const handleStartWithCount = async (pack: QuizPack, count: number) => {
@@ -87,6 +116,8 @@ export default function QuizScreen() {
   const handleNext = () => {
     setSelectedOption(null);
     setShowResult(false);
+    setEli5Text(null);
+    setEli5Loading(false);
     setCurrentIndex((i) => i + 1);
   };
 
@@ -397,6 +428,43 @@ export default function QuizScreen() {
               })}
             </View>
           )}
+
+          {/* ELI5 deeper explanation */}
+          {!eli5Text && !eli5Loading && (
+            <Pressable
+              onPress={async () => {
+                setEli5Loading(true);
+                const result = await explainSimpler(
+                  question.question,
+                  question.options,
+                  question.correctIndex,
+                  question.explanation
+                );
+                setEli5Text(result);
+                setEli5Loading(false);
+              }}
+              style={({ pressed }) => [
+                styles.eli5Button,
+                { borderColor: colors.primary, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={[styles.eli5ButtonText, { color: colors.primary }]}>💡 Explain simpler</Text>
+            </Pressable>
+          )}
+          {eli5Loading && (
+            <View style={styles.eli5Loading}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[styles.eli5LoadingText, { color: colors.textSecondary }]}>
+                Generating beginner-friendly explanation...
+              </Text>
+            </View>
+          )}
+          {eli5Text && (
+            <View style={[styles.eli5Box, { backgroundColor: colorScheme === 'dark' ? '#1A2335' : '#EDF2FA', borderColor: colors.primary + '40' }]}>
+              <Text style={[styles.eli5Label, { color: colors.primary }]}>💡 ELI5 Explanation</Text>
+              <Text style={[styles.eli5Content, { color: colors.text }]}>{eli5Text}</Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -644,6 +712,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     flex: 1,
+  },
+  eli5Button: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+  },
+  eli5ButtonText: {
+    fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+  },
+  eli5Loading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    backgroundColor: 'transparent',
+  },
+  eli5LoadingText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+  },
+  eli5Box: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  eli5Label: {
+    fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 6,
+  },
+  eli5Content: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: 'Inter-Regular',
   },
   nextButton: {
     marginHorizontal: 24,
