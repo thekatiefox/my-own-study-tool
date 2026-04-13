@@ -9,6 +9,7 @@ export interface NewsStory {
   score: number;
   time: number; // unix timestamp
   commentCount: number;
+  summary: string; // top comment excerpt as context
 }
 
 interface NewsCache {
@@ -28,11 +29,45 @@ function extractDomain(url: string): string {
   }
 }
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function fetchTopComment(kids: number[] | undefined): Promise<string> {
+  if (!kids || kids.length === 0) return '';
+  try {
+    const res = await fetch(`${HN_ITEM}/${kids[0]}.json`);
+    const comment = await res.json();
+    if (!comment || comment.dead || comment.deleted || !comment.text) return '';
+    const clean = stripHtml(comment.text);
+    return clean.length > 180 ? clean.slice(0, 177) + '...' : clean;
+  } catch {
+    return '';
+  }
+}
+
 async function fetchStory(id: number): Promise<NewsStory | null> {
   try {
     const res = await fetch(`${HN_ITEM}/${id}.json`);
     const item = await res.json();
     if (!item || item.type !== 'story' || item.dead || item.deleted) return null;
+
+    // Use the story's own text (for Ask HN / Show HN), or fetch top comment
+    let summary = '';
+    if (item.text) {
+      const clean = stripHtml(item.text);
+      summary = clean.length > 180 ? clean.slice(0, 177) + '...' : clean;
+    }
+
     return {
       id: item.id,
       title: item.title,
@@ -41,7 +76,9 @@ async function fetchStory(id: number): Promise<NewsStory | null> {
       score: item.score ?? 0,
       time: item.time ?? 0,
       commentCount: item.descendants ?? 0,
-    };
+      summary,
+      _kids: item.kids,
+    } as NewsStory & { _kids?: number[] };
   } catch {
     return null;
   }
@@ -67,14 +104,23 @@ export async function fetchTopTechNews(count: number = 5): Promise<NewsStory[]> 
     const results = await Promise.all(promises);
 
     const stories = results
-      .filter((s): s is NewsStory => s !== null)
+      .filter((s): s is NewsStory & { _kids?: number[] } => s !== null)
       .slice(0, count);
+
+    // Fetch top comments in parallel for stories without a summary
+    await Promise.all(
+      stories.map(async (story) => {
+        if (!story.summary && (story as any)._kids) {
+          story.summary = await fetchTopComment((story as any)._kids);
+        }
+        delete (story as any)._kids;
+      })
+    );
 
     cache = { stories, fetchedAt: Date.now() };
     return stories;
   } catch (err) {
     console.error('Failed to fetch tech news:', err);
-    // Return stale cache if available
     if (cache) return cache.stories.slice(0, count);
     return [];
   }

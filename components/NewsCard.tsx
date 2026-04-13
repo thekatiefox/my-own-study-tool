@@ -29,6 +29,11 @@ export default function NewsCard({ story, colors }: Props) {
       <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
         {story.title}
       </Text>
+      {story.summary ? (
+        <Text style={[styles.summary, { color: colors.textSecondary }]} numberOfLines={3}>
+          {story.summary}
+        </Text>
+      ) : null}
       <View style={styles.meta}>
         <Text style={[styles.source, { color: colors.primary }]}>
           {story.source}
@@ -57,6 +62,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 20,
+    marginBottom: 4,
+  },
+  summary: {
+    fontSize: 13,
+    lineHeight: 18,
     marginBottom: 8,
   },
   meta: {
