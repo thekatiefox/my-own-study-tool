@@ -90,7 +90,7 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
 
       {question.scenario ? (
         <View style={[styles.scenario, { backgroundColor: colorScheme === 'dark' ? '#1A1816' : '#F5F0EB', borderColor: colors.border }]}>
-          <Text style={[styles.scenarioText, { color: colors.text }]} numberOfLines={4}>
+          <Text style={[styles.scenarioText, { color: colors.text }]}>
             {question.scenario}
           </Text>
         </View>
@@ -122,7 +122,7 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
             <Text style={[styles.optionLetter, { color: optionBorder === colors.border ? colors.textSecondary : optionBorder }]}>
               {String.fromCharCode(65 + index)}
             </Text>
-            <Text style={[styles.optionText, { color: textColor }]} numberOfLines={2}>
+            <Text style={[styles.optionText, { color: textColor }]}>
               {option}
             </Text>
           </Pressable>
@@ -134,7 +134,7 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
           <Text style={[styles.resultLabel, { color: isCorrect ? '#7B9E87' : '#C47D5A' }]}>
             {isCorrect ? 'Correct' : 'Not quite'}
           </Text>
-          <Text style={[styles.resultText, { color: colors.text }]} numberOfLines={3}>
+          <Text style={[styles.resultText, { color: colors.text }]}>
             {question.explanation}
           </Text>
         </View>
