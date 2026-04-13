@@ -17,7 +17,13 @@
       "correctIndex": 2,
       "explanation": "Without an AbortController or a request ID check, rapid query changes can cause responses to arrive out of order. The last-fired request may not be the last to resolve, so stale results overwrite fresh ones. The fix is to use an AbortController in the useEffect cleanup, or track a request sequence number.",
       "category": "Race Conditions",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "useState only uses the initial value once on mount — it doesn't create a new array reference on each render, so this isn't a performance issue.",
+        "Fetch requests don't require Content-Type for GET requests, and CORS is a server configuration issue, not related to missing request headers here.",
+        "",
+        "setState functions from useState are guaranteed stable across renders — React docs confirm they don't need to be in dependency arrays."
+      ]
     },
     {
       "id": "cra-2",
@@ -32,7 +38,13 @@
       "correctIndex": 0,
       "explanation": "onChange and validate are new function references on every render. Any component using these in a useEffect dependency array or passing them to React.memo children will re-render unnecessarily. Wrapping them in useCallback fixes referential stability. This is a critical review catch for shared hooks.",
       "category": "Custom Hooks",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "",
+        "useState correctly ignores initialValue after the first render — useRef isn't needed here since the initialization behavior is already correct.",
+        "React batches multiple setState calls within the same event handler into a single re-render, so two useState calls don't cause extra renders.",
+        "setError(null) in onChange and setError(err) in validate run in separate user interactions — there's no race condition between them."
+      ]
     },
     {
       "id": "cra-3",
@@ -47,7 +59,13 @@
       "correctIndex": 3,
       "explanation": "Throwing a generic Error with just the status code discards the response body and makes it impossible for callers to implement proper error recovery. A 401 should trigger token refresh, a 422 should show validation errors, a 429 should trigger retry-after. Senior reviewers flag this because poor error discrimination cascades into bad UX throughout the entire app.",
       "category": "API Layer Design",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "While spreading could override Authorization, callers would need to explicitly set it — the more impactful issue is losing error response details for recovery.",
+        "Path traversal is a server-side validation concern — the frontend endpoint parameter doesn't create a security vulnerability in the API client itself.",
+        "While the hardcoded Content-Type is limiting, it's typically fine for JSON APIs — the bigger problem is the error handling that prevents proper recovery.",
+        ""
+      ]
     },
     {
       "id": "cra-4",
@@ -62,7 +80,13 @@
       "correctIndex": 0,
       "explanation": "Four independent booleans create 2^4 = 16 possible states, most of which are invalid (e.g., uploading AND success AND error simultaneously). A single status enum or state machine like XState makes impossible states unrepresentable. This is one of the most common senior-level review catches — boolean flag soup always leads to subtle bugs as requirements grow.",
       "category": "State Management",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "",
+        "Progress needs to trigger UI updates to show the upload bar — useRef doesn't cause re-renders, so the progress indicator would never update.",
+        "useCallback is a performance optimization, not an architectural fix — the fundamental problem is the impossible state combinations from multiple booleans.",
+        "useReducer doesn't inherently perform better than multiple useState calls — React batches both equally. The issue is state modeling, not performance."
+      ]
     },
     {
       "id": "cra-5",
@@ -77,7 +101,13 @@
       "correctIndex": 2,
       "explanation": "Barrel files (index.js re-exports) can break tree-shaking in Webpack 4 and some configurations of Webpack 5. Importing Button may cause the bundler to include the entire module graph of all exported components, including heavy ones like RichTextEditor and ChartWidget. The fix is direct imports (import { Button } from '@/components/Button') or configuring sideEffects: false in package.json.",
       "category": "Bundle Size",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "Named and default exports have identical bundler overhead — the export style doesn't affect tree-shaking or module resolution performance.",
+        "Path aliases are resolved at build time with negligible cost — they don't measurably impact production build times or bundle size.",
+        "",
+        "Dynamic imports add unnecessary async loading complexity for frequently-used components — direct imports solve the tree-shaking issue more simply."
+      ]
     },
     {
       "id": "cra-6",
@@ -92,7 +122,13 @@
       "correctIndex": 1,
       "explanation": "This is the frontend equivalent of an N+1 database query. The stats requests can't start until members load (waterfall), and then each member triggers its own HTTP request. With 50 members, that's 52 sequential network calls. The fix is a batch endpoint (fetchAllMemberStats(teamId)) or a GraphQL query that fetches everything in one request.",
       "category": "N+1 Requests",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "Switching from React Query to SWR doesn't fix the N+1 problem — both libraries would fire the same per-member requests with this component structure.",
+        "",
+        "GraphQL is one possible solution, but the core issue is the N+1 pattern — a batch REST endpoint would fix it without requiring a GraphQL migration.",
+        "React.memo prevents re-renders but doesn't reduce the number of network requests — each card still fires its own stats fetch on mount."
+      ]
     },
     {
       "id": "cra-7",
@@ -107,7 +143,13 @@
       "correctIndex": 3,
       "explanation": "API migrations need backwards compatibility during the transition. If the backend rolls out v2 gradually, or if the frontend deploys before the backend, users will get errors. A safe migration pattern: try v2 first, fall back to v1, log which version was used. Once v2 adoption hits 100%, remove the v1 fallback in a follow-up PR.",
       "category": "Migration PRs",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "A version parameter adds flexibility but doesn't solve the core problem — environments without v2 deployed will still break with no fallback.",
+        "While 'en-US' vs 'en' differ in specificity, the locale mapping is intentional in the migration — the critical risk is environments breaking without v1 fallback.",
+        "Runtime validation is good practice but secondary — if v2 isn't deployed yet, validation won't help because the endpoint itself will return an error.",
+        ""
+      ]
     },
     {
       "id": "cra-8",
@@ -122,7 +164,13 @@
       "correctIndex": 0,
       "explanation": "One error boundary for the whole app means a crash in the Reports page also takes down Dashboard and Settings. Users lose all functionality. Granular error boundaries per route or feature let the rest of the app keep working. The fallback should also include a retry mechanism (remount the route) rather than a dead-end error message.",
       "category": "Error Boundaries",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "",
+        "While error boundaries must technically be class components, this is an implementation detail — the real issue is the single boundary's blast radius.",
+        "Suspense handles loading states for lazy components, not render errors — it cannot replace error boundaries for catching runtime exceptions.",
+        "Error boundaries work correctly with React Router and don't cause hydration mismatches — this is not a real compatibility issue."
+      ]
     },
     {
       "id": "cra-9",
@@ -137,7 +185,13 @@
       "correctIndex": 2,
       "explanation": "A component with 17 props is a code smell in a shared library. It signals the component is trying to handle too many use cases, making it hard to maintain, document, and use correctly. Better patterns: compound components (Card.Image, Card.Actions), variant-specific wrappers (LinkCard, SelectableCard), or composition slots. The prop count directly correlates with bug surface area in a shared library.",
       "category": "Component Libraries",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "Generic types add flexibility but don't address the core problem — a 17-prop interface is too complex regardless of how extensible the types are.",
+        "ReactNode is the standard type for renderable content in React — it's appropriately permissive for a slot-based actions prop.",
+        "",
+        "forwardRef is useful for DOM access but is a minor enhancement — the overwhelming API surface of 17 props is the far more pressing design concern."
+      ]
     },
     {
       "id": "cra-10",
@@ -152,7 +206,13 @@
       "correctIndex": 0,
       "explanation": "dangerouslySetInnerHTML with user-generated content (c.body) is a textbook stored XSS vulnerability. An attacker posts a comment containing <script>stealCookies()</script>, which then executes for every user who views that post. The fix is to use a sanitization library (like DOMPurify) before rendering, or better yet, render markdown instead of raw HTML.",
       "category": "Security",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "",
+        "SQL injection is a server-side concern handled by parameterized queries — the frontend fetch URL doesn't directly create SQL injection vulnerabilities.",
+        "GET requests for reading comments are semantically correct — CSRF protection is handled by tokens or SameSite cookies, not HTTP method changes.",
+        "Clickjacking uses iframe overlays, not HTML in text fields — the author field displaying plain text doesn't create a clickjacking vulnerability."
+      ]
     },
     {
       "id": "cra-11",
@@ -167,7 +227,13 @@
       "correctIndex": 3,
       "explanation": "Moving the test step after deploy means broken code ships to production before tests catch it. This is a critical review catch — CI pipeline ordering defines your safety guarantees. Tests must always be a gate that blocks deployment, not a post-deploy verification. This subtle reordering might look like a simple cleanup but fundamentally breaks the deployment safety model.",
       "category": "CI/CD Review",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "Pinning actions to a SHA is a supply-chain security best practice, but it's far less critical than the test step running after production deployment.",
+        "npm ci already uses the lockfile by default — the real danger in this diff is that broken code deploys to production before tests catch failures.",
+        "Matrix strategies for multi-region deployment are an enhancement, not a bug — the critical issue is the test/deploy ordering that removes the safety gate.",
+        ""
+      ]
     },
     {
       "id": "cra-12",
@@ -182,7 +248,13 @@
       "correctIndex": 2,
       "explanation": "Filtering on preferences->>'theme' without a GIN or expression index means a full sequential scan of the users table. With 10K users this is fine; with 1M users, this query will time out and your frontend will show spinners forever. As a frontend reviewer, you should flag: 'Does this query have an index? What's the expected table size?' A missing index on a frequently-queried field is a production incident waiting to happen.",
       "category": "Schema Review",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "Most modern ORMs handle JSONB columns natively without special configuration — this isn't a realistic concern for mainstream frameworks.",
+        "The JOIN type depends on business requirements — if every user should have projects, an INNER JOIN is correct and a LEFT JOIN would hide data issues.",
+        "",
+        "DEFAULT '{}' is preferred over NULL for JSONB because it avoids null-check boilerplate and lets queries safely access nested keys without coalescing."
+      ]
     },
     {
       "id": "cra-13",
@@ -197,7 +269,13 @@
       "correctIndex": 1,
       "explanation": "formatPrice wraps a pure function with no dependencies — it will never change and the useMemo just adds overhead. containerStyle memoizes a static object — move it outside the component as a constant. Only sortedProducts benefits from memoization since sorting is O(n log n). Over-memoization is a common code smell: it adds cognitive complexity, memory overhead, and signals the author doesn't understand when memoization actually helps.",
       "category": "Memoization",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "useCallback is for memoizing functions passed as props — formatPrice and containerStyle aren't callbacks that need stable references for child components.",
+        "",
+        "Static objects and pure functions without dependencies never change between renders — memoizing them adds overhead without any caching benefit.",
+        "React Query or parent components should ensure referential stability of products — adding deep comparison in the child just masks an upstream issue."
+      ]
     },
     {
       "id": "cra-14",
@@ -212,7 +290,13 @@
       "correctIndex": 0,
       "explanation": "Client-side localStorage flags have serious problems: (1) Can't kill a broken feature remotely during an incident — you have to deploy a code fix. (2) Users can toggle any flag via DevTools, bypassing rollout controls. (3) Flags persist across sessions, making gradual rollouts unreliable. (4) No way to target specific user segments. Use a feature flag service (LaunchDarkly, Unleash, etc.) with server-side evaluation and real-time kill switches.",
       "category": "Feature Flags",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "",
+        "Analytics tracking location is a minor organizational concern — the critical issue is that localStorage flags can't be remotely controlled during incidents.",
+        "The string comparison works correctly as written — 'true' === 'true' is reliable and not prone to coercion issues in this context.",
+        "Lazy-loading is a bundle size optimization, not a feature flag concern — both layouts are small enough that code splitting provides minimal benefit here."
+      ]
     },
     {
       "id": "cra-15",
@@ -227,7 +311,13 @@
       "correctIndex": 2,
       "explanation": "This component has at least 4 i18n issues: (1) 'Add to cart', 'Out of stock', and 'left' are hardcoded English — use t('addToCart') translation keys. (2) Currency formatting (product.currency + price) breaks for currencies with different symbol positions (¥100 vs $100 vs 100€). Use Intl.NumberFormat. (3) Number formatting (product.stock) should be locale-aware (1,000 vs 1.000). (4) The layout may break in RTL languages. Senior reviewers catch these because fixing i18n retroactively is extremely expensive.",
       "category": "Internationalization",
-      "difficulty": "advanced"
+      "difficulty": "advanced",
+      "optionExplanations": [
+        "An explicit locale prop pushes i18n responsibility to every parent component — i18n libraries use context to provide locale globally without prop threading.",
+        "CSS logical properties help with RTL layouts but are a secondary concern — the hardcoded strings and raw formatting are the primary i18n violations.",
+        "",
+        "Translation is typically handled by i18n libraries at render time using keys, not by duplicating fields in the data model for each supported language."
+      ]
     }
   ]
 }

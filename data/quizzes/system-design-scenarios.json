@@ -17,7 +17,13 @@
       "correctIndex": 2,
       "explanation": "A shopping cart needs to persist across refreshes (localStorage) but doesn't need constant server sync until checkout. Keep it in client state (Context/Zustand + localStorage) and sync to the server when the user checks out.",
       "category": "State Management",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "Server-syncing every quantity change creates unnecessary API load and latency — a cart is inherently client state until checkout.",
+        "Redux with per-modification API calls adds complexity and latency without clear benefit — the cart doesn't need server sync until checkout.",
+        "",
+        "sessionStorage clears on tab close (bad for cart persistence), and IndexedDB adds complexity overkill for simple cart data that localStorage handles fine."
+      ]
     },
     {
       "id": "sd-2",
@@ -32,7 +38,13 @@
       "correctIndex": 0,
       "explanation": "With 50K records, loading all data is impractical. Cursor-based server pagination with virtual scrolling renders only visible rows, keeping memory low and performance high. The server handles sorting/filtering.",
       "category": "Data Loading",
-      "difficulty": "senior"
+      "difficulty": "senior",
+      "optionExplanations": [
+        "",
+        "Loading 50,000 records into memory is impractical — it wastes bandwidth, increases load time, and can crash browsers with limited memory.",
+        "Offset pagination becomes slow at large offsets because the database must skip over all preceding rows, degrading performance significantly.",
+        "Infinite scroll with 500-record batches would accumulate massive DOM nodes over time, causing memory bloat and scroll jank."
+      ]
     },
     {
       "id": "sd-3",
@@ -47,7 +59,13 @@
       "correctIndex": 3,
       "explanation": "Since profile data rarely changes, use a data-fetching library (React Query/SWR) with a long staleTime. The data is served from cache instantly, and revalidated in the background on window focus to stay fresh.",
       "category": "Caching",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "Fetching fresh data on every mount wastes bandwidth for data that changes weekly — a caching strategy with long stale times is far more efficient.",
+        "Service worker caching adds significant complexity for a simple use case that React Query or SWR handle elegantly with built-in stale-while-revalidate.",
+        "IndexedDB with background sync is heavy infrastructure for rarely-changing profile data — a data-fetching library with staleTime is simpler and sufficient.",
+        ""
+      ]
     },
     {
       "id": "sd-4",
@@ -62,7 +80,13 @@
       "correctIndex": 1,
       "explanation": "Optimistic updates make the UI feel instant: update the like count and heart icon immediately, send the API request in the background, and only roll back if it fails. This is standard for social interactions.",
       "category": "UX Patterns",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "Debouncing a like action adds a noticeable 300ms delay that makes the UI feel sluggish — users expect instant feedback on social interactions.",
+        "",
+        "Buffering likes and syncing periodically risks data loss if the user closes the tab, and the delayed feedback feels unresponsive.",
+        "Disabling the button with a spinner for every like creates a frustrating user experience — social interactions should feel instant, not transactional."
+      ]
     },
     {
       "id": "sd-5",
@@ -77,7 +101,13 @@
       "correctIndex": 2,
       "explanation": "WebSockets provide real-time bidirectional communication, ideal for chat. Unlike polling, there's no wasted requests when idle, and messages arrive instantly. At 1K users, a single WebSocket server handles the load easily.",
       "category": "Real-time",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "SSE only supports server-to-client communication — chat requires bidirectional messaging for both sending and receiving in real time.",
+        "Polling every 500ms wastes server resources with constant requests and still introduces up to 500ms latency for message delivery.",
+        "",
+        "HTTP/2 server push is designed for resource preloading, not real-time messaging — it lacks the persistent bidirectional channel chat requires."
+      ]
     },
     {
       "id": "sd-6",
@@ -92,7 +122,13 @@
       "correctIndex": 0,
       "explanation": "Custom hooks per domain (useUser, useOrders) using React Query/SWR give you automatic caching, deduplication, and revalidation. Shared data is fetched once and cached. Each page only fetches what it needs.",
       "category": "Architecture",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "",
+        "Prefetching all route data at startup wastes bandwidth loading data for pages the user may never visit and increases initial load time.",
+        "Co-located fetch calls in useEffect lack built-in caching and deduplication — shared data gets re-fetched on every mount across pages.",
+        "A single Redux store with thunks requires significant boilerplate and lacks built-in cache invalidation, stale-while-revalidate, and deduplication."
+      ]
     },
     {
       "id": "sd-7",
@@ -107,7 +143,13 @@
       "correctIndex": 3,
       "explanation": "Debouncing waits until the user pauses typing, reducing API calls. Cancel in-flight requests (AbortController) to avoid race conditions. Cache recent queries so revisiting a term is instant.",
       "category": "UX Patterns",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "Throttling fires requests at fixed intervals even while the user is still typing, wasting API calls on incomplete search terms.",
+        "Relying on server-side rate limiting wastes bandwidth and client resources — the client should prevent unnecessary requests in the first place.",
+        "Preloading 1,000 queries wastes bandwidth, only covers common terms, and can't handle the long tail of unique user searches.",
+        ""
+      ]
     },
     {
       "id": "sd-8",
@@ -122,7 +164,13 @@
       "correctIndex": 2,
       "explanation": "A feature flag service (LaunchDarkly, Unleash, or a simple config API) lets you target users by percentage, segment, or ID. You can toggle the flag instantly without deploying, and roll back if issues arise.",
       "category": "DevOps",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "Separate route paths expose both flows in the URL structure and require server-side redirect logic that's harder to toggle quickly during incidents.",
+        "A runtime config file still requires a file deployment or server restart to update, which doesn't meet the no-deploy requirement.",
+        "",
+        "Hash-based A/B testing is deterministic but lacks real-time toggle capability — you can't instantly roll back or adjust targeting without a deploy."
+      ]
     },
     {
       "id": "sd-9",
@@ -137,7 +185,13 @@
       "correctIndex": 0,
       "explanation": "Place error boundaries at route boundaries so a crash in one page doesn't break others. Add them around critical widgets (charts, data tables) that might fail independently. Too many boundaries adds complexity without benefit.",
       "category": "Error Handling",
-      "difficulty": "senior"
+      "difficulty": "senior",
+      "optionExplanations": [
+        "",
+        "Suspense handles loading states for lazy components, not render errors — error boundaries and Suspense serve different purposes and aren't interchangeable.",
+        "Wrapping every component individually adds excessive boilerplate and complexity without proportional benefit — strategic placement is more effective.",
+        "Your own code can also throw during rendering due to unexpected data shapes — limiting error boundaries to third-party code leaves your app vulnerable."
+      ]
     },
     {
       "id": "sd-10",
@@ -152,7 +206,13 @@
       "correctIndex": 3,
       "explanation": "Storing the access token in memory (JS variable) protects it from XSS. The refresh token in an httpOnly cookie is inaccessible to JavaScript. On page refresh, use the refresh token cookie to get a new access token silently.",
       "category": "Security",
-      "difficulty": "senior"
+      "difficulty": "senior",
+      "optionExplanations": [
+        "Client-side encryption keys are accessible to JavaScript, so XSS can still extract both tokens — this provides a false sense of security.",
+        "Storing the access token in a cookie exposes it to CSRF attacks, and Web Workers don't provide meaningful security isolation from XSS.",
+        "sessionStorage is accessible to JavaScript (vulnerable to XSS) and clears on tab close, forcing users to re-login every time they open a new tab.",
+        ""
+      ]
     }
   ]
 }

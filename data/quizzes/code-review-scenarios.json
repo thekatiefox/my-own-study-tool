@@ -17,7 +17,13 @@
       "correctIndex": 2,
       "explanation": "React requires a unique 'key' prop on elements rendered inside .map() to efficiently track list changes. Without it, React may re-render the entire list unnecessarily.",
       "category": "React",
-      "difficulty": "beginner"
+      "difficulty": "beginner",
+      "optionExplanations": [
+        "While defensive defaults are good practice, the code won't crash from a missing default — the real bug is the missing key prop that breaks React's reconciliation.",
+        "Fragments don't cause hydration mismatches here — the list renders fine structurally, but React needs key props to track individual list items.",
+        "",
+        "Optional chaining is a nice safeguard, but if user objects exist in the array, accessing .name won't throw — the missing key prop is the actual issue."
+      ]
     },
     {
       "id": "cr-2",
@@ -32,7 +38,13 @@
       "correctIndex": 3,
       "explanation": "The effect uses 'count' but the dependency array is empty []. This means the title only updates on mount, not when count changes. Add 'count' to the dependency array.",
       "category": "React Hooks",
-      "difficulty": "beginner"
+      "difficulty": "beginner",
+      "optionExplanations": [
+        "useEffect callbacks don't need to be async here since document.title is a synchronous assignment — no async teardown is needed.",
+        "Setting document.title directly is standard practice — refs aren't needed for DOM properties outside the React tree.",
+        "The initial useState value doesn't need to match the document title — the real issue is the effect not re-running when count changes.",
+        ""
+      ]
     },
     {
       "id": "cr-3",
@@ -47,7 +59,13 @@
       "correctIndex": 0,
       "explanation": "Calling items.push() mutates the existing array. Since setItems receives the same reference, React doesn't detect a change. Use setItems([...items, 'c']) to create a new array.",
       "category": "React State",
-      "difficulty": "beginner"
+      "difficulty": "beginner",
+      "optionExplanations": [
+        "",
+        "While push() does return the new length, that value isn't passed to setItems — items (the mutated array) is. The real issue is reference equality.",
+        "React handles synchronous handlers fine and batches state updates automatically — the problem is the mutated array reference.",
+        "The array literal only runs once during initialization, not every render — useState stores the initial value and ignores it on subsequent renders."
+      ]
     },
     {
       "id": "cr-4",
@@ -62,7 +80,13 @@
       "correctIndex": 2,
       "explanation": "The inline arrow function creates a new function reference on every render. If this button is in a memoized child component, it will break memoization. Use useCallback or extract the handler.",
       "category": "React Performance",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "Arrow functions in JSX capture the current closure correctly — stale closures are a useEffect/useCallback issue, not an inline handler issue.",
+        "React's synthetic event system works identically with inline and named handlers — event pooling is unrelated to how the handler is defined.",
+        "",
+        "React handles event delegation internally regardless of whether the handler is inline or extracted — this doesn't affect delegation behavior."
+      ]
     },
     {
       "id": "cr-5",
@@ -77,7 +101,13 @@
       "correctIndex": 0,
       "explanation": "The subscription is never cleaned up. When the component unmounts, the callback still fires, causing memory leaks and state updates on unmounted components. Return a cleanup: return () => sub.unsubscribe();",
       "category": "React Hooks",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "",
+        "Using functional updates is good practice for avoiding stale state, but it's not the critical issue — the missing cleanup causes memory leaks.",
+        "The subscribe method here returns a subscription object synchronously — it's not a Promise, so await isn't needed or applicable.",
+        "setMessages is stable (from useState) and api is typically a module-level import — neither needs to be in the dependency array."
+      ]
     },
     {
       "id": "cr-6",
@@ -92,7 +122,13 @@
       "correctIndex": 3,
       "explanation": "Using 'any' everywhere removes all type safety. Define an interface for the user, type the parameter as string/number, and type the response. Also, res.json() needs 'await'.",
       "category": "TypeScript",
-      "difficulty": "beginner"
+      "difficulty": "beginner",
+      "optionExplanations": [
+        "An explicit return type is a nice-to-have, but the bigger problem is that every parameter and variable uses 'any', eliminating all type safety.",
+        "Template literals for URL construction are common and acceptable — the core issue is the pervasive 'any' types removing all TypeScript benefits.",
+        "While typing res as Response is slightly better, fetch() already returns Response by default — the real problem is all the explicit 'any' annotations.",
+        ""
+      ]
     },
     {
       "id": "cr-7",
@@ -107,7 +143,13 @@
       "correctIndex": 0,
       "explanation": "When !important is used on every rule, you end up fighting specificity with more specificity. Refactor to use a clear, low-specificity naming convention like BEM instead.",
       "category": "CSS",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "",
+        "CSS selector complexity has negligible performance impact in modern browsers — the maintainability nightmare of cascading !important is far more concerning.",
+        "Named colors like red, blue, and green render consistently across modern browsers — the real issue is the !important specificity war.",
+        "CSS modules are one possible solution, but the core code smell is the !important abuse, which would still be problematic even inside a module."
+      ]
     },
     {
       "id": "cr-8",
@@ -122,7 +164,13 @@
       "correctIndex": 2,
       "explanation": "There's no try/catch or .catch() handling. If the network request fails or returns a non-OK status, the error is unhandled and the UI may break silently. Always add error handling for async operations.",
       "category": "Error Handling",
-      "difficulty": "beginner"
+      "difficulty": "beginner",
+      "optionExplanations": [
+        "Status code validation is important but secondary — without any error handling at all, even network failures will silently break the UI state.",
+        "startTransition is for deprioritizing non-urgent UI updates — it doesn't address the fundamental lack of error handling in this function.",
+        "",
+        "AbortController is useful for cleanup on unmount, but it's an optimization — the missing error handling is a more critical omission."
+      ]
     },
     {
       "id": "cr-9",
@@ -137,7 +185,13 @@
       "correctIndex": 3,
       "explanation": "The 'user' prop is drilled through 4 levels. Use React Context, composition (children pattern), or a state management library to avoid passing props through intermediary components that don't use them.",
       "category": "Architecture",
-      "difficulty": "intermediate"
+      "difficulty": "intermediate",
+      "optionExplanations": [
+        "React handles nested component trees efficiently — depth alone doesn't significantly impact reconciliation performance.",
+        "Having each component fetch its own data would create redundant API calls — the issue is how the data is passed, not where it's fetched.",
+        "Combining Layout and Sidebar would reduce flexibility without solving the core problem of passing user through every level.",
+        ""
+      ]
     },
     {
       "id": "cr-10",
@@ -152,7 +206,13 @@
       "correctIndex": 1,
       "explanation": "The <img> needs an alt attribute for screen readers. The icon-only button has no accessible label — add aria-label='Buy' so assistive technologies can describe its purpose.",
       "category": "Accessibility",
-      "difficulty": "beginner"
+      "difficulty": "beginner",
+      "optionExplanations": [
+        "While SVG roles can help, the button itself needs an accessible label — a role on the SVG alone doesn't provide a usable label for assistive tech.",
+        "",
+        "While onclick vs onClick is a valid JSX concern, it's a syntax issue, not an accessibility issue — the missing alt and label are more critical.",
+        "Buttons are natively keyboard-focusable without tabIndex — the real accessibility gaps are the missing alt text and button label."
+      ]
     }
   ]
 }
