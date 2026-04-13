@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 20,
-    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
   },
   heroCta: {
     borderRadius: 10,
@@ -176,18 +176,18 @@ const styles = StyleSheet.create({
   },
   heroCount: {
     fontSize: 40,
-    fontWeight: '300',
+    fontFamily: 'Inter-Light',
     letterSpacing: -1,
   },
   heroLabel: {
     fontSize: 13,
-    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
     letterSpacing: 0.5,
     marginTop: 4,
   },
   sectionLabel: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 2,
     marginBottom: 14,
   },
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   newsTitle: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     lineHeight: 20,
     marginBottom: 6,
   },

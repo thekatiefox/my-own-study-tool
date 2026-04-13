@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 0.3,
   },
   sublabel: {

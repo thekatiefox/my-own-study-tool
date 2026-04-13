@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: -0.3,
     marginBottom: 28,
   },
@@ -156,12 +156,12 @@ const styles = StyleSheet.create({
   },
   bigStatNumber: {
     fontSize: 28,
-    fontWeight: '300',
+    fontFamily: 'Inter-Light',
     letterSpacing: -0.5,
   },
   bigStatLabel: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     marginTop: 6,
     letterSpacing: 1.5,
     textTransform: 'uppercase',

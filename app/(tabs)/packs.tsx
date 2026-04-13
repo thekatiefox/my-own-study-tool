@@ -136,13 +136,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: -0.3,
     marginBottom: 4,
     paddingHorizontal: 24,
   },
   subtitle: {
     fontSize: 13,
+    fontFamily: 'Inter-Regular',
     letterSpacing: 0.2,
     marginBottom: 24,
     paddingHorizontal: 24,
@@ -160,13 +161,13 @@ const styles = StyleSheet.create({
   },
   categoryNumber: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 1.5,
     marginRight: 8,
   },
   categoryTitle: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },

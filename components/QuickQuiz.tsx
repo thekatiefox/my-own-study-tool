@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   teaserLabel: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 2,
   },
   teaserArrow: {
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 2,
   },
   collapseBtn: {
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   question: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     lineHeight: 20,
     marginBottom: 10,
   },

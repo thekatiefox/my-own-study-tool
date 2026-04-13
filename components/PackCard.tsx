@@ -99,16 +99,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   icon: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
   },
   headerText: {
     flex: 1,
@@ -116,12 +116,13 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 0.1,
     marginBottom: 2,
   },
   description: {
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     lineHeight: 17,
     letterSpacing: 0.1,
   },

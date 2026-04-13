@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   completeTitle: {
     fontSize: 22,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: -0.3,
     marginBottom: 8,
   },

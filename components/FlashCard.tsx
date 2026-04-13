@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 10,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: 2.5,
     marginBottom: 20,
   },
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 26,
     textAlign: 'center',
-    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
   },
   answerScroll: {
     flex: 1,

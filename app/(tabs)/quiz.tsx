@@ -409,13 +409,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: -0.3,
     marginBottom: 4,
     paddingHorizontal: 24,
   },
   subtitle: {
     fontSize: 13,
+    fontFamily: 'Inter-Regular',
     letterSpacing: 0.2,
     marginBottom: 24,
     paddingHorizontal: 24,
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
   },
   packName: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     marginBottom: 2,
   },
   packDesc: {
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
   },
   countBtnNumber: {
     fontSize: 24,
-    fontWeight: '300',
+    fontFamily: 'Inter-Light',
     letterSpacing: -0.5,
   },
   countBtnLabel: {
@@ -568,7 +569,7 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     paddingHorizontal: 24,
     marginBottom: 16,
     lineHeight: 22,
@@ -639,13 +640,13 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 20,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     letterSpacing: -0.3,
     marginBottom: 8,
   },
   summaryScore: {
     fontSize: 32,
-    fontWeight: '300',
+    fontFamily: 'Inter-Light',
     letterSpacing: -0.5,
     marginBottom: 4,
   },
