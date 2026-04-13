@@ -1,0 +1,323 @@
+{
+  "id": "best-practices",
+  "name": "Best Practices",
+  "description": "What's the recommended approach? Senior-level decisions for frontend development.",
+  "icon": "✅",
+  "questions": [
+    {
+      "id": "bp-1",
+      "scenario": "Your React project has grown to 200+ components. Files are currently organized by type: /components, /hooks, /utils, /styles, /types. Finding all files related to a single feature requires checking 5+ directories.",
+      "question": "What file organization strategy would improve developer productivity?",
+      "options": [
+        "Organize by feature or domain: /features/auth, /features/dashboard, each containing its own components, hooks, and utils",
+        "Keep the current by-type structure but add an index file in each directory that re-exports everything for easy discovery",
+        "Flatten all files into a single /src directory with a strict naming convention like feature.component.tsx for discoverability",
+        "Create a separate package per feature using a monorepo tool so each feature has its own independent package.json config"
+      ],
+      "correctIndex": 0,
+      "explanation": "Feature-based organization co-locates related files: /features/auth/LoginForm.tsx, /features/auth/useAuth.ts, /features/auth/auth.utils.ts. This makes features easy to find, modify, and delete without hunting across type directories. Shared utilities go in /shared or /common. This scales much better than type-based organization as the project grows.",
+      "optionExplanations": [
+        "",
+        "Index files improve imports but don't solve the discoverability problem — developers still need to check 5+ directories to find all files for one feature.",
+        "A flat directory with 200+ files becomes unnavigable regardless of naming conventions — feature directories provide natural grouping and scoping.",
+        "Separate packages add significant overhead (build configs, dependency management) for internal features that don't need independent versioning."
+      ],
+      "category": "Code Organization",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-2",
+      "scenario": "Your team has 8 developers working on the same repository. Feature branches often conflict with each other on merge. Long-lived branches diverge significantly from main, making code reviews painful.",
+      "question": "What Git workflow would reduce merge conflicts and improve code review quality?",
+      "options": [
+        "Trunk-based development with short-lived feature branches merged within one to two days of creation",
+        "GitFlow with develop, release, and hotfix branches providing structured parallel development tracks",
+        "A single main branch where all developers commit directly with pre-commit hooks enforcing tests",
+        "Long-lived feature branches with weekly rebase sessions to keep branches updated with main changes"
+      ],
+      "correctIndex": 0,
+      "explanation": "Trunk-based development with short-lived branches (1-2 days max) minimizes divergence and merge conflicts. Small branches are easier to review, faster to merge, and less likely to conflict. Use feature flags to hide incomplete work. This is the workflow recommended by DORA research as a predictor of high-performing engineering teams.",
+      "optionExplanations": [
+        "",
+        "GitFlow's multiple long-lived branches (develop, release) add ceremony and increase the risk of divergence and painful merges in fast-moving teams.",
+        "Direct commits to main without branches eliminate code review, which is critical for code quality and knowledge sharing in an 8-person team.",
+        "Weekly rebases are too infrequent — branches diverge significantly in a week, making rebases painful and conflict-prone with 8 active developers."
+      ],
+      "category": "Git Workflow",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-3",
+      "scenario": "You're setting up a testing strategy for a new React application. The team asks: 'What should we test, and at what level?' The app has forms, API (Application Programming Interface) integrations, complex state logic, and shared components.",
+      "question": "What testing strategy provides the best confidence-to-effort ratio?",
+      "options": [
+        "Focus primarily on integration tests that render components with their hooks and verify user-visible behavior",
+        "Write comprehensive unit tests for every function, hook, and component to achieve full code coverage metrics",
+        "Rely on end-to-end tests with Playwright or Cypress that test complete user journeys through the real application",
+        "Skip automated tests and use manual QA testing with detailed checklists reviewed before each production release"
+      ],
+      "correctIndex": 0,
+      "explanation": "Integration tests that render components with real hooks, mock API (Application Programming Interface) calls at the network level, and assert on user-visible output give the best confidence-to-effort ratio. They catch real bugs (broken forms, missing data) without being brittle to refactors. Supplement with unit tests for complex logic and a few E2E tests for critical user journeys.",
+      "optionExplanations": [
+        "",
+        "100% unit test coverage is expensive to maintain and gives false confidence — testing every function in isolation misses the integration bugs that actually affect users.",
+        "E2E tests are slow, flaky, and expensive to maintain at scale — they should cover critical paths only, not serve as the primary testing strategy.",
+        "Manual QA doesn't scale, is error-prone under time pressure, and provides no regression safety net — automated tests catch issues before they reach QA."
+      ],
+      "category": "Testing Strategy",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-4",
+      "scenario": "Your team debates whether to use inline styles, CSS Modules, Tailwind CSS, or styled-components for a new large-scale React application with 50+ developers.",
+      "question": "Which styling approach is best for a large team working on a shared component library?",
+      "options": [
+        "CSS Modules providing scoped class names with familiar CSS syntax and zero runtime performance cost",
+        "Styled-components offering dynamic theming and colocated styles with full TypeScript integration support",
+        "Tailwind CSS using utility classes for rapid development and consistent design tokens across the project",
+        "Inline styles via the style prop for maximum component isolation and zero-configuration CSS setup"
+      ],
+      "correctIndex": 0,
+      "explanation": "CSS Modules combine familiar CSS syntax (easy for 50+ developers to learn) with automatic scope isolation (no class name collisions). They have zero runtime cost (compiled at build time), work with any CSS tooling (PostCSS, Sass), and produce predictable output. For a large shared library, the combination of familiarity, isolation, and performance makes CSS Modules the safest default.",
+      "optionExplanations": [
+        "",
+        "Styled-components add runtime overhead for dynamic style injection and can cause performance issues with many components rendering simultaneously.",
+        "Tailwind is productive for applications but creates inconsistent class-name patterns across 50 developers and can generate very long className strings in complex components.",
+        "Inline styles can't handle pseudo-classes, media queries, or animations — they're too limited for a full component library and produce verbose, hard-to-maintain code."
+      ],
+      "category": "Styling",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-5",
+      "scenario": "You need to optimize the initial load performance of a React application. The current bundle is 1.2MB (gzipped 380KB). Users on slower connections wait 5+ seconds for the first meaningful paint.",
+      "question": "What is the highest-impact optimization to implement first?",
+      "options": [
+        "Code-split routes using React.lazy and Suspense so users only download code for the current page view",
+        "Enable gzip or Brotli compression on the server to reduce the transfer size of all JavaScript files served",
+        "Minify and tree-shake the production build by ensuring the bundler is configured with production settings",
+        "Replace large dependencies with lighter alternatives and audit the bundle with a size analysis tool first"
+      ],
+      "correctIndex": 0,
+      "explanation": "Route-level code splitting typically produces the largest single improvement for oversized bundles. Instead of downloading 1.2MB upfront, users download only the code for the current page (often 100-200KB). Other pages load on demand when navigated to. Combine with Suspense fallbacks for a smooth loading experience. After splitting, audit individual chunks for further optimization.",
+      "optionExplanations": [
+        "",
+        "The bundle is already 380KB gzipped, meaning compression is likely already enabled — further compression gains would be marginal compared to code splitting.",
+        "Production builds with minification and tree-shaking should already be configured — if the bundle is still 1.2MB, the issue is too much code loaded upfront.",
+        "Dependency auditing is valuable but time-consuming — code splitting gives an immediate, large improvement while you plan targeted dependency replacements."
+      ],
+      "category": "Performance",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-6",
+      "scenario": "Your team is launching a new production application. You need to decide on a deployment strategy that minimizes risk when shipping updates to users.",
+      "question": "What deployment strategy provides the safest production releases?",
+      "options": [
+        "Blue-green deployments where the new version runs alongside the old version with instant rollback capability",
+        "Rolling deployments that gradually replace instances one at a time over a period of several minutes",
+        "Direct deployments that replace the old version immediately with the new version during a maintenance window",
+        "Canary deployments that route a small percentage of production traffic to the new version before full rollout"
+      ],
+      "correctIndex": 3,
+      "explanation": "Canary deployments route a small percentage (e.g., 5%) of real production traffic to the new version. You monitor error rates, performance metrics, and user behavior. If issues arise, only 5% of users are affected and you roll back instantly. If metrics look good, gradually increase to 100%. This catches production-only issues that testing environments miss.",
+      "optionExplanations": [
+        "Blue-green gives instant rollback but switches 100% of traffic at once — if there's a subtle bug, all users are affected before you detect it.",
+        "Rolling deployments spread the transition but don't allow targeted monitoring of the new version in isolation before full rollout.",
+        "Direct deployments during maintenance windows cause downtime, affect all users simultaneously, and don't allow gradual rollout or easy rollback.",
+        ""
+      ],
+      "category": "Deployment",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "bp-7",
+      "scenario": "Your React application needs to fetch, cache, and synchronize server data. You're deciding between managing server state with Redux (dispatching async thunks) or using a dedicated data-fetching library.",
+      "question": "What is the recommended approach for managing server state in a modern React application?",
+      "options": [
+        "Use a dedicated data-fetching library like React Query or SWR (Stale-While-Revalidate) for server state management",
+        "Keep server state in Redux with createAsyncThunk for standardized async operations and centralized caching",
+        "Manage server state in React Context with useReducer to avoid adding any third-party library dependencies",
+        "Fetch data in useEffect and store results in useState with a custom cache implemented in a Map or object"
+      ],
+      "correctIndex": 0,
+      "explanation": "React Query and SWR (Stale-While-Revalidate) are purpose-built for server state: they handle caching, background revalidation, deduplication, pagination, optimistic updates, and error retry out of the box. Redux is better suited for client-side state (UI state, form state). Separating server state from client state reduces complexity and eliminates hundreds of lines of boilerplate.",
+      "optionExplanations": [
+        "",
+        "Redux requires significant boilerplate for caching, invalidation, and revalidation that React Query provides automatically — it adds complexity without proportional benefit for server state.",
+        "Context with useReducer lacks built-in caching, deduplication, stale-while-revalidate, and retry logic — you'd end up rebuilding a worse version of React Query.",
+        "Manual caching in useState requires implementing deduplication, invalidation, garbage collection, and error handling from scratch — a data-fetching library handles all of this."
+      ],
+      "category": "State Management",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-8",
+      "scenario": "You're writing a shared utility function that will be used across multiple projects. You want it to be easy to understand, test, and maintain for other developers who will use and modify it.",
+      "question": "What coding practice should you prioritize for shared utility code?",
+      "options": [
+        "Write pure functions with clear input/output types, no side effects, and thorough JSDoc documentation",
+        "Use the most concise JavaScript syntax possible to minimize the number of lines and reduce file size",
+        "Add extensive inline comments explaining every line of logic so future developers can follow the reasoning",
+        "Implement the function as a class with private methods to encapsulate the internal implementation details"
+      ],
+      "correctIndex": 0,
+      "explanation": "Pure functions (same input always produces same output, no side effects) are the most testable, debuggable, and reusable pattern. Clear TypeScript types serve as living documentation. JSDoc adds usage examples and edge case notes. This combination makes the function self-documenting and easy to verify at a glance.",
+      "optionExplanations": [
+        "",
+        "Concise code isn't the same as clear code — clever one-liners are often harder to understand and debug than straightforward implementations.",
+        "Comments explaining every line suggest the code itself isn't clear — better to write readable code with comments only for non-obvious decisions.",
+        "Classes add unnecessary complexity for utility functions — a plain function with typed parameters is simpler and more composable than class-based encapsulation."
+      ],
+      "category": "Code Quality",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "bp-9",
+      "scenario": "You are building a component that displays user-generated content including names, bios, and comments. Some content may contain special characters, HTML fragments, or script tags.",
+      "question": "What is the recommended approach for rendering user-generated content safely?",
+      "options": [
+        "Always render user content as text using JSX expressions like {content} which React auto-escapes safely",
+        "Sanitize all user content with a library like DOMPurify before rendering with dangerouslySetInnerHTML in JSX",
+        "Validate user content on the server side only since client-side sanitization can be easily bypassed by attackers",
+        "Encode all special characters in user content to their HTML entity equivalents before storing them in the database"
+      ],
+      "correctIndex": 0,
+      "explanation": "React's JSX expressions ({content}) automatically escape HTML entities, preventing XSS (Cross-Site Scripting). A string like '<script>alert(1)</script>' renders as visible text, not executable HTML. Only use dangerouslySetInnerHTML when you need to render actual HTML (like a rich text editor), and always sanitize with DOMPurify first in that case.",
+      "optionExplanations": [
+        "",
+        "DOMPurify plus dangerouslySetInnerHTML is correct when you need HTML rendering, but for plain text content, JSX auto-escaping is simpler and safer by default.",
+        "Server-side validation is important but insufficient alone — defense in depth requires client-side rendering safety too since data can arrive from multiple sources.",
+        "HTML entity encoding on storage is fragile and can cause double-encoding issues — rendering-time escaping (which React provides automatically) is the more reliable approach."
+      ],
+      "category": "Security",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "bp-10",
+      "scenario": "Your team needs to decide how to handle environment-specific configuration (API (Application Programming Interface) URLs, feature flags, analytics keys) across development, staging, and production environments.",
+      "question": "What is the recommended approach for managing environment configuration?",
+      "options": [
+        "Use .env files with a NEXT_PUBLIC_ or VITE_ prefix for client-exposed variables, validated at build time",
+        "Store all configuration in a JSON file committed to the repository with environment-specific sections",
+        "Hardcode configuration values with conditional checks on window.location.hostname at runtime in code",
+        "Fetch configuration from a dedicated config endpoint on application startup before rendering any routes"
+      ],
+      "correctIndex": 0,
+      "explanation": "Environment variables via .env files (with framework-specific prefixes like NEXT_PUBLIC_ or VITE_) are injected at build time, keeping secrets out of client bundles. Validate required variables at build time to catch missing config early. Use .env.local for developer overrides and never commit secrets to the repository.",
+      "optionExplanations": [
+        "",
+        "Committed JSON config exposes all environment values (including production secrets) to anyone with repository access — .env files can be gitignored.",
+        "Hostname-based conditionals are fragile, hard to test, and expose all environment configurations in the client bundle regardless of the current environment.",
+        "Fetching config on startup adds a network dependency to application boot, increasing time to first render and creating a single point of failure."
+      ],
+      "category": "Configuration",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "bp-11",
+      "scenario": "You need to handle errors gracefully throughout your React application. Currently, uncaught errors crash the entire UI and show a white screen. Users lose all their in-progress work when this happens.",
+      "question": "What is the recommended error handling strategy for a production React application?",
+      "options": [
+        "Layer error boundaries at route and feature levels, log errors to a monitoring service, and show recovery UI",
+        "Wrap every component in an individual try-catch block to catch and display errors at the most granular level",
+        "Add a single global window.onerror handler that catches all errors and displays a generic error notification",
+        "Use React's built-in error recovery mechanism that automatically retries failed renders three times on error"
+      ],
+      "correctIndex": 0,
+      "explanation": "Strategic error boundaries at route boundaries prevent one page from crashing the whole app. Feature-level boundaries around risky widgets (charts, third-party embeds) add targeted resilience. Log errors to Sentry or a similar service for debugging. Show fallback UI with retry options so users can recover without losing their work or reloading the page.",
+      "optionExplanations": [
+        "",
+        "Try-catch blocks in every component add massive boilerplate and don't catch errors in React's render phase — error boundaries are the React-specific solution.",
+        "window.onerror catches JavaScript errors but can't render fallback UI in place of the crashed component — error boundaries provide component-level recovery.",
+        "React does not have a built-in automatic retry mechanism for failed renders — error boundaries must be explicitly implemented by the developer."
+      ],
+      "category": "Error Handling",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-12",
+      "scenario": "Your team wants to enforce consistent code style, catch common bugs early, and automate formatting across 8 developers with different editor setups and operating systems.",
+      "question": "What tooling setup should you implement?",
+      "options": [
+        "ESLint for linting, Prettier for formatting, Husky pre-commit hooks, and shared editor config files",
+        "Rely on TypeScript strict mode alone since the compiler catches most code quality issues automatically",
+        "Write a team style guide document and trust developers to follow it during code reviews consistently",
+        "Use only Prettier for formatting and skip linting since most bugs are caught by TypeScript's type checker"
+      ],
+      "correctIndex": 0,
+      "explanation": "ESLint catches bugs and enforces patterns (no unused variables, hook rules). Prettier handles all formatting decisions (ending style debates). Husky runs both on pre-commit so no malformatted code enters the repo. .editorconfig and shared ESLint/Prettier configs ensure consistency across editors and operating systems. This automation removes style from code reviews.",
+      "optionExplanations": [
+        "",
+        "TypeScript catches type errors but not style issues, unused imports, accessibility violations, or React-specific anti-patterns that ESLint rules cover.",
+        "Style guides require manual enforcement in every code review — automated tooling catches issues instantly without relying on reviewer attention and consistency.",
+        "Prettier only handles formatting (indentation, quotes, semicolons) — it can't catch bugs, enforce patterns, or detect anti-patterns the way ESLint does."
+      ],
+      "category": "Developer Tooling",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "bp-13",
+      "scenario": "You're designing the state management approach for a new medium-complexity React application. It has form state, UI state (modals, sidebars), and server data. Previous projects used Redux for everything.",
+      "question": "What state management approach provides the best balance of simplicity and scalability?",
+      "options": [
+        "Use local useState for UI state, React Query or SWR (Stale-While-Revalidate) for server state, and context or Zustand for shared client state",
+        "Use Redux Toolkit for all state to maintain a single centralized store with consistent patterns everywhere",
+        "Use React Context with useReducer for everything to avoid adding any external state management dependencies",
+        "Use Zustand for all state management since it has less boilerplate than Redux while still providing a global store"
+      ],
+      "correctIndex": 0,
+      "explanation": "Different types of state have different needs. Local useState for ephemeral UI state (modal open/closed) keeps it simple. React Query/SWR (Stale-While-Revalidate) for server state provides caching and revalidation. Zustand or Context for truly shared client state (theme, user preferences) provides global access. This separation of concerns keeps each layer simple and avoids over-engineering.",
+      "optionExplanations": [
+        "",
+        "Redux for everything adds unnecessary ceremony to simple UI state — opening a modal shouldn't require an action creator, reducer, and selector boilerplate.",
+        "Context with useReducer lacks server state features (caching, deduplication, revalidation) and causes excessive re-renders when used as a global store.",
+        "Using a global store for all state (including local UI state) couples components unnecessarily and makes them harder to reuse and test in isolation."
+      ],
+      "category": "State Management",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "bp-14",
+      "scenario": "You're building a component library that will be consumed by multiple teams. You want components to be flexible enough for diverse use cases but simple enough that developers use them correctly.",
+      "question": "What API (Application Programming Interface) design principle should guide your component interfaces?",
+      "options": [
+        "Composition over configuration: provide small focused components that teams combine for their use cases",
+        "Anticipate all use cases upfront and expose configuration props for every possible customization scenario",
+        "Provide a single flexible component per category with extensive props to handle every variant and layout",
+        "Keep components minimal with no customization and require teams to fork the library for any modifications"
+      ],
+      "correctIndex": 0,
+      "explanation": "Composition (Card.Header, Card.Body, Card.Actions) lets consumers build exactly what they need from small, well-tested pieces. Configuration-heavy components (17+ props) become impossible to document, test, and maintain. Compound components, render props, and slot patterns provide flexibility without prop explosion. The React ecosystem consistently favors composition.",
+      "optionExplanations": [
+        "",
+        "Anticipating all use cases leads to bloated components with dozens of props — many combinations will be untested and some will conflict with each other.",
+        "Single flexible components with extensive props create the exact problem of impossible states and overwhelming documentation that configuration-heavy APIs cause.",
+        "Forcing teams to fork the library fragments maintenance and means bug fixes must be manually propagated — composition provides flexibility without fragmentation."
+      ],
+      "category": "Component Design",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "bp-15",
+      "scenario": "Your team is starting a new project and needs to choose between Next.js (with App Router), Remix, and a plain Vite + React setup. The app is a dashboard with authenticated routes, server-side data fetching, and SEO requirements for public pages.",
+      "question": "Which framework choice best fits these requirements?",
+      "options": [
+        "Next.js App Router providing server components, built-in authentication patterns, and hybrid rendering modes",
+        "Plain Vite plus React for maximum flexibility and control over the build pipeline and rendering approach",
+        "Remix with its loader/action pattern for server-side data fetching and progressive enhancement support",
+        "A static site generator like Astro with React islands for the interactive dashboard component sections"
+      ],
+      "correctIndex": 0,
+      "explanation": "Next.js App Router provides Server Components (zero-JS server rendering), middleware for authentication, ISR for SEO pages, and client components for interactive dashboards. The hybrid rendering model lets you choose per-page: static for marketing, SSR for SEO, and client-side for dashboard. Its large ecosystem and Vercel hosting integration reduce infrastructure decisions.",
+      "optionExplanations": [
+        "",
+        "Plain Vite requires building SSR, authentication middleware, and SEO rendering from scratch — this adds months of infrastructure work that Next.js provides out of the box.",
+        "Remix is excellent but has a smaller ecosystem, fewer hosting integrations, and requires more custom setup for hybrid static and dynamic rendering compared to Next.js.",
+        "Astro is optimized for content-heavy sites with minimal interactivity — a complex authenticated dashboard needs more client-side capability than Astro's island model provides."
+      ],
+      "category": "Framework Selection",
+      "difficulty": "advanced"
+    }
+  ]
+}

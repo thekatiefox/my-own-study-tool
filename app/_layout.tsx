@@ -69,23 +69,19 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={theme}>
       <Stack>
-        {needsAuth ? (
-          <Stack.Screen name="auth" options={{ headerShown: false }} />
-        ) : (
-          <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="review/[packId]"
-              options={{
-                title: 'Review',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-                headerShadowVisible: false,
-                presentation: 'modal',
-              }}
-            />
-          </>
-        )}
+        <Stack.Screen name="auth" options={{ headerShown: false }} redirect={!needsAuth} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} redirect={needsAuth} />
+        <Stack.Screen
+          name="review/[packId]"
+          options={{
+            title: 'Review',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerShadowVisible: false,
+            presentation: 'modal',
+          }}
+          redirect={needsAuth}
+        />
       </Stack>
     </ThemeProvider>
   );

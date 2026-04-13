@@ -10,7 +10,7 @@
       "question": "What race condition exists in this custom hook?",
       "options": [
         "The useState initializer creates a new empty array reference on every component render cycle",
-        "The fetch call is missing required Content-Type and Accept headers causing silent CORS failures",
+        "The fetch call is missing required Content-Type and Accept headers causing silent CORS (Cross-Origin Resource Sharing) failures",
         "Rapid query changes cause out-of-order responses where stale results can overwrite fresh ones",
         "The dependency array should include setResults to prevent stale closure reference access bugs"
       ],
@@ -49,7 +49,7 @@
     {
       "id": "cra-3",
       "scenario": "```js\n// api/client.js\nexport async function apiCall(endpoint, options = {}) {\n  const response = await fetch(`${BASE_URL}${endpoint}`, {\n    ...options,\n    headers: {\n      'Content-Type': 'application/json',\n      'Authorization': `Bearer ${localStorage.getItem('token')}`,\n      ...options.headers,\n    },\n  });\n\n  if (!response.ok) {\n    throw new Error(`API Error: ${response.status}`);\n  }\n\n  return response.json();\n}\n```",
-      "question": "What is the most critical issue in this API layer design?",
+      "question": "What is the most critical issue in this API (Application Programming Interface) layer design?",
       "options": [
         "Spreading options.headers can silently override the required Authorization header from callers",
         "Using template literals for URL construction opens the endpoint to path traversal injections",
@@ -124,9 +124,9 @@
       "category": "N+1 Requests",
       "difficulty": "advanced",
       "optionExplanations": [
-        "Switching from React Query to SWR doesn't fix the N+1 problem — both libraries would fire the same per-member requests with this component structure.",
+        "Switching from React Query to SWR (Stale-While-Revalidate) doesn't fix the N+1 problem — both libraries would fire the same per-member requests with this component structure.",
         "",
-        "GraphQL is one possible solution, but the core issue is the N+1 pattern — a batch REST endpoint would fix it without requiring a GraphQL migration.",
+        "GraphQL is one possible solution, but the core issue is the N+1 pattern — a batch REST (Representational State Transfer) endpoint would fix it without requiring a GraphQL migration.",
         "React.memo prevents re-renders but doesn't reduce the number of network requests — each card still fires its own stats fetch on mount."
       ]
     },
@@ -135,7 +135,7 @@
       "scenario": "```ts\n// PR: \"Migrate user settings from v1 API to v2 API\"\n// Old endpoint returns: { theme: 'dark', lang: 'en' }\n// New endpoint returns: { preferences: { theme: 'dark', locale: 'en-US' } }\n\nexport async function getUserSettings() {\n  const res = await fetch('/api/v2/settings');\n  const data = await res.json();\n  return {\n    theme: data.preferences.theme,\n    lang: data.preferences.locale,\n  };\n}\n```",
       "question": "What migration concern would you raise in review?",
       "options": [
-        "The function should accept a version parameter to support dynamic API version switching",
+        "The function should accept a version parameter to support dynamic API (Application Programming Interface) version switching",
         "The locale field mapping is lossy because 'en-US' and 'en' are not semantically equivalent",
         "The response shape should be validated at runtime with a schema library before being used",
         "There is no v1 fallback, so environments that haven't deployed v2 yet will break entirely"
@@ -175,7 +175,7 @@
     {
       "id": "cra-9",
       "scenario": "```tsx\n// Shared component library PR\ninterface CardProps {\n  title: string;\n  subtitle?: string;\n  image?: string;\n  imagePosition?: 'top' | 'left' | 'right' | 'background';\n  actions?: ReactNode;\n  onClick?: () => void;\n  href?: string;\n  variant?: 'elevated' | 'outlined' | 'filled';\n  size?: 'sm' | 'md' | 'lg';\n  badge?: string;\n  badgeColor?: string;\n  isLoading?: boolean;\n  isSelected?: boolean;\n  isDisabled?: boolean;\n  animateOnHover?: boolean;\n  className?: string;\n  testId?: string;\n}\n```",
-      "question": "What would you flag in this shared component's API?",
+      "question": "What would you flag in this shared component's API (Application Programming Interface)?",
       "options": [
         "The component should use generic types to let consumers extend the props interface flexibly",
         "Using ReactNode for the actions prop is too permissive and needs a stricter type contract",
@@ -190,7 +190,7 @@
         "Generic types add flexibility but don't address the core problem — a 17-prop interface is too complex regardless of how extensible the types are.",
         "ReactNode is the standard type for renderable content in React — it's appropriately permissive for a slot-based actions prop.",
         "",
-        "forwardRef is useful for DOM access but is a minor enhancement — the overwhelming API surface of 17 props is the far more pressing design concern."
+        "forwardRef is useful for DOM (Document Object Model) access but is a minor enhancement — the overwhelming API surface of 17 props is the far more pressing design concern."
       ]
     },
     {
@@ -198,8 +198,8 @@
       "scenario": "```jsx\nfunction CommentSection({ postId }) {\n  const [comments, setComments] = useState([]);\n\n  useEffect(() => {\n    fetch(`/api/posts/${postId}/comments`)\n      .then(res => res.json())\n      .then(setComments);\n  }, [postId]);\n\n  return (\n    <div>\n      {comments.map(c => (\n        <div key={c.id}>\n          <p dangerouslySetInnerHTML={{ __html: c.body }} />\n          <span>{c.author}</span>\n        </div>\n      ))}\n    </div>\n  );\n}\n```",
       "question": "What security vulnerability would you flag in this PR?",
       "options": [
-        "Using dangerouslySetInnerHTML with user-generated comment content enables stored XSS attacks",
-        "The API endpoint is susceptible to SQL injection through the unvalidated postId path parameter",
+        "Using dangerouslySetInnerHTML with user-generated comment content enables stored XSS (Cross-Site Scripting) attacks",
+        "The API (Application Programming Interface) endpoint is susceptible to SQL injection through the unvalidated postId path parameter",
         "The fetch call should use POST instead of GET to mitigate cross-site request forgery attacks",
         "The author display field needs HTML entity encoding to prevent UI-based clickjacking exploits"
       ],
@@ -210,14 +210,14 @@
       "optionExplanations": [
         "",
         "SQL injection is a server-side concern handled by parameterized queries — the frontend fetch URL doesn't directly create SQL injection vulnerabilities.",
-        "GET requests for reading comments are semantically correct — CSRF protection is handled by tokens or SameSite cookies, not HTTP method changes.",
+        "GET requests for reading comments are semantically correct — CSRF (Cross-Site Request Forgery) protection is handled by tokens or SameSite cookies, not HTTP method changes.",
         "Clickjacking uses iframe overlays, not HTML in text fields — the author field displaying plain text doesn't create a clickjacking vulnerability."
       ]
     },
     {
       "id": "cra-11",
       "scenario": "```yaml\n# .github/workflows/deploy.yml PR diff:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - run: npm ci\n      - run: npm run build\n-     - run: npm test\n      - run: npx serverless deploy --stage production\n+     - run: npm test\n```",
-      "question": "What CI/CD issue would you flag in this config change?",
+      "question": "What CI/CD (Continuous Integration / Continuous Deployment) issue would you flag in this config change?",
       "options": [
         "The checkout action should be pinned to a specific commit SHA rather than a mutable version tag",
         "The npm ci step should include a frozen lockfile flag to guarantee fully reproducible installs",
@@ -240,7 +240,7 @@
       "scenario": "```sql\n-- Migration PR: Add user preferences table\nALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}';\n\n-- New query used by the frontend:\nSELECT u.*, p.team_name\nFROM users u\nJOIN projects p ON p.owner_id = u.id\nWHERE u.preferences->>'theme' = 'dark';\n```",
       "question": "What would you flag reviewing this schema change from a frontend perspective?",
       "options": [
-        "JSONB columns require specialized ORM configuration that commonly causes type mapping errors",
+        "JSONB columns require specialized ORM (Object-Relational Mapping) configuration that commonly causes type mapping errors",
         "The JOIN should be a LEFT JOIN to correctly handle users who have no associated projects yet",
         "Filtering on a JSONB field without a GIN index causes a full table scan that degrades over time",
         "The DEFAULT '{}' should be DEFAULT NULL to reduce storage overhead and simplify null handling"
@@ -304,7 +304,7 @@
       "question": "What internationalization (i18n) issues would you flag in this component?",
       "options": [
         "The component should accept an explicit locale prop to dynamically support multiple languages",
-        "Using className strings without CSS logical properties breaks layout in RTL language contexts",
+        "Using className strings without CSS logical properties breaks layout in RTL (React Testing Library) language contexts",
         "Hardcoded English strings and raw currency/number formatting violate i18n standards throughout",
         "The Product type should define locale-specific fields for translated name and description values"
       ],
@@ -318,6 +318,153 @@
         "",
         "Translation is typically handled by i18n libraries at render time using keys, not by duplicating fields in the data model for each supported language."
       ]
+    },
+    {
+      "id": "cra-16",
+      "scenario": "```jsx\nfunction ChatApp() {\n  const [messages, setMessages] = useState([]);\n\n  useEffect(() => {\n    const ws = new WebSocket('wss://chat.example.com');\n    ws.onmessage = (event) => {\n      setMessages(prev => [...prev, JSON.parse(event.data)]);\n    };\n    return () => ws.close();\n  }, []);\n\n  return (\n    <div className=\"chat\">\n      {messages.map(msg => (\n        <div key={msg.id} className=\"message\">\n          <img src={msg.avatar} />\n          <p>{msg.text}</p>\n        </div>\n      ))}\n    </div>\n  );\n}\n```",
+      "question": "What memory issue would you flag in this long-running SPA (Single-Page Application) component?",
+      "options": [
+        "The WebSocket connection should be managed by a shared context provider to prevent duplicate sockets",
+        "Messages accumulate indefinitely in state without any upper bound, causing unbounded memory growth",
+        "The spread operator in setMessages creates expensive deep copies of the entire message history",
+        "Each message image tag creates a persistent network connection that is never released on scroll"
+      ],
+      "correctIndex": 1,
+      "explanation": "In a long-running chat, messages keep accumulating via [...prev, newMsg] with no upper limit. After hours of use, the array grows unboundedly, consuming memory and slowing renders. Implement a sliding window (keep last N messages), virtualized rendering, or paginated message history to cap memory usage.",
+      "optionExplanations": [
+        "Context-managed WebSockets are an architectural improvement but don't address the unbounded memory growth from accumulating messages.",
+        "",
+        "Spread creates a shallow copy, not a deep copy — while it's O(n), the real issue is that n grows without limit, not the per-operation cost.",
+        "Image tags load resources but don't maintain persistent connections — the browser manages image caching and connection pooling automatically."
+      ],
+      "category": "Memory Management",
+      "difficulty": "senior"
+    },
+    {
+      "id": "cra-17",
+      "scenario": "```tsx\n// app/dashboard/page.tsx (Next.js App Router)\n'use client';\n\nimport { useState, useEffect } from 'react';\n\nexport default function DashboardPage() {\n  const [stats, setStats] = useState(null);\n  const [user, setUser] = useState(null);\n\n  useEffect(() => {\n    fetch('/api/stats').then(r => r.json()).then(setStats);\n    fetch('/api/user').then(r => r.json()).then(setUser);\n  }, []);\n\n  if (!stats || !user) return <p>Loading...</p>;\n\n  return (\n    <div>\n      <h1>Welcome, {user.name}</h1>\n      <StatsGrid data={stats} />\n    </div>\n  );\n}\n```",
+      "question": "What architectural issue would you flag in this Next.js App Router page?",
+      "options": [
+        "The two fetch calls should be combined into a single endpoint to reduce the total request count",
+        "The loading state should use a Suspense boundary with a skeleton component for better perceived speed",
+        "This page uses 'use client' unnecessarily — it should be a Server Component fetching data directly",
+        "The useEffect fetch calls need AbortController cleanup to prevent race conditions on navigation"
+      ],
+      "correctIndex": 2,
+      "explanation": "This page has no client-side interactivity — it just fetches data and renders it. Making it a Client Component forces the browser to download the JavaScript, hydrate, then fetch data in a waterfall. As a Server Component, the data fetches happen on the server with zero client-side JavaScript, eliminating the loading spinner and reducing time to first meaningful paint.",
+      "optionExplanations": [
+        "Combining endpoints is a minor optimization — the fundamental issue is that server-side data fetching eliminates the client-side waterfall entirely.",
+        "Suspense improves perceived loading but doesn't fix the unnecessary client-side data fetching that a Server Component would eliminate completely.",
+        "",
+        "AbortController is good cleanup practice, but the core problem is the unnecessary 'use client' directive forcing client-side rendering and data fetching."
+      ],
+      "category": "Next.js Architecture",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "cra-18",
+      "scenario": "```tsx\n// utils/helpers.ts\nimport moment from 'moment';\nimport _ from 'lodash';\n\nexport function formatDate(date: Date): string {\n  return moment(date).format('MMM D, YYYY');\n}\n\nexport function capitalize(str: string): string {\n  return _.capitalize(str);\n}\n\nexport function sortByName<T extends { name: string }>(items: T[]): T[] {\n  return _.sortBy(items, 'name');\n}\n```",
+      "question": "What bundle size issue would you flag in this utilities file?",
+      "options": [
+        "The generic type constraint on sortByName adds runtime overhead that increases the compiled output",
+        "Full imports of moment and lodash pull entire libraries into the bundle for trivial operations",
+        "The helper functions should be inlined at call sites instead of centralized in a utilities file",
+        "Using named exports instead of default exports prevents bundlers from properly tree-shaking code"
+      ],
+      "correctIndex": 1,
+      "explanation": "moment (~300KB) and lodash (~70KB) are imported in their entirety for operations that native JavaScript handles easily. Use Intl.DateTimeFormat or date-fns for dates, and native string/array methods for capitalize and sort. If lodash is needed, use lodash-es with named imports (import sortBy from 'lodash-es/sortBy') for tree-shaking.",
+      "optionExplanations": [
+        "TypeScript generics are erased at compile time and produce zero runtime overhead — they don't affect bundle size at all.",
+        "",
+        "Centralizing helpers in a utilities file is good for maintainability — the problem is the heavyweight library imports, not the file organization.",
+        "Named exports are actually better for tree-shaking than default exports — most bundlers handle named exports more effectively."
+      ],
+      "category": "Bundle Size",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "cra-19",
+      "scenario": "```ts\n// API route: GET /api/teams/:teamId/summary\nexport async function GET(req: Request) {\n  const team = await db.teams.findById(teamId);\n  const members = await db.users.findByTeamId(teamId);\n\n  const summary = [];\n  for (const member of members) {\n    const tasks = await db.tasks.findByUserId(member.id);\n    const reviews = await db.reviews.findByUserId(member.id);\n    summary.push({\n      name: member.name,\n      taskCount: tasks.length,\n      reviewCount: reviews.length,\n    });\n  }\n\n  return Response.json({ team, summary });\n}\n```",
+      "question": "What database performance issue would you flag in this API (Application Programming Interface) route?",
+      "options": [
+        "The sequential await calls for team and members should use Promise.all for parallel execution",
+        "The for loop issues N queries per member creating an N+1 problem that degrades with team size",
+        "The findById and findByTeamId calls should be replaced with a single JOIN query for efficiency",
+        "The Response.json serialization should stream results incrementally for large team summaries"
+      ],
+      "correctIndex": 1,
+      "explanation": "For a team of 20 members, this fires 1 (team) + 1 (members) + 20 (tasks) + 20 (reviews) = 42 database queries. At 50 members, it's 102 queries. This N+1 pattern causes response times to grow linearly with team size. Fix with batch queries: db.tasks.findByUserIds(memberIds) and db.reviews.findByUserIds(memberIds), reducing it to 4 total queries.",
+      "optionExplanations": [
+        "Parallelizing team and members saves one round-trip but doesn't address the per-member loop that generates the vast majority of queries.",
+        "",
+        "A single JOIN could work but adds complexity — the immediate fix is batch queries in the loop, which reduces queries from O(n) to O(1).",
+        "Streaming is useful for very large responses but doesn't reduce the database load — the query count is the primary performance bottleneck."
+      ],
+      "category": "Database Performance",
+      "difficulty": "senior"
+    },
+    {
+      "id": "cra-20",
+      "scenario": "```tsx\nfunction SearchResults({ query }: { query: string }) {\n  const [results, setResults] = useState<Result[]>([]);\n  const [isPending, startTransition] = useTransition();\n\n  useEffect(() => {\n    startTransition(() => {\n      fetch(`/api/search?q=${query}`)\n        .then(r => r.json())\n        .then(data => setResults(data));\n    });\n  }, [query]);\n\n  return (\n    <div>\n      {isPending && <Spinner />}\n      {results.map(r => <ResultCard key={r.id} result={r} />)}\n    </div>\n  );\n}\n```",
+      "question": "What misuse of concurrent React features would you flag?",
+      "options": [
+        "useTransition is meant for wrapping state updates that trigger re-renders, not async fetch calls",
+        "The startTransition call should be moved outside the useEffect and into an event handler instead",
+        "The isPending flag from useTransition conflicts with the loading state from the async fetch call",
+        "The useTransition hook should be replaced with useDeferredValue applied to the query parameter"
+      ],
+      "correctIndex": 0,
+      "explanation": "useTransition marks synchronous state updates as non-urgent so React can keep the UI responsive. Wrapping a fetch call inside startTransition doesn't make the fetch non-blocking — the transition completes immediately and isPending becomes false before results arrive. Use useTransition around the state update itself (e.g., filtering a large local list), or use Suspense-compatible data fetching for async operations.",
+      "optionExplanations": [
+        "",
+        "The location of startTransition isn't the issue — useEffect or event handler, the problem is that fetch is async and transitions are for synchronous updates.",
+        "While there's a conceptual overlap, the actual bug is that isPending doesn't track the fetch at all — it resolves immediately because fetch is not a synchronous update.",
+        "useDeferredValue defers a value to reduce re-renders, but it doesn't fix the fundamental misuse of transitions for async data fetching."
+      ],
+      "category": "Concurrent React",
+      "difficulty": "senior"
+    },
+    {
+      "id": "cra-21",
+      "scenario": "```jsx\nfunction AnalyticsDashboard() {\n  const chartRef = useRef(null);\n\n  useEffect(() => {\n    const chart = new HeavyChartLibrary(chartRef.current, {\n      data: fetchInitialData(),\n      plugins: [tooltipPlugin, zoomPlugin],\n    });\n\n    window.addEventListener('resize', chart.reflow);\n    document.addEventListener('visibilitychange', chart.pause);\n\n    return () => {\n      chart.destroy();\n    };\n  }, []);\n\n  return <div ref={chartRef} />;\n}\n```",
+      "question": "What memory leak would you catch in this cleanup logic?",
+      "options": [
+        "The chart.destroy() call should be wrapped in a try-catch to handle cleanup errors gracefully",
+        "The event listeners on window and document are never removed, leaking handlers across navigations",
+        "The chartRef should use a callback ref pattern instead of useRef for proper lifecycle management",
+        "The fetchInitialData call inside the constructor creates an unmanaged Promise that may reject"
+      ],
+      "correctIndex": 1,
+      "explanation": "While chart.destroy() is called, the resize and visibilitychange event listeners attached to window and document are never removed. These global listeners persist after unmount, holding references to the destroyed chart instance. Add removeEventListener calls for both listeners in the cleanup function.",
+      "optionExplanations": [
+        "Error handling in cleanup is nice but doesn't address the leaked event listeners that persist after the component unmounts.",
+        "",
+        "Callback refs help with dynamic ref targets, but the standard useRef works fine here — the leak is from the un-removed event listeners.",
+        "While the unmanaged Promise is a minor concern, the event listeners actively leak memory by keeping references to the chart after unmount."
+      ],
+      "category": "Memory Management",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "cra-22",
+      "scenario": "```tsx\n// routes.tsx\nimport Dashboard from './pages/Dashboard';\nimport Settings from './pages/Settings';\nimport Analytics from './pages/Analytics';\nimport AdminPanel from './pages/AdminPanel';\nimport UserManagement from './pages/UserManagement';\nimport Reports from './pages/Reports';\nimport BillingPage from './pages/BillingPage';\nimport AuditLog from './pages/AuditLog';\n\nexport const routes = [\n  { path: '/dashboard', element: <Dashboard /> },\n  { path: '/settings', element: <Settings /> },\n  { path: '/analytics', element: <Analytics /> },\n  { path: '/admin', element: <AdminPanel /> },\n  { path: '/users', element: <UserManagement /> },\n  { path: '/reports', element: <Reports /> },\n  { path: '/billing', element: <BillingPage /> },\n  { path: '/audit', element: <AuditLog /> },\n];\n```",
+      "question": "What performance issue would you flag in this route configuration?",
+      "options": [
+        "Static imports load all page bundles upfront, making every user download code for routes they never visit",
+        "The routes array should be defined as a constant outside the module scope to prevent re-creation on import",
+        "Each route element should be wrapped in an ErrorBoundary to isolate page-level crashes from the router",
+        "The route paths should use a centralized constants file to prevent typos and enable compile-time checks"
+      ],
+      "correctIndex": 0,
+      "explanation": "Static imports mean all 8 page components are bundled into the main JavaScript file. Users loading /dashboard must download code for AdminPanel, AuditLog, and every other page. Use React.lazy() with dynamic imports: const Dashboard = lazy(() => import('./pages/Dashboard')). This creates separate chunks loaded on demand, dramatically reducing initial bundle size.",
+      "optionExplanations": [
+        "",
+        "The routes array is created once at module evaluation time — there's no re-creation issue. The problem is the static imports pulling all pages into one bundle.",
+        "Error boundaries per route are a good practice but don't address the bundle size problem caused by static imports of all page components.",
+        "Centralized route constants prevent typos but don't reduce bundle size — the static imports are what force all page code into the initial download."
+      ],
+      "category": "Code Splitting",
+      "difficulty": "advanced"
     }
   ]
 }

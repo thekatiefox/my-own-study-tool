@@ -10,7 +10,7 @@
       "question": "Where should the cart state live?",
       "options": [
         "Server state managed by React Query that syncs to the database on each quantity change",
-        "A global Redux store that dispatches API calls for every individual cart modification",
+        "A global Redux store that dispatches API (Application Programming Interface) calls for every individual cart modification",
         "Client state synced to localStorage for persistence, pushed to server on checkout only",
         "Browser sessionStorage combined with IndexedDB backup for offline-first resilience"
       ],
@@ -27,7 +27,7 @@
     },
     {
       "id": "sd-2",
-      "scenario": "Your app has a table showing 50,000 order records. Users need to search, sort, and browse all records. The API supports pagination.",
+      "scenario": "Your app has a table showing 50,000 order records. Users need to search, sort, and browse all records. The API (Application Programming Interface) supports pagination.",
       "question": "What pagination approach would you choose?",
       "options": [
         "Server-side cursor pagination combined with virtual scrolling rendering only visible rows",
@@ -43,18 +43,18 @@
         "",
         "Loading 50,000 records into memory is impractical — it wastes bandwidth, increases load time, and can crash browsers with limited memory.",
         "Offset pagination becomes slow at large offsets because the database must skip over all preceding rows, degrading performance significantly.",
-        "Infinite scroll with 500-record batches would accumulate massive DOM nodes over time, causing memory bloat and scroll jank."
+        "Infinite scroll with 500-record batches would accumulate massive DOM (Document Object Model) nodes over time, causing memory bloat and scroll jank."
       ]
     },
     {
       "id": "sd-3",
-      "scenario": "Your app shows a user profile on many screens. The profile data rarely changes (maybe once a week). Each screen currently makes its own API call to fetch it.",
+      "scenario": "Your app shows a user profile on many screens. The profile data rarely changes (maybe once a week). Each screen currently makes its own API (Application Programming Interface) call to fetch it.",
       "question": "What caching strategy should you use?",
       "options": [
         "Fetch fresh data on every page mount but batch concurrent duplicate requests with deduplication",
         "Store the profile data in a service worker cache with a network-first refresh strategy on load",
         "Write profile data to IndexedDB on the first fetch and use background sync API to revalidate",
-        "Cache with a long staleTime in React Query or SWR, then revalidate on window focus events"
+        "Cache with a long staleTime in React Query or SWR (Stale-While-Revalidate), then revalidate on window focus events"
       ],
       "correctIndex": 3,
       "explanation": "Since profile data rarely changes, use a data-fetching library (React Query/SWR) with a long staleTime. The data is served from cache instantly, and revalidated in the background on window focus to stay fresh.",
@@ -69,7 +69,7 @@
     },
     {
       "id": "sd-4",
-      "scenario": "Users can 'like' a post in your social feed. The API takes 200-500ms to respond. You want the UI to feel instant.",
+      "scenario": "Users can 'like' a post in your social feed. The API (Application Programming Interface) takes 200-500ms to respond. You want the UI to feel instant.",
       "question": "How should you implement the like button?",
       "options": [
         "Debounce the like action by 300ms to batch rapid taps into a single API request",
@@ -103,7 +103,7 @@
       "category": "Real-time",
       "difficulty": "intermediate",
       "optionExplanations": [
-        "SSE only supports server-to-client communication — chat requires bidirectional messaging for both sending and receiving in real time.",
+        "SSE (Server-Sent Events) only supports server-to-client communication — chat requires bidirectional messaging for both sending and receiving in real time.",
         "Polling every 500ms wastes server resources with constant requests and still introduces up to 500ms latency for message delivery.",
         "",
         "HTTP/2 server push is designed for resource preloading, not real-time messaging — it lacks the persistent bidirectional channel chat requires."
@@ -111,10 +111,10 @@
     },
     {
       "id": "sd-6",
-      "scenario": "Your React app has 20+ pages. Each page needs different data from the API. Some data is shared across pages. You need to decide where data fetching lives.",
+      "scenario": "Your React app has 20+ pages. Each page needs different data from the API (Application Programming Interface). Some data is shared across pages. You need to decide where data fetching lives.",
       "question": "Where should data fetching logic go?",
       "options": [
-        "Custom hooks per data domain using React Query or SWR for caching and request deduplication",
+        "Custom hooks per data domain using React Query or SWR (Stale-While-Revalidate) for caching and request deduplication",
         "A centralized data layer that prefetches all route data in parallel during app initialization",
         "Co-located fetch calls in each component's useEffect with a shared global AbortController",
         "A single Redux store with thunk middleware that loads data on demand and caches in slices"
@@ -132,7 +132,7 @@
     },
     {
       "id": "sd-7",
-      "scenario": "You need a search autocomplete that queries an API as the user types. Results should appear fast, but you don't want to overload the server with requests on every keystroke.",
+      "scenario": "You need a search autocomplete that queries an API (Application Programming Interface) as the user types. Results should appear fast, but you don't want to overload the server with requests on every keystroke.",
       "question": "What's the best implementation approach?",
       "options": [
         "Throttle keystroke events at a fixed interval and queue overflow requests in a priority buffer",
@@ -162,7 +162,7 @@
         "Implement A/B testing using a hashed user ID to deterministically assign each user a variant"
       ],
       "correctIndex": 2,
-      "explanation": "A feature flag service (LaunchDarkly, Unleash, or a simple config API) lets you target users by percentage, segment, or ID. You can toggle the flag instantly without deploying, and roll back if issues arise.",
+      "explanation": "A feature flag service (LaunchDarkly, Unleash, or a simple config API (Application Programming Interface)) lets you target users by percentage, segment, or ID. You can toggle the flag instantly without deploying, and roll back if issues arise.",
       "category": "DevOps",
       "difficulty": "intermediate",
       "optionExplanations": [
@@ -195,7 +195,7 @@
     },
     {
       "id": "sd-10",
-      "scenario": "Your SPA needs authentication. After login, the user gets a JWT access token (expires in 15 min) and a refresh token (expires in 7 days). You need to store them securely.",
+      "scenario": "Your SPA (Single-Page Application) needs authentication. After login, the user gets a JWT (JSON Web Token) access token (expires in 15 min) and a refresh token (expires in 7 days). You need to store them securely.",
       "question": "Where should you store the tokens?",
       "options": [
         "Both tokens in an encrypted localStorage entry protected by a client-side encryption key",
@@ -204,15 +204,225 @@
         "Access token held in memory only, refresh token stored in a secure httpOnly cookie"
       ],
       "correctIndex": 3,
-      "explanation": "Storing the access token in memory (JS variable) protects it from XSS. The refresh token in an httpOnly cookie is inaccessible to JavaScript. On page refresh, use the refresh token cookie to get a new access token silently.",
+      "explanation": "Storing the access token in memory (JS variable) protects it from XSS (Cross-Site Scripting). The refresh token in an httpOnly cookie is inaccessible to JavaScript. On page refresh, use the refresh token cookie to get a new access token silently.",
       "category": "Security",
       "difficulty": "senior",
       "optionExplanations": [
         "Client-side encryption keys are accessible to JavaScript, so XSS can still extract both tokens — this provides a false sense of security.",
-        "Storing the access token in a cookie exposes it to CSRF attacks, and Web Workers don't provide meaningful security isolation from XSS.",
+        "Storing the access token in a cookie exposes it to CSRF (Cross-Site Request Forgery) attacks, and Web Workers don't provide meaningful security isolation from XSS.",
         "sessionStorage is accessible to JavaScript (vulnerable to XSS) and clears on tab close, forcing users to re-login every time they open a new tab.",
         ""
       ]
+    },
+    {
+      "id": "sd-11",
+      "scenario": "Your company has 5 product teams, each owning a section of a large customer portal. Teams want to deploy independently without coordinating releases. The portal currently runs as a single React monolith.",
+      "question": "What architecture would you recommend?",
+      "options": [
+        "Micro-frontends using Module Federation so each team deploys independently with runtime integration",
+        "A monorepo with shared CI/CD (Continuous Integration / Continuous Deployment) pipelines that builds and deploys the full app on any team's merge",
+        "Separate standalone apps per team linked together using standard hyperlinks for page navigation",
+        "A plugin architecture where teams publish npm packages consumed by a central shell application"
+      ],
+      "correctIndex": 0,
+      "explanation": "Module Federation lets each team build, test, and deploy their section independently while sharing a common shell. Teams get full autonomy over their tech stack and release cadence. The runtime integration avoids the coordination bottleneck of a monolith while preserving a seamless user experience across sections.",
+      "optionExplanations": [
+        "",
+        "A shared CI/CD (Continuous Integration / Continuous Deployment) pipeline that deploys everything on each merge reintroduces the coordination bottleneck that teams want to eliminate.",
+        "Separate apps with hyperlinks lose shared state, consistent navigation, and require full page reloads between team-owned sections.",
+        "npm package publishing creates a release dependency — the shell must update and redeploy whenever a team publishes a new package version."
+      ],
+      "category": "Architecture",
+      "difficulty": "senior"
+    },
+    {
+      "id": "sd-12",
+      "scenario": "Your e-commerce site serves customers globally. Static assets (images, JS bundles, CSS) are currently served from a single origin server in US-East. Users in Europe and Asia report slow page loads.",
+      "question": "What is the best strategy for improving static asset delivery?",
+      "options": [
+        "Deploy identical origin servers in each geographic region and use DNS-based routing for proximity",
+        "Compress all static assets with Brotli encoding and enable HTTP/2 push from the origin server",
+        "Use a CDN (Content Delivery Network) with edge caching, cache-busted filenames, and long cache TTLs",
+        "Serve critical assets inline in the HTML document and lazy-load remaining assets after page render"
+      ],
+      "correctIndex": 2,
+      "explanation": "A CDN (Content Delivery Network) caches static assets at edge locations worldwide, serving them from the nearest node to each user. Cache-busted filenames (e.g., bundle.a1b2c3.js) allow setting long TTL headers (1 year) since new deploys generate new filenames. This eliminates the latency of cross-continental requests for static files.",
+      "optionExplanations": [
+        "Deploying full origin servers per region is expensive and complex to maintain — a CDN achieves the same latency improvement for static assets at a fraction of the cost.",
+        "Compression and HTTP/2 help reduce transfer size but don't solve the fundamental latency of cross-continental network round trips to a single origin.",
+        "",
+        "Inlining assets increases HTML document size and breaks caching — the HTML can't be cached as long as static files with content-hashed names."
+      ],
+      "category": "Performance",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "sd-13",
+      "scenario": "You're designing a backend for a social media app. Users create posts with text and images, follow other users, and see a personalized feed. Posts have comments and reactions. The data model involves complex relationships.",
+      "question": "Which database approach is most appropriate?",
+      "options": [
+        "A document database like MongoDB for flexible schemas and fast reads of denormalized post data",
+        "A relational database like PostgreSQL for strong consistency and efficient relationship queries",
+        "A graph database like Neo4j optimized for traversing follow relationships and generating feeds",
+        "A key-value store like Redis for maximum read throughput on frequently accessed feed and post data"
+      ],
+      "correctIndex": 1,
+      "explanation": "Social media apps have deeply relational data: users follow users, posts belong to users, comments belong to posts, reactions link users to posts. PostgreSQL handles these relationships efficiently with JOINs, enforces data integrity with foreign keys, and supports JSONB for flexible fields. Use Redis as a caching layer on top, not as the primary store.",
+      "optionExplanations": [
+        "Document databases struggle with the many-to-many relationships in social data — denormalization leads to update anomalies when users change profiles.",
+        "",
+        "Graph databases excel at relationship traversal but lack the mature ecosystem, tooling, and query flexibility needed for a full social media backend.",
+        "Key-value stores lack relationship modeling entirely — they work well as a cache layer but not as the primary database for complex relational data."
+      ],
+      "category": "Database Design",
+      "difficulty": "senior"
+    },
+    {
+      "id": "sd-14",
+      "scenario": "Your public-facing REST (Representational State Transfer) API (Application Programming Interface) serves mobile apps (v1 and v2) and a web frontend. You need to ship breaking changes to the user endpoint without disrupting existing mobile app users who can't force-update.",
+      "question": "What API versioning strategy should you use?",
+      "options": [
+        "URL path versioning with /api/v1/users and /api/v2/users running as separate maintained routes",
+        "Query parameter versioning using /api/users?version=2 parsed by middleware to route requests",
+        "Header-based versioning with a custom Accept-Version header that clients must set per request",
+        "No explicit versioning — use feature flags on the server to gradually roll out the new response shape"
+      ],
+      "correctIndex": 0,
+      "explanation": "URL path versioning (/api/v1/, /api/v2/) is the most explicit and discoverable approach. It's easy to route, document, test, and monitor independently. Mobile apps pin to v1 until they update, while the web frontend adopts v2 immediately. Deprecate v1 with a sunset header and timeline once mobile adoption of v2 is high enough.",
+      "optionExplanations": [
+        "",
+        "Query parameter versioning is less discoverable and harder to cache — CDN and proxy configurations often ignore query strings by default.",
+        "Header-based versioning is invisible in URLs, making it harder to debug, document, and test — developers can't simply open versioned endpoints in a browser.",
+        "Feature flags on the server are for gradual rollouts, not API contracts — clients need a stable, predictable way to request a specific response shape."
+      ],
+      "category": "API Design",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "sd-15",
+      "scenario": "Your frontend app is in production with 100K daily active users. You have basic server-side error logging but no visibility into client-side issues. Users report intermittent UI freezes and broken features that you can't reproduce locally.",
+      "question": "What observability strategy should you implement?",
+      "options": [
+        "Add console.log statements to critical paths and ask users to send browser console screenshots on error",
+        "Implement client-side error tracking, performance monitoring, and session replay with a tool like Sentry",
+        "Set up a custom error reporting endpoint that stores errors in a database for manual weekly review",
+        "Rely on automated end-to-end test suites running in CI to catch all regressions before they ship"
+      ],
+      "correctIndex": 1,
+      "explanation": "A dedicated observability platform like Sentry captures unhandled errors with stack traces and source maps, tracks Core Web Vitals and custom performance metrics, and provides session replay to see exactly what the user experienced. This gives you the context needed to diagnose intermittent issues that are impossible to reproduce locally.",
+      "optionExplanations": [
+        "Asking users for console screenshots is unreliable, doesn't scale to 100K users, and most errors vanish before users can capture them.",
+        "",
+        "A custom error endpoint captures raw data but lacks the aggregation, deduplication, alerting, and source map support needed to act on it effectively.",
+        "E2E tests catch regressions in known flows but can't detect intermittent production issues caused by specific browser versions, network conditions, or data."
+      ],
+      "category": "Observability",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "sd-16",
+      "scenario": "You're building a complex form-heavy enterprise app (insurance quoting tool). The app must be fully usable by keyboard-only users and screen reader users, and must meet WCAG 2.1 AA compliance.",
+      "question": "How should you architect accessibility into the application?",
+      "options": [
+        "Add aria attributes and alt text at the end of development as a dedicated accessibility remediation pass",
+        "Use a headless component library like Radix UI that provides accessible primitives with custom styling",
+        "Install an automated accessibility overlay widget that adds screen reader support at runtime for users",
+        "Rely on native HTML elements exclusively and avoid any custom components to guarantee accessibility"
+      ],
+      "correctIndex": 1,
+      "explanation": "Headless component libraries like Radix UI, React Aria, or Headless UI provide fully accessible primitives (dialogs, comboboxes, menus) with proper keyboard navigation, focus management, and ARIA attributes built in. You add custom styling on top. This approach bakes accessibility into the architecture from day one instead of bolting it on after the fact.",
+      "optionExplanations": [
+        "Retrofitting accessibility after development is extremely expensive and often results in incomplete coverage — architectural decisions made early can be impossible to fix later.",
+        "",
+        "Accessibility overlays are widely criticized by the accessibility community — they don't fix underlying markup issues and can actually make the experience worse for assistive technology users.",
+        "Native HTML is a good foundation but is insufficient for complex widgets like comboboxes, date pickers, and multi-step forms that need custom keyboard and ARIA patterns."
+      ],
+      "category": "Accessibility",
+      "difficulty": "senior"
+    },
+    {
+      "id": "sd-17",
+      "scenario": "Your SaaS product is expanding from English-only to 12 languages including Arabic (right-to-left) and Japanese. The app has 200+ components with hardcoded English strings, locale-specific date and number formatting, and left-aligned layouts.",
+      "question": "What internationalization strategy should you use?",
+      "options": [
+        "Build a translation layer using react-intl or next-intl with ICU message syntax and CSS logical properties",
+        "Create separate codebases per language with localized strings, layouts, and formatting in each version",
+        "Use browser auto-translation features and only manually translate marketing pages and legal content",
+        "Store all UI strings in a database table and fetch the current language pack on application startup"
+      ],
+      "correctIndex": 0,
+      "explanation": "Use an established i18n library (react-intl, next-intl) with ICU message format for plurals, gender, and interpolation. Replace all hardcoded strings with translation keys. Use Intl.DateTimeFormat and Intl.NumberFormat for locale-aware formatting. Switch to CSS logical properties (margin-inline-start instead of margin-left) for RTL (React Testing Library) support. This scales to new languages without code changes.",
+      "optionExplanations": [
+        "",
+        "Separate codebases per language create a maintenance nightmare — every bug fix and feature must be replicated across 12 codebases.",
+        "Browser auto-translation produces inconsistent, often incorrect results and can't handle application-specific terminology or complex formatting.",
+        "Database-stored strings add a network dependency to every page load and lack the compile-time safety and developer tooling of i18n libraries."
+      ],
+      "category": "Internationalization",
+      "difficulty": "senior"
+    },
+    {
+      "id": "sd-18",
+      "scenario": "You're building a public government services portal. Users range from people on modern devices with fast connections to those on old phones with 2G connectivity. The portal must be functional for everyone.",
+      "question": "What frontend architecture approach ensures broad accessibility?",
+      "options": [
+        "Progressive enhancement: start with server-rendered HTML forms, then layer JavaScript for enhancements",
+        "Build a lightweight SPA (Single-Page Application) framework with aggressive code splitting and prefetching for fast loading",
+        "Use AMP (Accelerated Mobile Pages) for all pages to guarantee fast loading on constrained mobile devices",
+        "Detect the user's device capabilities via User-Agent and serve completely different app versions accordingly"
+      ],
+      "correctIndex": 0,
+      "explanation": "Progressive enhancement ensures the core functionality works with just HTML and server-side rendering — forms submit, pages load, content is readable. Then JavaScript enhances the experience for capable devices: client-side validation, dynamic updates, richer interactions. This guarantees all users can complete tasks regardless of device or network constraints.",
+      "optionExplanations": [
+        "",
+        "An SPA (Single-Page Application) requires JavaScript to function at all — users on old devices or flaky connections get a blank page if the bundle fails to load or parse.",
+        "AMP is restrictive, requires Google's infrastructure, and limits interactivity — it's designed for content pages, not interactive government service forms.",
+        "User-Agent detection is unreliable, creates maintenance burden with multiple codebases, and can incorrectly classify devices, locking users into a poor experience."
+      ],
+      "category": "Architecture",
+      "difficulty": "senior"
+    },
+    {
+      "id": "sd-19",
+      "scenario": "You're building a dashboard that must work well on desktop (1920px), tablet (768px), and mobile (375px). The dashboard has data tables, charts, and complex filter panels.",
+      "question": "What responsive architecture approach should you use?",
+      "options": [
+        "Build three separate layouts and use JavaScript to detect screen width and render the correct version",
+        "Use a mobile-first CSS approach with container queries, responsive components, and adaptive layouts",
+        "Design for desktop only and use CSS zoom/scale to shrink the layout proportionally on smaller screens",
+        "Create a dedicated native mobile app for small screens and restrict the web dashboard to desktop only"
+      ],
+      "correctIndex": 1,
+      "explanation": "A mobile-first CSS approach starts with the smallest layout and progressively enhances for larger screens. Container queries let components respond to their own container size (not just viewport), making them truly reusable across different layouts. Data tables become scrollable cards on mobile, charts resize responsively, and filter panels collapse into drawers.",
+      "optionExplanations": [
+        "JavaScript-based layout switching is fragile, causes layout flashes on load, and doesn't handle intermediate sizes — CSS media and container queries handle this natively.",
+        "",
+        "Scaling down a desktop layout produces unreadable text, tiny touch targets, and a poor mobile experience — responsive design requires layout adaptation, not proportional shrinking.",
+        "A separate native app doubles development effort and excludes mobile web users — a well-designed responsive web app serves all screen sizes from a single codebase."
+      ],
+      "category": "Responsive Design",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "sd-20",
+      "scenario": "Your team ships frontend updates weekly. Page load times have gradually increased from 1.5s to 4.2s over six months. Nobody noticed until users started complaining. You need to prevent this regression pattern.",
+      "question": "What strategy would you implement to prevent performance regressions?",
+      "options": [
+        "Set performance budgets in CI that fail the build if bundle size or Lighthouse scores exceed thresholds",
+        "Schedule monthly manual performance audits where a team member runs Lighthouse and files any regressions",
+        "Add a performance warning banner in the app that alerts developers when page load exceeds three seconds",
+        "Limit the number of dependencies in package.json and require approval for any new library additions"
+      ],
+      "correctIndex": 0,
+      "explanation": "Performance budgets enforced in CI catch regressions at the PR level before they ship. Set thresholds for bundle size (e.g., main chunk < 200KB), Lighthouse performance score (> 90), and key metrics (LCP < 2.5s). Tools like bundlesize, Lighthouse CI, or SpeedCurve automate this. When a PR exceeds the budget, it fails the build and forces the author to optimize before merging.",
+      "optionExplanations": [
+        "",
+        "Monthly audits are too infrequent — performance can degrade significantly between audits, and the feedback loop is too slow to identify which change caused the regression.",
+        "A runtime warning only fires in development and doesn't prevent regressions from shipping — by the time you see it, users are already affected.",
+        "Limiting dependencies is one factor but doesn't catch regressions from code changes, image additions, or configuration changes that also impact performance."
+      ],
+      "category": "Performance",
+      "difficulty": "intermediate"
     }
   ]
 }

@@ -5,13 +5,25 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { QuizPack, QuizQuestion } from '@/types';
 import * as Haptics from 'expo-haptics';
-import { saveQuizResult } from '@/lib/database';
+import { saveQuizResult, recordQuizQuestionResult } from '@/lib/database';
+import { selectSmartQuestions } from '@/lib/quizSelection';
 
 import codeReviewData from '@/data/quizzes/code-review-scenarios.json';
 import codeReviewAdvData from '@/data/quizzes/code-review-advanced.json';
 import systemDesignData from '@/data/quizzes/system-design-scenarios.json';
 
-const quizPacks: QuizPack[] = [codeReviewData, codeReviewAdvData, systemDesignData] as QuizPack[];
+let debuggingData: QuizPack | null = null;
+let bestPracticesData: QuizPack | null = null;
+try { debuggingData = require('@/data/quizzes/debugging-scenarios.json'); } catch {}
+try { bestPracticesData = require('@/data/quizzes/best-practices.json'); } catch {}
+
+const quizPacks: QuizPack[] = [
+  codeReviewData,
+  codeReviewAdvData,
+  systemDesignData,
+  ...(debuggingData ? [debuggingData] : []),
+  ...(bestPracticesData ? [bestPracticesData] : []),
+] as QuizPack[];
 
 export default function QuizScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -25,6 +37,15 @@ export default function QuizScreen() {
   const [score, setScore] = useState(0);
   const [choosingCount, setChoosingCount] = useState(false);
 
+  const handleSurpriseMe = async () => {
+    const allQuestions = quizPacks.flatMap(p => p.questions) as QuizQuestion[];
+    const smart = await selectSmartQuestions(allQuestions, 5);
+    setSelectedPack({ id: 'surprise', name: 'Surprise Mix', icon: '🎲', description: 'A random mix from all packs', questions: smart } as QuizPack);
+    resetQuiz();
+    setActiveQuestions(smart);
+    setChoosingCount(false);
+  };
+
   const QUESTION_COUNTS = [3, 5, 10];
 
   const resetQuiz = () => {
@@ -34,11 +55,11 @@ export default function QuizScreen() {
     setScore(0);
   };
 
-  const handleStartWithCount = (pack: QuizPack, count: number) => {
+  const handleStartWithCount = async (pack: QuizPack, count: number) => {
     setSelectedPack(pack);
     resetQuiz();
-    const shuffled = [...pack.questions].sort(() => Math.random() - 0.5);
-    setActiveQuestions(shuffled.slice(0, Math.min(count, shuffled.length)));
+    const smart = await selectSmartQuestions(pack.questions as QuizQuestion[], count);
+    setActiveQuestions(smart);
     setChoosingCount(false);
   };
 
@@ -53,7 +74,9 @@ export default function QuizScreen() {
     if (showResult) return;
     setSelectedOption(index);
     setShowResult(true);
-    if (index === activeQuestions[currentIndex].correctIndex) {
+    const correct = index === activeQuestions[currentIndex].correctIndex;
+    recordQuizQuestionResult(activeQuestions[currentIndex].id, correct).catch(() => {});
+    if (correct) {
       setScore((s) => s + 1);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
@@ -91,6 +114,21 @@ export default function QuizScreen() {
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Test your knowledge with scenarios
         </Text>
+
+        {/* Surprise Me — zero-decision quick start */}
+        <Pressable
+          onPress={handleSurpriseMe}
+          style={({ pressed }) => [
+            styles.surpriseButton,
+            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <Text style={styles.surpriseEmoji}>🎲</Text>
+          <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+            <Text style={styles.surpriseTitle}>Surprise Me</Text>
+            <Text style={styles.surpriseDesc}>5 smart-picked questions from all packs</Text>
+          </View>
+        </Pressable>
 
         {quizPacks.map((pack) => {
           const maxQ = pack.questions.length;
@@ -329,24 +367,36 @@ export default function QuizScreen() {
           >
             {isCorrect ? '✓ Correct!' : '✗ Not quite'}
           </Text>
-          {!isCorrect && selectedOption !== null && question.optionExplanations?.[selectedOption] && (
-            <Text
-              style={[
-                styles.explanationText,
-                { color: colors.text, marginBottom: 8 },
-              ]}
-            >
-              {question.optionExplanations[selectedOption]}
-            </Text>
-          )}
           <Text
             style={[
               styles.explanationText,
-              { color: colors.text },
+              { color: colors.text, marginBottom: 10 },
             ]}
           >
             {question.explanation}
           </Text>
+          {question.optionExplanations && question.optionExplanations.some(e => e) && (
+            <View style={styles.wrongAnswerBreakdown}>
+              <Text style={[styles.breakdownTitle, { color: colors.textSecondary }]}>
+                Why the other answers are wrong:
+              </Text>
+              {question.options.map((opt, i) => {
+                if (i === question.correctIndex) return null;
+                const explanation = question.optionExplanations?.[i];
+                if (!explanation) return null;
+                return (
+                  <View key={i} style={styles.breakdownItem}>
+                    <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>
+                      {String.fromCharCode(65 + i)}.
+                    </Text>
+                    <Text style={[styles.breakdownText, { color: colors.text }]}>
+                      {explanation}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </View>
       )}
 
@@ -394,6 +444,31 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     marginBottom: 24,
     paddingHorizontal: 24,
+  },
+
+  // Surprise Me
+  surpriseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 24,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 10,
+  },
+  surpriseEmoji: {
+    fontSize: 24,
+    marginRight: 14,
+  },
+  surpriseTitle: {
+    color: '#FFF9F4',
+    fontSize: 15,
+    fontFamily: 'Inter-Medium',
+    marginBottom: 2,
+  },
+  surpriseDesc: {
+    color: 'rgba(255,249,244,0.75)',
+    fontSize: 12,
+    letterSpacing: 0.1,
   },
 
   // Pack cards
@@ -540,6 +615,35 @@ const styles = StyleSheet.create({
   explanationText: {
     fontSize: 13,
     lineHeight: 20,
+  },
+  wrongAnswerBreakdown: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  breakdownTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  breakdownItem: {
+    flexDirection: 'row',
+    marginBottom: 6,
+    paddingLeft: 2,
+  },
+  breakdownLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    width: 20,
+    marginTop: 1,
+  },
+  breakdownText: {
+    fontSize: 12,
+    lineHeight: 18,
+    flex: 1,
   },
   nextButton: {
     marginHorizontal: 24,

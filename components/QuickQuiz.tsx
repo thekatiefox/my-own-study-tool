@@ -1,17 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { QuizQuestion } from '@/types';
 import * as Haptics from 'expo-haptics';
+import { recordQuizQuestionResult } from '@/lib/database';
+import { selectSmartQuestions } from '@/lib/quizSelection';
 
 import codeReviewData from '@/data/quizzes/code-review-scenarios.json';
 import codeReviewAdvData from '@/data/quizzes/code-review-advanced.json';
 import systemDesignData from '@/data/quizzes/system-design-scenarios.json';
 
+let debuggingData: any = null;
+let bestPracticesData: any = null;
+try { debuggingData = require('@/data/quizzes/debugging-scenarios.json'); } catch {}
+try { bestPracticesData = require('@/data/quizzes/best-practices.json'); } catch {}
+
 const ALL_QUESTIONS: QuizQuestion[] = [
   ...codeReviewData.questions,
   ...codeReviewAdvData.questions,
   ...systemDesignData.questions,
+  ...(debuggingData ? debuggingData.questions : []),
+  ...(bestPracticesData ? bestPracticesData.questions : []),
 ] as QuizQuestion[];
 
 function getRandomQuestion(): QuizQuestion {
@@ -29,19 +38,29 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
 
+  // Replace initial random question with smart-selected one
+  useEffect(() => {
+    selectSmartQuestions(ALL_QUESTIONS, 1).then(q => {
+      if (q[0]) setQuestion(q[0]);
+    }).catch(() => {});
+  }, []);
+
   const handleSelect = (index: number) => {
     if (showResult) return;
     setSelectedOption(index);
     setShowResult(true);
+    const correct = index === question.correctIndex;
+    recordQuizQuestionResult(question.id, correct).catch(() => {});
     Haptics.notificationAsync(
-      index === question.correctIndex
+      correct
         ? Haptics.NotificationFeedbackType.Success
         : Haptics.NotificationFeedbackType.Error
     );
   };
 
-  const handleNext = () => {
-    setQuestion(getRandomQuestion());
+  const handleNext = async () => {
+    const smart = await selectSmartQuestions(ALL_QUESTIONS, 1);
+    setQuestion(smart[0] || getRandomQuestion());
     setSelectedOption(null);
     setShowResult(false);
     setExpanded(true);
@@ -77,12 +96,10 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
   // Expanded state — full quiz interaction
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <View style={styles.header}>
+      <Pressable onPress={() => setExpanded(false)} style={styles.header}>
         <Text style={[styles.headerLabel, { color: colors.primary }]}>QUICK QUIZ</Text>
-        <Pressable onPress={() => setExpanded(false)} hitSlop={8}>
-          <Text style={[styles.collapseBtn, { color: colors.textSecondary }]}>Done</Text>
-        </Pressable>
-      </View>
+        <Text style={[styles.collapseBtn, { color: colors.textSecondary }]}>Done</Text>
+      </Pressable>
 
       <Text style={[styles.question, { color: colors.text }]}>
         {question.question}
@@ -134,14 +151,31 @@ export default function QuickQuiz({ colors, colorScheme }: Props) {
           <Text style={[styles.resultLabel, { color: isCorrect ? '#7B9E87' : '#C47D5A' }]}>
             {isCorrect ? 'Correct' : 'Not quite'}
           </Text>
-          {!isCorrect && selectedOption !== null && question.optionExplanations?.[selectedOption] && (
-            <Text style={[styles.resultText, { color: colors.text, marginBottom: 6 }]}>
-              {question.optionExplanations[selectedOption]}
-            </Text>
-          )}
-          <Text style={[styles.resultText, { color: colors.text }]}>
+          <Text style={[styles.resultText, { color: colors.text, marginBottom: 8 }]}>
             {question.explanation}
           </Text>
+          {question.optionExplanations && question.optionExplanations.some((e: string) => e) && (
+            <View style={styles.wrongBreakdown}>
+              <Text style={[styles.wrongBreakdownTitle, { color: colors.textSecondary }]}>
+                Why the other answers are wrong:
+              </Text>
+              {question.options.map((opt: string, i: number) => {
+                if (i === question.correctIndex) return null;
+                const explanation = question.optionExplanations?.[i];
+                if (!explanation) return null;
+                return (
+                  <View key={i} style={styles.wrongBreakdownItem}>
+                    <Text style={[styles.wrongBreakdownLabel, { color: colors.textSecondary }]}>
+                      {String.fromCharCode(65 + i)}.
+                    </Text>
+                    <Text style={[styles.wrongBreakdownText, { color: colors.text }]}>
+                      {explanation}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </View>
       )}
 
@@ -261,6 +295,35 @@ const styles = StyleSheet.create({
   resultText: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  wrongBreakdown: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  wrongBreakdownTitle: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  wrongBreakdownItem: {
+    flexDirection: 'row',
+    marginBottom: 4,
+    paddingLeft: 2,
+  },
+  wrongBreakdownLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    width: 18,
+    marginTop: 1,
+  },
+  wrongBreakdownText: {
+    fontSize: 11,
+    lineHeight: 16,
+    flex: 1,
   },
   nextBtn: {
     borderRadius: 8,

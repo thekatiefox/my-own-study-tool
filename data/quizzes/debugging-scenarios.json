@@ -1,0 +1,323 @@
+{
+  "id": "debugging-scenarios",
+  "name": "Debugging Scenarios",
+  "description": "You see this error or behavior — can you identify the cause?",
+  "icon": "🐛",
+  "questions": [
+    {
+      "id": "db-1",
+      "scenario": "Your React app shows this error in the console:\n\nWarning: Cannot update a component (`ParentComponent`) while rendering a different component (`ChildComponent`).",
+      "question": "What is the most likely cause of this error?",
+      "options": [
+        "ChildComponent is calling a setState function from ParentComponent directly during its render phase",
+        "ParentComponent is passing an unstable callback prop that triggers re-renders in ChildComponent",
+        "The two components share a context provider that is re-rendering both simultaneously on update",
+        "ChildComponent is using React.memo incorrectly which triggers a forced update in the parent tree"
+      ],
+      "correctIndex": 0,
+      "explanation": "This warning occurs when a child component calls a parent's setState during rendering (not in an effect or event handler). For example, calling onChange(value) directly in the render body instead of in a useEffect. Move the state update into a useEffect or event handler.",
+      "optionExplanations": [
+        "",
+        "Unstable callback props cause unnecessary re-renders but don't trigger this specific warning about updating during another component's render.",
+        "Shared context re-renders subscribers in a normal React cycle — it doesn't cause cross-component render-phase state update warnings.",
+        "React.memo prevents re-renders, it doesn't force parent updates — this error specifically indicates a render-phase setState call."
+      ],
+      "category": "React Errors",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "db-2",
+      "scenario": "Your React component enters an infinite loop and the console shows:\n\nError: Too many re-renders. React limits the number of renders to prevent an infinite loop.",
+      "question": "Which code pattern most commonly causes this error?",
+      "options": [
+        "Calling setState directly in the component body without wrapping it in a useEffect hook call",
+        "Using an object literal as a useEffect dependency that creates a new reference on every render",
+        "Returning a new array from a useMemo hook that triggers downstream effects in child components",
+        "Passing an inline arrow function as an event handler prop to a memoized child component tree"
+      ],
+      "correctIndex": 0,
+      "explanation": "The most common cause is calling setState unconditionally in the render body: the component renders, calls setState, which triggers another render, which calls setState again — infinite loop. Common examples: setCount(count + 1) in the component body, or onClick={setOpen(true)} (calling immediately instead of passing a function).",
+      "optionExplanations": [
+        "",
+        "Object dependencies in useEffect cause repeated effect runs but hit the effect limit, not the render limit — the error message would differ.",
+        "useMemo returning a new value only recomputes when dependencies change — it doesn't trigger infinite re-renders on its own.",
+        "Inline arrow functions create new references but only cause unnecessary re-renders in children, not an infinite render loop."
+      ],
+      "category": "React Errors",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "db-3",
+      "scenario": "Your TypeScript build fails with:\n\nTS2322: Type 'string | undefined' is not assignable to type 'string'.\n  Type 'undefined' is not assignable to type 'string'.",
+      "question": "What is the correct way to resolve this TypeScript error?",
+      "options": [
+        "Add a non-null assertion (!) to tell the compiler the value will never actually be undefined",
+        "Cast the value to string using 'as string' to override the compiler's type narrowing analysis",
+        "Handle the undefined case explicitly with a type guard, default value, or optional chaining check",
+        "Change the target variable's type from string to 'string | undefined' to accept both value types"
+      ],
+      "correctIndex": 2,
+      "explanation": "The compiler is telling you the value might be undefined, but you're using it where only string is accepted. Handle it properly: provide a default value (value ?? 'default'), add a type guard (if (value !== undefined)), or use optional chaining. Don't suppress the warning — it's protecting you from a runtime bug.",
+      "optionExplanations": [
+        "Non-null assertions silence the compiler but don't provide runtime safety — if the value is actually undefined, your code will crash.",
+        "Type casting with 'as string' overrides the type system without adding any runtime protection — it's the same risk as non-null assertions.",
+        "",
+        "Widening the target type may fix this error but pushes the undefined handling to every consumer of that variable, spreading the problem."
+      ],
+      "category": "TypeScript Errors",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "db-4",
+      "scenario": "Your frontend makes a fetch request to your backend API (Application Programming Interface). The browser console shows:\n\nAccess to fetch at 'https://api.example.com/data' from origin 'https://app.example.com' has been blocked by CORS (Cross-Origin Resource Sharing) policy: No 'Access-Control-Allow-Origin' header is present.",
+      "question": "Where should you fix this CORS (Cross-Origin Resource Sharing) error?",
+      "options": [
+        "Add a mode: 'no-cors' option to the frontend fetch call to bypass the browser's cross-origin restriction",
+        "Configure the backend server to include the Access-Control-Allow-Origin header in its HTTP responses",
+        "Move the frontend application to the same domain as the backend to eliminate the cross-origin request",
+        "Use a frontend proxy server during development and a reverse proxy like nginx for production deploys"
+      ],
+      "correctIndex": 1,
+      "explanation": "CORS is enforced by the browser but configured on the server. The backend must include Access-Control-Allow-Origin: https://app.example.com (or * for public endpoints) in its responses. This tells the browser that the frontend origin is allowed to read the response.",
+      "optionExplanations": [
+        "mode: 'no-cors' makes the response opaque — your JavaScript can't read the response body, making it useless for data fetching.",
+        "",
+        "Same-domain deployment eliminates CORS but isn't always architecturally feasible — properly configured CORS headers solve the problem without restructuring.",
+        "Proxies work for development but add infrastructure complexity in production — the correct solution is proper CORS headers on the backend."
+      ],
+      "category": "Network Debugging",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "db-5",
+      "scenario": "Your CSS flexbox layout isn't centering as expected:\n\n.container {\n  display: flex;\n  justify-content: center;\n}\n.child {\n  width: 100%;\n}",
+      "question": "Why isn't the child element visually centered?",
+      "options": [
+        "The child has width: 100% so it fills the entire container, making centering invisible to the user",
+        "The justify-content property should be align-items to center elements on the cross axis vertically",
+        "Flexbox centering requires both justify-content and align-items to be set to center simultaneously",
+        "The container needs an explicit height and width set for justify-content to calculate the center"
+      ],
+      "correctIndex": 0,
+      "explanation": "The child element has width: 100%, so it already fills the entire container width. justify-content: center positions flex items along the main axis, but when an item is full-width, there's no remaining space to distribute. Remove or reduce the width to see the centering take effect.",
+      "optionExplanations": [
+        "",
+        "justify-content centers along the main axis (horizontal in row direction), which is correct for horizontal centering — align-items is for the cross axis.",
+        "Both properties center on different axes — you only need justify-content for horizontal centering. The issue is the 100% width, not a missing property.",
+        "Flexbox containers don't need explicit dimensions for justify-content to work — the problem is the child's 100% width consuming all available space."
+      ],
+      "category": "CSS Debugging",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "db-6",
+      "scenario": "Your page content is cut off and not scrollable on mobile devices:\n\n.page {\n  height: 100vh;\n  overflow: hidden;\n}\n.content {\n  padding: 20px;\n}",
+      "question": "What is causing the content to be cut off on mobile?",
+      "options": [
+        "100vh on mobile includes the browser chrome height, and overflow: hidden clips any overflowing content",
+        "The padding on .content adds to the total height causing the content to exceed the viewport boundary",
+        "Mobile browsers use a different viewport unit calculation that makes 100vh shorter than expected",
+        "The .page element needs position: relative and a min-height instead of height for proper scrolling"
+      ],
+      "correctIndex": 0,
+      "explanation": "On mobile browsers, 100vh includes the area behind the browser's address bar and navigation chrome, making the actual visible area shorter than 100vh. Combined with overflow: hidden, any content beyond the visible area is clipped and cannot be scrolled. Use min-height: 100dvh (dynamic viewport height) and remove overflow: hidden.",
+      "optionExplanations": [
+        "",
+        "Padding does add to the element's size, but the primary issue is the fixed height with overflow: hidden cutting off content that extends beyond the viewport.",
+        "Mobile browsers don't calculate vh differently — 100vh deliberately includes the browser chrome area, which is the intended behavior causing the visible mismatch.",
+        "Adding position: relative doesn't fix the overflow: hidden clipping — the content is still hidden regardless of the positioning context."
+      ],
+      "category": "CSS Debugging",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "db-7",
+      "scenario": "Your React app renders correctly on initial load, but after clicking a button that updates state, the entire page goes white. The console shows:\n\nUncaught TypeError: Cannot read properties of undefined (reading 'map')",
+      "question": "What is the most likely cause of this crash?",
+      "options": [
+        "The state update sets a value to undefined or null and the component tries to call .map() on it",
+        "The .map() method was overridden by a third-party library that conflicts with the Array prototype",
+        "React's reconciliation failed to diff the virtual DOM (Document Object Model) tree after the state change",
+        "The button's onClick handler is missing event.preventDefault() which causes a full page navigation"
+      ],
+      "correctIndex": 0,
+      "explanation": "The state update likely sets an array value to undefined (e.g., setItems(response.data) where response.data is undefined). When the component re-renders and calls items.map(), it throws because undefined has no .map() method. The fix: validate the data before setting state, or provide a default empty array fallback.",
+      "optionExplanations": [
+        "",
+        "Prototype pollution is extremely rare in modern apps — the error message specifically says the value itself is undefined, not that .map is missing from arrays.",
+        "React's reconciler doesn't fail in a way that produces this error — TypeError on .map() is a standard JavaScript error from calling a method on undefined.",
+        "event.preventDefault() prevents form submission or link navigation — a button click handler doesn't cause page navigation without an enclosing form or link."
+      ],
+      "category": "Runtime Errors",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "db-8",
+      "scenario": "Your React component fetches data but the loading spinner never disappears, even though the network tab shows a successful 200 response with valid JSON data.",
+      "question": "What is the most likely cause of the perpetual loading state?",
+      "options": [
+        "The successful response triggers a re-render that resets the loading state before data can be displayed",
+        "The state update that clears the loading flag is in a different render cycle than the data set call",
+        "The loading state is set to true but never set back to false because the success handler has an error",
+        "The network response is cached by the browser so the fetch callback never fires on subsequent requests"
+      ],
+      "correctIndex": 2,
+      "explanation": "The most common cause: the success handler throws an error (e.g., accessing a nested property like data.results.items when data.results is undefined), which prevents setLoading(false) from executing. The error may be silently swallowed if there's no error handling. Check the console for errors and add try/catch around the success handler.",
+      "optionExplanations": [
+        "React batches state updates together — setting data and clearing loading in the same handler produces a single re-render with both changes applied.",
+        "React batches state updates from the same event handler into one render cycle — separate setState calls don't cause sequencing issues within a handler.",
+        "",
+        "Cached responses still trigger the .then() callback with the cached data — the browser cache doesn't prevent fetch callbacks from executing."
+      ],
+      "category": "Runtime Errors",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "db-9",
+      "scenario": "Your TypeScript build fails with:\n\nTS2345: Argument of type '{ name: string; }' is not assignable to parameter of type 'User'.\n  Property 'email' is missing in type '{ name: string; }' but required in type 'User'.",
+      "question": "What does this error tell you about the code?",
+      "options": [
+        "You are passing an object literal that is missing the required 'email' property defined in the User type",
+        "The User interface needs to mark the 'email' property as optional with a question mark annotation",
+        "The function parameter should use Partial<User> instead of User to accept incomplete user objects",
+        "TypeScript's excess property checking is too strict and should be disabled with a compiler flag"
+      ],
+      "correctIndex": 0,
+      "explanation": "The error clearly states that you're passing { name: string } where a User is expected, and User requires an email property. Add the missing email property to the object, or if email is truly optional in this context, update the function to accept Partial<User> or make email optional in the interface.",
+      "optionExplanations": [
+        "",
+        "Making email optional changes the User contract for all consumers — only do this if email is genuinely optional in the domain model.",
+        "Partial<User> makes all properties optional, which may be too permissive — it's better to add the missing property or create a specific input type.",
+        "TypeScript's type checking exists to prevent bugs — disabling it defeats the purpose and hides real errors that would cause runtime failures."
+      ],
+      "category": "TypeScript Errors",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "db-10",
+      "scenario": "Your React component uses useEffect to fetch data, but you notice the network tab shows the same request firing twice on every mount in development mode.",
+      "question": "Why is the request firing twice?",
+      "options": [
+        "React 18 Strict Mode intentionally double-invokes effects in development to surface cleanup bugs",
+        "The useEffect dependency array is missing values which causes React to re-run the effect repeatedly",
+        "The component is wrapped in two nested providers that each trigger a separate mount lifecycle event",
+        "The browser's prefetch mechanism is sending a speculative duplicate request for performance reasons"
+      ],
+      "correctIndex": 0,
+      "explanation": "React 18's Strict Mode in development intentionally mounts, unmounts, and remounts components to help you find effects that need cleanup. This causes useEffect to run twice. It only happens in development — production builds run effects once. If the double-fire causes issues, your effect is missing proper cleanup (like an AbortController).",
+      "optionExplanations": [
+        "",
+        "Missing dependencies cause effects to re-run on every render, not exactly twice — the consistent double-fire pattern is a hallmark of Strict Mode behavior.",
+        "Nested providers don't cause components to mount twice — they wrap the component tree but don't duplicate the mount lifecycle of their children.",
+        "Browser prefetch sends separate requests for linked resources, not duplicate requests for the same JavaScript-initiated fetch call."
+      ],
+      "category": "React Debugging",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "db-11",
+      "scenario": "Your page loads slowly. Chrome DevTools Performance tab shows a long task of 800ms on the main thread during initial render. The call stack points to a component that renders a list of 2,000 items with complex markup.",
+      "question": "What is the most effective fix for this performance issue?",
+      "options": [
+        "Wrap the list in React.memo and add useMemo to the parent to prevent unnecessary re-renders of items",
+        "Implement virtualized rendering using a library like react-window to only render visible list items",
+        "Move the list rendering to a Web Worker so the heavy computation runs off the main browser thread",
+        "Split the list into chunks and render each chunk in a separate requestAnimationFrame callback cycle"
+      ],
+      "correctIndex": 1,
+      "explanation": "Rendering 2,000 complex items creates thousands of DOM (Document Object Model) nodes, blocking the main thread for 800ms. Virtualization renders only the items visible in the viewport (typically 20-50), reducing DOM (Document Object Model) nodes by 98%. Libraries like react-window or @tanstack/virtual handle scroll-based rendering efficiently. This is the standard solution for large list performance.",
+      "optionExplanations": [
+        "React.memo prevents re-renders but doesn't help with the initial render of 2,000 items — the first paint is what's causing the 800ms long task.",
+        "",
+        "Web Workers can't access the DOM — React rendering must happen on the main thread. Workers are useful for data processing, not for rendering.",
+        "Chunked rendering with requestAnimationFrame spreads the work across frames but adds complexity and causes visible incremental painting as items pop in."
+      ],
+      "category": "Performance Debugging",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "db-12",
+      "scenario": "Your React app works fine locally but in production, clicking links causes a full page reload instead of client-side navigation. The app uses React Router.",
+      "question": "What is the most likely cause of this behavior?",
+      "options": [
+        "The links use <a href=\"/path\"> instead of React Router's <Link to=\"/path\"> component for navigation",
+        "The production build strips out React Router's history listener due to aggressive tree-shaking settings",
+        "The server is not configured to serve index.html for all routes, causing the server to handle routing",
+        "React Router requires a basename prop in production that maps to the deployment subdirectory path"
+      ],
+      "correctIndex": 0,
+      "explanation": "Standard <a> tags trigger full page navigation by default, bypassing React Router's client-side routing. Replace <a href=\"/path\"> with <Link to=\"/path\"> so React Router intercepts the click, updates the URL with the History API (Application Programming Interface), and renders the new route without a page reload.",
+      "optionExplanations": [
+        "",
+        "Bundlers don't strip React Router's internals during tree-shaking — if Router is imported and used, all its functionality is preserved in the bundle.",
+        "Server routing configuration matters for direct URL access and refreshes, but link clicks causing reloads is specifically a client-side <a> vs <Link> issue.",
+        "basename is only needed when the app is deployed to a subdirectory — it doesn't affect whether navigation causes full reloads vs client-side transitions."
+      ],
+      "category": "React Debugging",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "db-13",
+      "scenario": "Your useEffect updates a parent component's state via a callback prop. The console shows:\n\nWarning: Can't perform a React state update on an unmounted component. This is a no-op, but it indicates a memory leak in your application.",
+      "question": "What is causing this warning?",
+      "options": [
+        "An async operation completes after the component unmounts and tries to update state on the destroyed instance",
+        "The parent component is garbage collected before the child's useEffect cleanup function runs on unmount",
+        "React's strict mode is simulating unmount/remount cycles that trigger false positive memory leak warnings",
+        "The callback prop reference changes on every render, causing the useEffect to fire on an outdated component"
+      ],
+      "correctIndex": 0,
+      "explanation": "This classic warning occurs when an async operation (fetch, setTimeout, subscription) resolves after the component has unmounted. The callback tries to call setState on a component that no longer exists. Fix by using an AbortController for fetch, clearing timeouts in cleanup, or using a mounted ref flag to guard state updates.",
+      "optionExplanations": [
+        "",
+        "React doesn't garbage collect components before their cleanup runs — the cleanup function is guaranteed to execute before the component is destroyed.",
+        "Strict Mode does simulate unmount/remount, but this warning specifically indicates an async operation completing after a real or simulated unmount.",
+        "Changing callback references cause effect re-runs but don't cause unmounted state update warnings — the issue is async operations outliving the component."
+      ],
+      "category": "React Debugging",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "db-14",
+      "scenario": "Your web app's Lighthouse performance score dropped from 92 to 54 after a recent deploy. The performance audit shows a Largest Contentful Paint of 6.2 seconds and lists 'Reduce unused JavaScript' as the top opportunity.",
+      "question": "What is the most likely cause of this performance regression?",
+      "options": [
+        "A newly added heavy dependency was included in the main bundle instead of being loaded on demand",
+        "The server response time increased due to a backend deployment that happened at the same time",
+        "Image assets were not properly optimized with modern formats like WebP causing slow content paint",
+        "The CSS stylesheets grew too large and are blocking the critical rendering path during page load"
+      ],
+      "correctIndex": 0,
+      "explanation": "The 'Reduce unused JavaScript' audit directly points to excessive JavaScript in the main bundle. A newly added library (e.g., a charting or rich text library) likely got statically imported into the main bundle instead of being dynamically imported. Check the bundle analyzer to identify the new addition and use code splitting to load it only where needed.",
+      "optionExplanations": [
+        "",
+        "Backend response time affects Time to First Byte, not 'unused JavaScript' — Lighthouse specifically flagged JavaScript payload as the issue, not server latency.",
+        "Unoptimized images affect LCP but wouldn't trigger the 'Reduce unused JavaScript' recommendation — the audit specifically targets JavaScript bundle size.",
+        "Large CSS can block rendering, but the primary audit finding is unused JavaScript, which points to bundle size as the dominant regression cause."
+      ],
+      "category": "Performance Debugging",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "db-15",
+      "scenario": "Your form input loses focus after every keystroke. Each character typed requires clicking the input again to continue typing. The component re-renders on each change.",
+      "question": "What is the most likely cause of the input losing focus?",
+      "options": [
+        "The input component is being defined inside another component's render function, creating a new type each render",
+        "The onChange handler is calling setState synchronously which triggers a focus-stealing re-render cycle",
+        "The input is missing a stable key prop so React destroys and recreates the element on every update",
+        "The autoFocus attribute is set on a sibling element that steals focus whenever the component re-renders"
+      ],
+      "correctIndex": 0,
+      "explanation": "Defining a component inside another component's render body creates a new component type on every render. React sees it as a different component each time and unmounts/remounts it, destroying the DOM (Document Object Model) element and losing focus. Move the inner component definition outside the parent component.",
+      "optionExplanations": [
+        "",
+        "React batches synchronous setState calls and maintains focus through normal re-renders — setState alone doesn't cause focus loss.",
+        "Missing keys on individual inputs cause reconciliation issues in lists, but this behavior of losing focus on every keystroke is the hallmark of a recreated component type.",
+        "autoFocus only fires on initial mount, not on re-renders — a sibling with autoFocus wouldn't repeatedly steal focus after the first render."
+      ],
+      "category": "React Debugging",
+      "difficulty": "intermediate"
+    }
+  ]
+}

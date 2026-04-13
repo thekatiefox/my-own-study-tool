@@ -41,7 +41,7 @@
       "difficulty": "beginner",
       "optionExplanations": [
         "useEffect callbacks don't need to be async here since document.title is a synchronous assignment — no async teardown is needed.",
-        "Setting document.title directly is standard practice — refs aren't needed for DOM properties outside the React tree.",
+        "Setting document.title directly is standard practice — refs aren't needed for DOM (Document Object Model) properties outside the React tree.",
         "The initial useState value doesn't need to match the document title — the real issue is the effect not re-running when count changes.",
         ""
       ]
@@ -75,7 +75,7 @@
         "The arrow function captures stale closure variables from the parent component scope",
         "Inline handlers bypass React's synthetic event pooling mechanism and reduce performance",
         "A new function reference is created each render, breaking memoization of child components",
-        "Passing a callback with arguments prevents proper event delegation on the DOM element"
+        "Passing a callback with arguments prevents proper event delegation on the DOM (Document Object Model) element"
       ],
       "correctIndex": 2,
       "explanation": "The inline arrow function creates a new function reference on every render. If this button is in a memoized child component, it will break memoization. Use useCallback or extract the handler.",
@@ -141,7 +141,7 @@
         "Each class override should be scoped inside a CSS module to prevent global style leakage"
       ],
       "correctIndex": 0,
-      "explanation": "When !important is used on every rule, you end up fighting specificity with more specificity. Refactor to use a clear, low-specificity naming convention like BEM instead.",
+      "explanation": "When !important is used on every rule, you end up fighting specificity with more specificity. Refactor to use a clear, low-specificity naming convention like BEM (Block Element Modifier) instead.",
       "category": "CSS",
       "difficulty": "intermediate",
       "optionExplanations": [
@@ -188,7 +188,7 @@
       "difficulty": "intermediate",
       "optionExplanations": [
         "React handles nested component trees efficiently — depth alone doesn't significantly impact reconciliation performance.",
-        "Having each component fetch its own data would create redundant API calls — the issue is how the data is passed, not where it's fetched.",
+        "Having each component fetch its own data would create redundant API (Application Programming Interface) calls — the issue is how the data is passed, not where it's fetched.",
         "Combining Layout and Sidebar would reduce flexibility without solving the core problem of passing user through every level.",
         ""
       ]
@@ -213,6 +213,216 @@
         "While onclick vs onClick is a valid JSX concern, it's a syntax issue, not an accessibility issue — the missing alt and label are more critical.",
         "Buttons are natively keyboard-focusable without tabIndex — the real accessibility gaps are the missing alt text and button label."
       ]
+    },
+    {
+      "id": "cr-11",
+      "scenario": "async function loadUsers() {\n  const response = fetch('/users');\n  const data = response.json();\n  return data;\n}",
+      "question": "What's wrong with this async function?",
+      "options": [
+        "The fetch call is missing the await keyword so response is a Promise, not a Response object",
+        "The function should use XMLHttpRequest instead of fetch for proper error status handling",
+        "The async keyword is unnecessary here since the function already returns a Promise value",
+        "The response.json() call should be replaced with JSON.parse(response.body) for safety"
+      ],
+      "correctIndex": 0,
+      "explanation": "Without 'await' before fetch(), response is a Promise, not a Response. Calling .json() on a Promise fails silently or throws. Always use 'await' with async operations inside async functions.",
+      "optionExplanations": [
+        "",
+        "fetch is the modern standard for HTTP requests — XMLHttpRequest is legacy and doesn't solve the missing await issue.",
+        "The async keyword is needed to use await inside the function — removing it would make the missing await even harder to fix.",
+        "JSON.parse is for strings, not Response objects — response.json() is correct once you actually await the fetch call first."
+      ],
+      "category": "Async/Await",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-12",
+      "scenario": "async function saveSettings(settings) {\n  fetch('/api/settings', {\n    method: 'POST',\n    body: JSON.stringify(settings),\n  });\n  showToast('Settings saved!');\n}",
+      "question": "What bug would you flag in this code review?",
+      "options": [
+        "The showToast call runs immediately without waiting for the fetch to succeed or fail first",
+        "The POST body needs a Content-Type header set to application/json for proper server parsing",
+        "The function should use PUT instead of POST since it updates an existing settings resource",
+        "The JSON.stringify call should include a replacer function to filter sensitive user fields"
+      ],
+      "correctIndex": 0,
+      "explanation": "The fetch call is not awaited, so showToast('Settings saved!') runs immediately regardless of whether the request succeeds. The user sees a success message even if the save fails. Add 'await' and wrap in try/catch.",
+      "optionExplanations": [
+        "",
+        "A Content-Type header is good practice, but the core bug is that the success message shows before the request completes or fails.",
+        "PUT vs POST is a semantic choice that depends on the backend design — the missing await causing false success feedback is the real bug.",
+        "Filtering sensitive fields is a valid concern, but the function falsely reports success regardless of the request outcome."
+      ],
+      "category": "Async/Await",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-13",
+      "scenario": "function getUserDisplayName(user: User | null) {\n  return user!.firstName + ' ' + user!.lastName;\n}\n\nfunction getOrderTotal(order: Order | undefined) {\n  return order!.items.reduce((sum, i) => sum + i.price!, 0);\n}",
+      "question": "What TypeScript issue would you flag in this code?",
+      "options": [
+        "The non-null assertion operator (!) bypasses null checks and will crash at runtime on null values",
+        "The reduce callback should use a generic type parameter to ensure the accumulator is typed",
+        "The union types should use a type guard instead of a union to enable narrowing in branches",
+        "The return types should be explicitly annotated as string and number for clarity in the API (Application Programming Interface)"
+      ],
+      "correctIndex": 0,
+      "explanation": "The non-null assertion operator (!) tells TypeScript to trust that the value is not null/undefined, but it provides no runtime protection. If user or order is actually null, the code throws a runtime error. Use proper null checks or optional chaining instead.",
+      "optionExplanations": [
+        "",
+        "The reduce accumulator type is inferred correctly from the initial value — generic type parameters aren't needed here.",
+        "Union types with null/undefined are standard TypeScript patterns — type guards work with them, but the real issue is the unsafe non-null assertions.",
+        "While explicit return types are nice, they don't fix the runtime crash caused by asserting non-null on potentially null values."
+      ],
+      "category": "TypeScript",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-14",
+      "scenario": "const processData = (input) => {\n  const result = input.map(item => {\n    if (item.type === 'active') {\n      return { ...item, status: 'enabled' };\n    }\n  });\n  return result;\n};",
+      "question": "What TypeScript and logic issue is present?",
+      "options": [
+        "The function has no parameter types or return type, and the map returns undefined for non-active items",
+        "The spread operator inside map creates shallow copies that still share nested reference values",
+        "The input parameter should be typed as ReadonlyArray to prevent accidental mutation in the body",
+        "The equality check should use strict type narrowing with a discriminated union instead of strings"
+      ],
+      "correctIndex": 0,
+      "explanation": "The function lacks TypeScript types entirely — no parameter type, no return type. Additionally, the .map() callback only returns a value when item.type is 'active'. For all other items, it implicitly returns undefined, creating holes in the result array.",
+      "optionExplanations": [
+        "",
+        "Shallow copies from spread are standard practice for immutable updates — deep cloning is rarely needed for state transformations.",
+        "ReadonlyArray is a nice defensive pattern, but the critical issues are the missing types and the implicit undefined returns from map.",
+        "String comparisons for type checking are common and valid — discriminated unions help but don't fix the missing types or undefined returns."
+      ],
+      "category": "TypeScript",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-15",
+      "scenario": "function SearchResults({ query, results }) {\n  return (\n    <div>\n      <h2>Results for: <span\n        dangerouslySetInnerHTML={{ __html: query }}\n      /></h2>\n      {results.map(r => <p key={r.id}>{r.title}</p>)}\n    </div>\n  );\n}",
+      "question": "What security vulnerability exists in this component?",
+      "options": [
+        "The query parameter rendered with dangerouslySetInnerHTML enables XSS (Cross-Site Scripting) attacks",
+        "The results array lacks input validation which could allow injected objects with malicious properties",
+        "The component should sanitize the query string by encoding special HTML characters before display",
+        "The key prop using r.id could expose internal database identifiers to end users via the markup"
+      ],
+      "correctIndex": 0,
+      "explanation": "Using dangerouslySetInnerHTML with user-provided input (the search query) is a textbook XSS (Cross-Site Scripting) vulnerability. An attacker could craft a query like <script>stealCookies()</script> that executes in every user's browser. Use text content rendering instead: {query}.",
+      "optionExplanations": [
+        "",
+        "React automatically escapes text content in JSX — the results rendering is safe because it uses {r.title} which doesn't allow HTML injection.",
+        "Encoding is one mitigation, but the simplest fix is to not use dangerouslySetInnerHTML at all — just render the query as text with {query}.",
+        "Key props are used by React internally and aren't typically exposed in a way that creates a meaningful security risk to end users."
+      ],
+      "category": "Security",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-16",
+      "scenario": "function DynamicComponent({ config }) {\n  const computedStyle = eval(\n    `({${config.styleExpression}})`\n  );\n  return <div style={computedStyle}>{config.content}</div>;\n}",
+      "question": "What critical issue would you flag in this code?",
+      "options": [
+        "Using eval() with external input allows arbitrary code execution and is a severe security risk",
+        "Dynamic style objects should use CSS custom properties instead of inline styles for performance",
+        "The template literal wrapping is incorrect and will throw a SyntaxError on complex expressions",
+        "The config parameter should be validated with a schema library before accessing its properties"
+      ],
+      "correctIndex": 0,
+      "explanation": "eval() executes arbitrary JavaScript code. If config.styleExpression comes from user input or an external source, an attacker can run any code in the user's browser. Never use eval() with dynamic content — parse the style configuration with a safe parser instead.",
+      "optionExplanations": [
+        "",
+        "CSS custom properties are useful but don't address the security vulnerability — eval with external input is dangerous regardless of the styling approach.",
+        "The template literal syntax may work for simple cases, but the fundamental problem is using eval at all, not the specific syntax wrapper.",
+        "Schema validation is good practice but insufficient — even validated strings passed to eval can contain malicious code if the schema isn't perfect."
+      ],
+      "category": "Security",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-17",
+      "scenario": "test('submits the form correctly', () => {\n  render(<LoginForm />);\n  const emailInput = screen.getByTestId('email-input');\n  const passwordInput = screen.getByTestId('password-input');\n  fireEvent.change(emailInput, {\n    target: { value: 'test@example.com' },\n  });\n  fireEvent.change(passwordInput, {\n    target: { value: 'password123' },\n  });\n  fireEvent.click(screen.getByTestId('submit-btn'));\n  expect(mockSubmit).toHaveBeenCalledWith({\n    email: 'test@example.com',\n    password: 'password123',\n  });\n});",
+      "question": "What testing anti-pattern is demonstrated here?",
+      "options": [
+        "The test relies on test IDs instead of accessible roles, coupling it to implementation details",
+        "Using fireEvent instead of userEvent means the interactions don't simulate real user behavior",
+        "The mock assertion checks exact call arguments instead of verifying visible UI feedback to users",
+        "The test lacks an async act() wrapper that is required for state updates triggered by events"
+      ],
+      "correctIndex": 0,
+      "explanation": "Using getByTestId couples the test to implementation details (specific data-testid attributes). If the component restructures its markup, tests break even though behavior is unchanged. Use getByRole('textbox', { name: /email/i }) and getByRole('button') to query by accessible roles, making tests more resilient and verifying accessibility.",
+      "optionExplanations": [
+        "",
+        "While userEvent is preferred for more realistic interaction simulation, fireEvent still works — the bigger anti-pattern is the test ID coupling.",
+        "Checking mock call arguments is valid for verifying form submission — the problem is how the elements are queried, not what's asserted.",
+        "act() is automatically handled by render and fireEvent in most testing library setups — it's not the issue demonstrated here."
+      ],
+      "category": "Testing",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-18",
+      "scenario": "function UserProfile({ userId, isAdmin }) {\n  const [user, setUser] = useState(null);\n\n  if (isAdmin) {\n    useEffect(() => {\n      fetchAdminData(userId).then(setUser);\n    }, [userId]);\n  } else {\n    useEffect(() => {\n      fetchUserData(userId).then(setUser);\n    }, [userId]);\n  }\n\n  return user ? <div>{user.name}</div> : <p>Loading...</p>;\n}",
+      "question": "What React rules violation is in this component?",
+      "options": [
+        "Hooks are called inside conditional branches which violates the Rules of Hooks ordering contract",
+        "The fetchAdminData and fetchUserData calls should be combined into a single unified data fetcher",
+        "The useState initial value of null requires a type annotation to avoid implicit any in TypeScript",
+        "The conditional rendering with a ternary should use a Suspense boundary for the loading state"
+      ],
+      "correctIndex": 0,
+      "explanation": "React hooks must be called in the same order on every render. Placing useEffect inside an if/else means hooks are called conditionally, which breaks React's internal hook tracking. Instead, call one useEffect and put the condition inside it.",
+      "optionExplanations": [
+        "",
+        "Combining the fetchers is a design choice, not a bug — the critical issue is that hooks are called conditionally, breaking React's rules.",
+        "TypeScript typing is a best practice concern, but the conditional hooks cause a runtime React error that crashes the component entirely.",
+        "Suspense is for lazy-loaded components and data fetching libraries that support it — it doesn't fix the conditional hooks violation."
+      ],
+      "category": "React Hooks",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-19",
+      "scenario": "function Timer() {\n  const [seconds, setSeconds] = useState(0);\n\n  useEffect(() => {\n    setInterval(() => {\n      setSeconds(prev => prev + 1);\n    }, 1000);\n  }, []);\n\n  return <p>Elapsed: {seconds}s</p>;\n}",
+      "question": "What issue would you flag in this Timer component?",
+      "options": [
+        "The setInterval callback should use seconds directly instead of the functional updater form",
+        "The interval is never cleared on unmount, causing a memory leak and updates to stale component",
+        "The useEffect dependency array should include seconds to re-register the interval each tick",
+        "Using setInterval in React is unreliable and should be replaced with requestAnimationFrame"
+      ],
+      "correctIndex": 1,
+      "explanation": "The setInterval is never cleared because the useEffect doesn't return a cleanup function. When the component unmounts, the interval continues firing, causing a memory leak and potential 'setState on unmounted component' warnings. Return a cleanup: return () => clearInterval(id);",
+      "optionExplanations": [
+        "The functional updater form (prev => prev + 1) is actually correct here — it avoids stale closure issues with the interval callback.",
+        "",
+        "Adding seconds to the dependency array would clear and recreate the interval every second, causing drift — the functional updater avoids this.",
+        "setInterval works reliably in React when properly cleaned up — requestAnimationFrame is for animation frames, not fixed-interval timers."
+      ],
+      "category": "React Hooks",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-20",
+      "scenario": "async function processOrders(orderIds) {\n  const results = [];\n  orderIds.forEach(async (id) => {\n    const order = await fetchOrder(id);\n    results.push(order);\n  });\n  return results;\n}",
+      "question": "Why does this function return an empty array?",
+      "options": [
+        "Array.forEach does not await async callbacks, so the function returns before any fetches complete",
+        "The results array should be declared with const but initialized using Array.from for async use",
+        "The fetchOrder function needs to be wrapped in Promise.resolve to work inside the forEach loop",
+        "The push method is not safe to call concurrently and needs a mutex or synchronization wrapper"
+      ],
+      "correctIndex": 0,
+      "explanation": "Array.forEach ignores the return value of its callback, including Promises. The async callbacks start executing but forEach doesn't await them. The function returns the empty results array immediately. Use for...of with await, or Promise.all with .map() instead.",
+      "optionExplanations": [
+        "",
+        "The array declaration style has no effect on async behavior — const with [] is fine. The issue is forEach not awaiting the callbacks.",
+        "fetchOrder already returns a Promise — wrapping it in Promise.resolve is redundant and doesn't fix forEach ignoring async results.",
+        "JavaScript is single-threaded so push doesn't need synchronization — the problem is that forEach returns before any async callbacks resolve."
+      ],
+      "category": "Async/Await",
+      "difficulty": "intermediate"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, ScrollView } from 'react-native';
+import { StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -76,6 +76,29 @@ export default function PacksScreen() {
     setPacks(packsWithProgress);
   };
 
+  const handleSurpriseMe = () => {
+    if (packs.length === 0) return;
+    // Priority: packs with due cards first, then core skills, then random
+    const duePacks = packs.filter(p => p.dueCards > 0);
+    if (duePacks.length > 0) {
+      const pick = duePacks[Math.floor(Math.random() * duePacks.length)];
+      router.push(`/review/${pick.id}`);
+      return;
+    }
+    const corePacks = packs.filter(p => PACK_CATEGORIES[p.id] === 'Core Skills');
+    const unfinishedCore = corePacks.filter(p => p.learnedCards < p.totalCards);
+    if (unfinishedCore.length > 0) {
+      const pick = unfinishedCore[Math.floor(Math.random() * unfinishedCore.length)];
+      router.push(`/review/${pick.id}`);
+      return;
+    }
+    // All core done — pick any pack with unlearned cards, else truly random
+    const unfinished = packs.filter(p => p.learnedCards < p.totalCards);
+    const pool = unfinished.length > 0 ? unfinished : packs;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    router.push(`/review/${pick.id}`);
+  };
+
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: colors.background }]}
@@ -85,6 +108,23 @@ export default function PacksScreen() {
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         Choose a pack to study
       </Text>
+
+      {/* Surprise Me — skip the decision */}
+      {packs.length > 0 && (
+        <Pressable
+          onPress={handleSurpriseMe}
+          style={({ pressed }) => [
+            styles.surpriseButton,
+            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <Text style={styles.surpriseEmoji}>🎲</Text>
+          <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+            <Text style={styles.surpriseTitle}>Surprise Me</Text>
+            <Text style={styles.surpriseDesc}>Pick a pack for me and start studying</Text>
+          </View>
+        </Pressable>
+      )}
 
       {/* Continue section — packs with due cards */}
       {(() => {
@@ -177,6 +217,29 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     marginBottom: 24,
     paddingHorizontal: 24,
+  },
+  surpriseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 24,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 10,
+  },
+  surpriseEmoji: {
+    fontSize: 24,
+    marginRight: 14,
+  },
+  surpriseTitle: {
+    color: '#FFF9F4',
+    fontSize: 15,
+    fontFamily: 'Inter-Medium',
+    marginBottom: 2,
+  },
+  surpriseDesc: {
+    color: 'rgba(255,249,244,0.75)',
+    fontSize: 12,
+    letterSpacing: 0.1,
   },
   categorySection: {
     marginBottom: 4,

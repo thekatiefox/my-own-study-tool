@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, Pressable, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { StyleSheet, Pressable, ScrollView, ActivityIndicator, RefreshControl, Platform, Linking } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -93,17 +93,17 @@ export default function HomeScreen() {
         {dueCards > 0 ? (
           <>
             <Text style={[styles.heroCount, { color: colors.primary }]}>{dueCards}</Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due for review</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due — tap to review</Text>
           </>
         ) : hasHistory ? (
           <>
-            <Text style={[styles.heroCount, { color: colors.accent }]}>0</Text>
+            <Text style={[styles.heroCount, { color: colors.accent }]}>✓</Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>all caught up — nice work</Text>
           </>
         ) : (
           <>
             <Text style={[styles.heroCount, { color: colors.primary }]}>{totalCards}</Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards to explore</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards available — pick a pack to start</Text>
           </>
         )}
       </Pressable>
@@ -146,7 +146,15 @@ export default function HomeScreen() {
           <>
             {(showAllNews ? news : news.slice(0, 2)).map((story) => (
               <View key={story.id} style={[styles.newsItem, { borderColor: colors.border }]}>
-                <Pressable onPress={() => toggleStory(story.id)}>
+                <Pressable
+                  onPress={(e: any) => {
+                    if (Platform.OS === 'web' && (e?.ctrlKey || e?.metaKey)) {
+                      window.open(story.url, '_blank');
+                    } else {
+                      toggleStory(story.id);
+                    }
+                  }}
+                >
                   <Text style={[styles.newsTitle, { color: colors.text }]} numberOfLines={2}>
                     {story.title}
                   </Text>
@@ -168,7 +176,11 @@ export default function HomeScreen() {
                     <Pressable
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        WebBrowser.openBrowserAsync(story.url);
+                        if (Platform.OS === 'web') {
+                          window.open(story.url, '_blank');
+                        } else {
+                          WebBrowser.openBrowserAsync(story.url);
+                        }
                       }}
                     >
                       <Text style={[styles.readLink, { color: colors.primary }]}>Read article</Text>

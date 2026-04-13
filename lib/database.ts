@@ -78,6 +78,14 @@ async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
       date TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS quiz_question_progress (
+      question_id TEXT PRIMARY KEY,
+      times_seen INTEGER NOT NULL DEFAULT 0,
+      times_correct INTEGER NOT NULL DEFAULT 0,
+      last_seen_date TEXT,
+      streak INTEGER NOT NULL DEFAULT 0
+    );
+
     CREATE INDEX IF NOT EXISTS idx_cards_pack ON cards(pack_id);
     CREATE INDEX IF NOT EXISTS idx_progress_next_review ON card_progress(next_review_date);
     CREATE INDEX IF NOT EXISTS idx_progress_pack ON card_progress(pack_id);
@@ -527,4 +535,66 @@ export async function getQuizStats(): Promise<{
     bestCategory: bestRow?.pack_name ?? null,
     worstCategory: worstRow?.pack_name ?? null,
   };
+}
+
+// --- Quiz Question Progress ---
+
+interface QuizQuestionProgress {
+  questionId: string;
+  timesSeen: number;
+  timesCorrect: number;
+  lastSeenDate: string | null;
+  streak: number;
+}
+
+const memQuizQuestionProgress = new Map<string, QuizQuestionProgress>();
+
+export async function recordQuizQuestionResult(questionId: string, correct: boolean): Promise<void> {
+  const date = new Date().toISOString().split('T')[0];
+  if (isWeb) {
+    const existing = memQuizQuestionProgress.get(questionId) ?? {
+      questionId, timesSeen: 0, timesCorrect: 0, lastSeenDate: null, streak: 0,
+    };
+    existing.timesSeen += 1;
+    if (correct) { existing.timesCorrect += 1; existing.streak += 1; }
+    else { existing.streak = 0; }
+    existing.lastSeenDate = date;
+    memQuizQuestionProgress.set(questionId, existing);
+  } else {
+    const database = await getDatabase();
+    await database.runAsync(
+      `INSERT INTO quiz_question_progress (question_id, times_seen, times_correct, last_seen_date, streak)
+       VALUES (?, 1, ?, ?, ?)
+       ON CONFLICT(question_id) DO UPDATE SET
+         times_seen = times_seen + 1,
+         times_correct = times_correct + CASE WHEN ? THEN 1 ELSE 0 END,
+         last_seen_date = ?,
+         streak = CASE WHEN ? THEN streak + 1 ELSE 0 END`,
+      [questionId, correct ? 1 : 0, date, correct ? 1 : 0, correct ? 1 : 0, date, correct ? 1 : 0]
+    );
+  }
+}
+
+export async function getQuizQuestionProgressMap(): Promise<Map<string, { timesSeen: number; timesCorrect: number; lastSeenDate: string | null; streak: number }>> {
+  if (isWeb) {
+    const map = new Map<string, { timesSeen: number; timesCorrect: number; lastSeenDate: string | null; streak: number }>();
+    for (const [k, v] of memQuizQuestionProgress) {
+      map.set(k, { timesSeen: v.timesSeen, timesCorrect: v.timesCorrect, lastSeenDate: v.lastSeenDate, streak: v.streak });
+    }
+    return map;
+  }
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<{
+    question_id: string; times_seen: number; times_correct: number; last_seen_date: string | null; streak: number;
+  }>('SELECT * FROM quiz_question_progress');
+  const map = new Map<string, { timesSeen: number; timesCorrect: number; lastSeenDate: string | null; streak: number }>();
+  for (const r of rows) {
+    map.set(r.question_id, {
+      timesSeen: r.times_seen,
+      timesCorrect: r.times_correct,
+      lastSeenDate: r.last_seen_date,
+      streak: r.streak,
+    });
+  }
+  return map;
 }
