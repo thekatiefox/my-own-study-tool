@@ -3,18 +3,15 @@ import {
   StyleSheet,
   Pressable,
   Animated,
-  Dimensions,
   ScrollView,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { CardContent } from '@/types';
 import * as Haptics from 'expo-haptics';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 48;
-const CARD_HEIGHT = CARD_WIDTH * 0.85;
 
 interface FlashCardProps {
   card: CardContent;
@@ -26,13 +23,17 @@ export default function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const flipAnim = React.useRef(new Animated.Value(0)).current;
+  const { width: windowWidth } = useWindowDimensions();
+
+  const CARD_WIDTH = Math.min(windowWidth - 48, 500);
+  const CARD_HEIGHT = CARD_WIDTH * 0.85;
 
   React.useEffect(() => {
     Animated.spring(flipAnim, {
       toValue: isFlipped ? 1 : 0,
       friction: 8,
       tension: 10,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [isFlipped]);
 
@@ -46,21 +47,31 @@ export default function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
     outputRange: ['180deg', '360deg'],
   });
 
+  // On web, backfaceVisibility doesn't work reliably, so we toggle opacity
+  const frontOpacity = Platform.OS === 'web'
+    ? flipAnim.interpolate({ inputRange: [0, 0.5, 0.5, 1], outputRange: [1, 1, 0, 0] })
+    : 1;
+  const backOpacity = Platform.OS === 'web'
+    ? flipAnim.interpolate({ inputRange: [0, 0.5, 0.5, 1], outputRange: [0, 0, 1, 1] })
+    : 1;
+
   const handleFlip = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onFlip();
   };
 
   return (
-    <Pressable onPress={handleFlip} style={styles.container}>
+    <Pressable onPress={handleFlip} style={[styles.container, { width: CARD_WIDTH, minHeight: CARD_HEIGHT }]}>
       {/* Front of card */}
       <Animated.View
         style={[
           styles.card,
           {
+            minHeight: CARD_HEIGHT,
             backgroundColor: colors.cardFront,
             borderColor: colors.border,
-            transform: [{ rotateY: frontInterpolate }],
+            transform: [{ perspective: 1000 }, { rotateY: frontInterpolate }],
+            opacity: frontOpacity,
           },
         ]}
       >
@@ -81,15 +92,17 @@ export default function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
           styles.card,
           styles.cardBack,
           {
+            minHeight: CARD_HEIGHT,
             backgroundColor: colors.cardBack,
             borderColor: colors.primary,
-            transform: [{ rotateY: backInterpolate }],
+            transform: [{ perspective: 1000 }, { rotateY: backInterpolate }],
+            opacity: backOpacity,
           },
         ]}
       >
         <Text style={[styles.label, { color: colors.primary }]}>ANSWER</Text>
         <ScrollView
-          style={styles.answerScroll}
+          style={[styles.answerScroll, { maxHeight: CARD_HEIGHT - 80 }]}
           contentContainerStyle={styles.answerScrollContent}
           showsVerticalScrollIndicator={true}
           nestedScrollEnabled={true}
@@ -105,13 +118,10 @@ export default function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: CARD_WIDTH,
-    minHeight: CARD_HEIGHT,
     alignSelf: 'center',
   },
   card: {
     width: '100%',
-    minHeight: CARD_HEIGHT,
     borderRadius: 10,
     borderWidth: 1,
     padding: 28,
@@ -127,6 +137,8 @@ const styles = StyleSheet.create({
   cardBack: {
     position: 'absolute',
     top: 0,
+    left: 0,
+    right: 0,
   },
   label: {
     fontSize: 10,
@@ -139,11 +151,12 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     textAlign: 'center',
     fontFamily: 'Inter-Regular',
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   answerScroll: {
     flex: 1,
     alignSelf: 'stretch',
-    maxHeight: CARD_HEIGHT - 80,
   },
   answerScrollContent: {
     paddingBottom: 8,
