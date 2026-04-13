@@ -1,0 +1,99 @@
+{
+  "id": "frontend-architecture",
+  "name": "Frontend Architecture",
+  "description": "Monorepos, micro-frontends, module patterns, and how large-scale frontend apps are structured.",
+  "icon": "🏛️",
+  "category": "Architecture",
+  "cards": [
+    {
+      "id": "fa-001",
+      "front": "What is a monorepo and why would you use one?",
+      "back": "A monorepo is a single repository containing multiple projects/packages.\n\n• Shared code — reuse utils, types, and components across apps\n• Atomic changes — update a library + all consumers in one PR\n• Unified CI/CD — one pipeline config, consistent tooling\n• Easier refactoring — rename across packages with confidence\n\nTradeoffs:\n• Repo size grows fast (clone times, CI pressure)\n• Needs specialized tooling (Nx, Turborepo) to stay fast\n• Team boundaries can blur — ownership gets murky\n\nUse when: multiple related apps share code (e.g., dashboard + marketing site + shared UI lib).",
+      "tags": ["monorepo", "architecture", "tooling"]
+    },
+    {
+      "id": "fa-002",
+      "front": "Compare monorepo tools: Nx vs Turborepo vs Lerna",
+      "back": "Nx:\n• Full-featured build system with dependency graph\n• Computation caching (local + remote)\n• Code generators, plugins for React/Angular/Node\n• Best for: large teams wanting structure + guardrails\n\nTurborepo:\n• Lightweight, fast task runner by Vercel\n• Remote caching out of the box\n• Minimal config — just turbo.json\n• Best for: teams wanting speed with low setup cost\n\nLerna:\n• OG monorepo tool, now maintained by Nx\n• Focused on versioning + publishing npm packages\n• Best for: open-source libraries shipping to npm\n\nKey insight: Nx and Turborepo handle task orchestration. Lerna handles package publishing. Many teams combine them.",
+      "tags": ["monorepo", "nx", "turborepo", "lerna", "tooling"]
+    },
+    {
+      "id": "fa-003",
+      "front": "What are micro-frontends?",
+      "back": "Micro-frontends split a single UI into independently deployable pieces, each owned by a different team.\n\n• Each \"micro-app\" has its own repo, build, and deploy pipeline\n• They compose at runtime in a shell/host application\n• Teams pick their own frameworks (React, Vue, etc.)\n\nComposition strategies:\n• Build-time — npm packages composed during build\n• Runtime — Module Federation (webpack 5), iframes, or Web Components\n• Server-side — edge/server stitches HTML fragments together\n\nReal example: An e-commerce site where the product team owns the catalog UI, the checkout team owns the cart, and a platform team owns the shell/nav.",
+      "tags": ["micro-frontends", "architecture", "module-federation"]
+    },
+    {
+      "id": "fa-004",
+      "front": "When do micro-frontends make sense vs when are they overkill?",
+      "back": "✅ Good fit when:\n• 3+ teams need to deploy independently\n• Teams have different release cadences\n• Legacy migration — wrap old app, build new pieces separately\n• App is truly massive (100+ routes, distinct domains)\n\n❌ Overkill when:\n• Single team owns the whole frontend\n• App is small-to-medium (<50 routes)\n• You just want code splitting (use lazy loading instead)\n• Teams share the same tech stack and release together\n\nHidden costs:\n• Shared state is painful (event bus, URL params, or global store)\n• Duplicate dependencies inflate bundle size\n• Consistent UX requires a shared design system\n• Debugging across boundaries is harder\n\nRule of thumb: start with a well-structured monolith. Split only when team autonomy demands it.",
+      "tags": ["micro-frontends", "architecture", "tradeoffs"]
+    },
+    {
+      "id": "fa-005",
+      "front": "Explain module patterns: barrel files and feature folders",
+      "back": "Barrel files (index.ts):\n• Re-export public API from a folder\n• Example: components/index.ts exports Button, Modal, Card\n• Benefit: clean imports — import { Button } from '@/components'\n• Risk: can cause circular deps and tree-shaking issues if overused\n\nFeature folders:\n• Group by feature, not by type\n• Example: features/auth/ has its own components/, hooks/, api/, types/\n• Each feature is a self-contained module\n• Reduces cross-feature coupling\n\nAnti-pattern: grouping ALL components in /components, ALL hooks in /hooks — this scales poorly and creates a junk-drawer effect.\n\nSenior tip: barrel files at the feature boundary, not inside every subfolder. Keep the public surface small.",
+      "tags": ["module-patterns", "folder-structure", "barrel-files"]
+    },
+    {
+      "id": "fa-006",
+      "front": "How should you structure a shared component library?",
+      "back": "Recommended structure:\n• packages/ui/ — the component library package\n• Each component in its own folder: Button/Button.tsx, Button.test.tsx, Button.stories.tsx, index.ts\n• A root index.ts barrel for public exports\n\nKey principles:\n• Headless logic vs styled components — separate behavior from visuals\n• Tokens > hardcoded styles — use design tokens for colors, spacing\n• Peer dependencies — don't bundle React; let consumers provide it\n• Versioning strategy — semver + changelog for breaking changes\n\nTooling:\n• Storybook for visual dev + documentation\n• Chromatic or Percy for visual regression testing\n• Changesets for automated versioning + changelogs\n\nAnti-patterns:\n• God components with 30+ props — split them\n• Tightly coupling to a specific app's business logic",
+      "tags": ["component-library", "design-system", "architecture"]
+    },
+    {
+      "id": "fa-007",
+      "front": "Compare package managers: npm vs yarn vs pnpm",
+      "back": "npm:\n• Ships with Node — zero setup\n• Flat node_modules by default\n• Slower installs, larger disk usage\n• Best for: small projects, quick prototypes\n\nyarn (Classic v1 / Berry v3+):\n• Deterministic installs via lockfile\n• Workspaces for monorepos built in\n• Berry (v3+) uses Plug'n'Play — no node_modules\n• Best for: teams already invested in yarn ecosystem\n\npnpm:\n• Content-addressable store — saves massive disk space\n• Strict by default — prevents phantom dependencies\n• Fastest installs in benchmarks\n• Native workspace support\n• Best for: monorepos, CI speed, disk-constrained envs\n\nSenior take: pnpm is the strongest choice for new projects today. Its strictness catches real bugs (phantom deps) that npm/yarn silently allow.",
+      "tags": ["package-management", "npm", "yarn", "pnpm", "tooling"]
+    },
+    {
+      "id": "fa-008",
+      "front": "How do you handle dependency management and version conflicts in large apps?",
+      "back": "Common problems:\n• Version mismatch — two packages need different React versions\n• Phantom dependencies — code imports a package it didn't declare\n• Duplicate bundles — same lib bundled multiple times\n\nStrategies:\n• Lockfiles — always commit package-lock.json / pnpm-lock.yaml\n• Renovate or Dependabot — automate dependency updates with PRs\n• pnpm strict mode — catches undeclared deps at install time\n• Resolutions/overrides — force a single version across the tree\n• Bundle analysis — use webpack-bundle-analyzer or source-map-explorer\n\nMonorepo-specific:\n• Hoist shared deps to root (npm/yarn workspaces)\n• Pin versions in a shared catalog (pnpm catalogs)\n• Use a single version policy — all packages on same React version\n\nRule: update deps regularly in small batches, not once a year in a panic.",
+      "tags": ["dependencies", "versioning", "tooling", "monorepo"]
+    },
+    {
+      "id": "fa-009",
+      "front": "What does design system architecture look like?",
+      "back": "Layers of a design system:\n\n1. Design tokens — primitive values (colors, spacing, radii, shadows)\n2. Core components — Button, Input, Modal, Typography\n3. Composite patterns — SearchBar, DataTable, FormField\n4. Page templates — layouts and page-level patterns\n\nArchitecture decisions:\n• Token format: use Style Dictionary or Figma Tokens to generate CSS vars / JS objects\n• Theming: CSS custom properties for runtime theme switching\n• Docs: Storybook as the single source of truth\n• Versioning: semver the package; breaking changes = major bump\n\nOrg model:\n• Centralized — one team owns the system (scales well, slower to add)\n• Federated — contributors from product teams (faster, needs governance)\n• Hybrid — core team reviews, product teams propose\n\nSuccess metric: product teams reach for the design system first, not custom CSS.",
+      "tags": ["design-system", "tokens", "architecture", "components"]
+    },
+    {
+      "id": "fa-010",
+      "front": "How do you manage environment configuration (.env, feature flags, config layers)?",
+      "back": "Config layers (from lowest to highest priority):\n1. Defaults in code — sensible fallbacks\n2. .env files — .env.development, .env.production, .env.local\n3. CI/CD variables — injected at build time\n4. Runtime config — fetched from API at startup\n\n.env best practices:\n• Never commit secrets — use .env.local + .gitignore\n• Prefix with VITE_ or NEXT_PUBLIC_ to expose to client\n• Validate at startup — fail fast if required vars are missing\n\nFeature flags:\n• Simple: JSON config or env vars for on/off toggles\n• Advanced: LaunchDarkly, Unleash, Statsig for gradual rollouts\n• Use flags to decouple deploy from release\n• Clean up stale flags — they become tech debt fast\n\nSenior tip: treat config as a contract. Type it, validate it, and document what each value does.",
+      "tags": ["configuration", "env", "feature-flags", "architecture"]
+    },
+    {
+      "id": "fa-011",
+      "front": "Compare rendering patterns: CSR vs SSR vs SSG vs ISR",
+      "back": "CSR (Client-Side Rendering):\n• Browser downloads empty HTML, JS renders everything\n• Fast transitions, poor initial load + SEO\n• Use for: dashboards, internal tools, SPAs behind auth\n\nSSR (Server-Side Rendering):\n• Server renders HTML per request, sends it to browser\n• Great SEO + fast first paint, higher server cost\n• Use for: dynamic content, personalized pages\n\nSSG (Static Site Generation):\n• HTML generated at build time\n• Blazing fast, served from CDN, stale until rebuild\n• Use for: blogs, docs, marketing sites\n\nISR (Incremental Static Regeneration):\n• SSG + background revalidation after a timeout\n• Best of both — fast CDN delivery + fresh data\n• Use for: e-commerce product pages, content sites with frequent updates\n\nKey: pick per-route, not per-app. Next.js lets you mix all four.",
+      "tags": ["rendering", "csr", "ssr", "ssg", "isr", "performance"]
+    },
+    {
+      "id": "fa-012",
+      "front": "When should you use Next.js vs plain React with Vite?",
+      "back": "Choose Next.js when:\n• You need SSR, SSG, or ISR\n• SEO matters (marketing, e-commerce, content)\n• You want file-based routing out of the box\n• You need API routes (lightweight BFF)\n• Image optimization, middleware, edge functions\n\nChoose React + Vite when:\n• Pure SPA — dashboard, admin panel, internal tool\n• No server-side rendering needed\n• You want minimal abstraction and full control\n• Faster dev server startup (Vite is very fast)\n• Deploying to static hosting (S3, Netlify, Vercel static)\n\nTradeoffs:\n• Next.js adds complexity — server components, caching rules, deploy constraints\n• Vite is simpler but you wire up routing, data fetching, SSR yourself\n\nSenior take: don't adopt Next.js just because it's popular. If your app is behind a login and SEO is irrelevant, Vite + React Router is simpler and faster to iterate on.",
+      "tags": ["nextjs", "vite", "react", "framework", "tradeoffs"]
+    },
+    {
+      "id": "fa-013",
+      "front": "What is the BFF (Backend For Frontend) pattern?",
+      "back": "A BFF is a backend service tailored specifically for one frontend's needs.\n\n• Sits between the frontend and backend microservices\n• Aggregates data from multiple APIs into one response\n• Shapes data exactly how the UI needs it\n• Handles auth, caching, and error formatting for the client\n\nWhy use it:\n• Frontend stops doing 5 API calls to render one page\n• Backend teams don't bloat their APIs with UI-specific fields\n• Different frontends (web, mobile) can have different BFFs\n\nImplementation options:\n• Next.js API routes / Route Handlers\n• Express or Fastify service\n• GraphQL gateway (acts as a natural BFF)\n• Edge functions for low-latency aggregation\n\nAnti-pattern: putting business logic in the BFF — it should orchestrate and transform, not own domain rules.",
+      "tags": ["bff", "api-gateway", "architecture", "backend"]
+    },
+    {
+      "id": "fa-014",
+      "front": "What are the best folder structure strategies for large frontend apps?",
+      "back": "Strategy 1 — Feature-based (recommended):\n• src/features/auth/, src/features/dashboard/, src/features/settings/\n• Each feature owns its components, hooks, api, types, tests\n• Shared code in src/shared/ or src/common/\n\nStrategy 2 — Domain-driven:\n• src/domains/user/, src/domains/billing/, src/domains/catalog/\n• Maps to business domains, great for DDD-aligned teams\n\nStrategy 3 — Layer-based (avoid at scale):\n• src/components/, src/hooks/, src/utils/, src/services/\n• Fine for small apps, becomes a junk drawer at 50+ files per folder\n\nRules that scale:\n• Colocation — test files next to source files\n• Barrel exports at feature boundary only\n• Enforce dependency rules — features/ can't import across features directly; use shared/\n• Keep it flat — avoid nesting beyond 3 levels\n\nSenior tip: the best structure mirrors your team structure (Conway's Law).",
+      "tags": ["folder-structure", "architecture", "organization", "scaling"]
+    },
+    {
+      "id": "fa-015",
+      "front": "How do you identify and manage technical debt in a frontend codebase?",
+      "back": "Identifying tech debt:\n• Slow CI — builds/tests taking 10+ minutes\n• Fear of changing code — \"don't touch that file\"\n• Duplicate logic — same fetch/transform in 5 places\n• Outdated dependencies — 2+ major versions behind\n• No types — any/unknown scattered everywhere\n• Dead code — unused components, feature-flagged-off experiments\n\nManaging it:\n• Track it — use a tech-debt backlog or ADRs (Architecture Decision Records)\n• Budget time — 10-20% of each sprint for debt paydown\n• Boy Scout Rule — leave code cleaner than you found it\n• Strangler pattern — wrap old code, build new beside it, migrate gradually\n• Lint rules as guardrails — eslint-plugin-deprecation, no-restricted-imports\n\nPrioritize by:\n• Blast radius — how much code does this affect?\n• Developer pain — is this slowing the team daily?\n• Risk — could this cause a production incident?\n\nSenior tip: tech debt isn't bad code. It's a strategic tradeoff. Document WHY the shortcut was taken.",
+      "tags": ["tech-debt", "maintenance", "architecture", "best-practices"]
+    }
+  ]
+}

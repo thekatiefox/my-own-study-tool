@@ -1,0 +1,99 @@
+{
+  "id": "build-tools",
+  "name": "Build Tools & Bundlers",
+  "description": "Understand how your code gets from source to browser — Vite, Webpack, Turbopack, and the build pipeline.",
+  "icon": "🔧",
+  "category": "Tooling",
+  "cards": [
+    {
+      "id": "bt-001",
+      "front": "What is a bundler and why do we need one?",
+      "back": "A bundler combines many source files into optimized output files the browser can load efficiently.\n\n• Browsers can't natively resolve bare imports like `import React from 'react'`\n• Without bundling, you'd ship hundreds of HTTP requests for tiny files\n• Bundlers resolve dependency graphs, deduplicate code, and output compact bundles\n• They also enable non-JS assets (CSS, images, SVG) to participate in the module graph\n\nAnalogy: A bundler is like a moving company — it packs everything into the fewest boxes possible so the truck (browser) makes fewer trips.",
+      "tags": ["bundler", "fundamentals", "webpack", "vite"]
+    },
+    {
+      "id": "bt-002",
+      "front": "Vite vs Webpack — what are the key differences?",
+      "back": "Architecture:\n• Webpack bundles everything upfront, even in dev → slower cold start\n• Vite serves native ESM in dev — only transforms files on demand → near-instant start\n\nDev speed:\n• Webpack rebuilds the whole bundle on change (mitigated by caching)\n• Vite uses native ESM + esbuild for HMR in milliseconds\n\nProduction:\n• Webpack uses its own bundling pipeline\n• Vite uses Rollup under the hood for optimized production builds\n\nConfig:\n• Webpack is highly configurable but verbose\n• Vite is opinionated with sensible defaults — less config needed\n\nTakeaway: Vite trades Webpack's flexibility for dramatically better DX.",
+      "tags": ["vite", "webpack", "comparison", "architecture"]
+    },
+    {
+      "id": "bt-003",
+      "front": "What is HMR (Hot Module Replacement)?",
+      "back": "HMR swaps changed modules in the browser without a full page reload, preserving app state.\n\n• You edit a React component → only that component re-renders, form inputs stay filled\n• Works via a WebSocket connection between dev server and browser\n• The server sends a small update patch; the client runtime applies it\n\nHow it differs from Live Reload:\n• Live Reload refreshes the whole page — you lose all state\n• HMR surgically replaces just the changed module\n\nVite HMR is faster than Webpack's because it leverages native ESM — it only invalidates the exact file that changed, not the whole bundle graph.",
+      "tags": ["hmr", "dev-experience", "vite", "webpack"]
+    },
+    {
+      "id": "bt-004",
+      "front": "What is tree-shaking?",
+      "back": "Tree-shaking is dead-code elimination based on static analysis of ES module imports/exports.\n\n• If you `import { debounce } from 'lodash-es'`, only debounce (and its deps) ship to production\n• The bundler builds a dependency graph and drops unreachable exports\n\nRequirements:\n• Must use ESM (`import/export`) — CommonJS (`require`) is too dynamic to analyze\n• Side-effect-free code — or mark files with `\"sideEffects\": false` in package.json\n\nCommon gotcha:\n• Barrel files (`index.ts` re-exporting everything) can defeat tree-shaking if the bundler can't prove exports are side-effect-free\n\nAnalogy: Shaking a tree so only the dead leaves (unused code) fall off.",
+      "tags": ["tree-shaking", "optimization", "esm", "production"]
+    },
+    {
+      "id": "bt-005",
+      "front": "What is code splitting and lazy loading?",
+      "back": "Code splitting breaks your bundle into smaller chunks loaded on demand instead of one giant file.\n\n• Dynamic `import()` creates a split point — the bundler outputs a separate chunk\n• React: `const Page = React.lazy(() => import('./HeavyPage'))`\n• Router-based splitting is the most common pattern — each route = one chunk\n\nWhy it matters:\n• Users download only the code they need for the current view\n• Dramatically improves Time to Interactive (TTI) on slow networks\n\nLazy loading = loading those chunks only when needed (on route change, scroll, click)\n\nPro tip: Use `webpackChunkName` or Vite's `manualChunks` to control chunk naming and grouping for caching strategies.",
+      "tags": ["code-splitting", "lazy-loading", "performance", "react"]
+    },
+    {
+      "id": "bt-006",
+      "front": "ESModules vs CommonJS — what's the difference and why does it matter?",
+      "back": "ESM (ES Modules):\n• `import/export` syntax — static, analyzed at parse time\n• Enables tree-shaking because the dependency graph is known before execution\n• Native browser support via `<script type=\"module\">`\n• Top-level `await` supported\n\nCommonJS (CJS):\n• `require()/module.exports` — dynamic, resolved at runtime\n• Can conditionally require: `if (x) require('y')` — impossible to statically analyze\n• Node.js default historically; not natively supported in browsers\n\nWhy it matters for builds:\n• Bundlers can optimize ESM far better (tree-shaking, scope hoisting)\n• CJS modules often get wrapped in compatibility shims, increasing bundle size\n• The ecosystem is migrating to ESM-first (`\"type\": \"module\"` in package.json)",
+      "tags": ["esm", "commonjs", "modules", "node"]
+    },
+    {
+      "id": "bt-007",
+      "front": "What does Turbopack do differently?",
+      "back": "Turbopack is a Rust-based bundler by Vercel (from the creator of Webpack) designed for incremental computation.\n\n• Written in Rust → native speed, no JS runtime overhead\n• Uses a function-level caching model — re-executes only the minimal work on each change\n• Designed to scale to massive codebases where Webpack and even Vite slow down\n\nKey difference from Vite:\n• Vite relies on native ESM in dev (no bundling) — fast for small/medium apps\n• Turbopack actually bundles in dev but uses incremental Rust-powered compilation → aims to be fast even for huge monorepos\n\nStatus: Currently integrated into Next.js (`next dev --turbopack`). Not yet a general-purpose standalone bundler.\n\nTakeaway: Turbopack bets on incremental Rust compilation over Vite's unbundled ESM approach.",
+      "tags": ["turbopack", "rust", "vercel", "next.js"]
+    },
+    {
+      "id": "bt-008",
+      "front": "Source maps — what are they and why do we need them?",
+      "back": "Source maps are JSON files that map minified/transpiled code back to your original source code.\n\n• Without them, errors point to `bundle.min.js:1:43872` — useless for debugging\n• With them, errors point to `UserProfile.tsx:42` — the actual file and line\n\nHow they work:\n• The bundler generates a `.map` file alongside each output file\n• A comment like `//# sourceMappingURL=bundle.js.map` links them\n• Browser DevTools read the map and show original source\n\nProduction considerations:\n• Don't ship source maps publicly (exposes your source code)\n• Use `hidden-source-map` — uploaded to error tracking (Sentry) but not linked in the bundle\n• Or use `nosources-source-map` — shows stack traces but not source content",
+      "tags": ["source-maps", "debugging", "production", "devtools"]
+    },
+    {
+      "id": "bt-009",
+      "front": "What is transpilation vs compilation?",
+      "back": "Both transform code, but at different levels:\n\nTranspilation (source-to-source):\n• Converts code from one language to a similar-level language\n• Example: TypeScript → JavaScript, JSX → React.createElement calls\n• Example: Modern JS (ES2024) → older JS (ES5) for browser compat\n• Tools: Babel, TypeScript compiler (tsc), SWC, esbuild\n\nCompilation (traditional sense):\n• Converts to a fundamentally lower-level language\n• Example: C → machine code, Rust → binary\n\nIn frontend, we loosely say \"compile\" for both, but technically most frontend tools are transpilers.\n\nWhy it matters:\n• Transpilation is what lets you write modern syntax today and still support older browsers\n• The choice of transpiler (Babel vs SWC vs esbuild) hugely affects build speed",
+      "tags": ["transpilation", "compilation", "babel", "typescript"]
+    },
+    {
+      "id": "bt-010",
+      "front": "What does Babel do?",
+      "back": "Babel is a JavaScript transpiler that converts modern/experimental JS into backward-compatible JS.\n\nCore jobs:\n• Syntax transforms: arrow functions, optional chaining, class fields → ES5 equivalents\n• JSX transform: `<App />` → `React.createElement(App)` (or the new automatic runtime)\n• Polyfill injection: adds missing APIs (Promise, Array.flat) via core-js\n\nHow it works:\n• Parse → AST → Transform (via plugins) → Generate output code\n• Plugins do individual transforms; presets are bundles of plugins\n• `@babel/preset-env` targets specific browsers using browserslist\n\nIs Babel still relevant?\n• Being replaced in many setups by SWC (Rust-based, used by Next.js) and esbuild (Go-based, used by Vite)\n• Still needed for cutting-edge TC39 proposals and custom AST transforms\n• Many legacy projects still depend on it",
+      "tags": ["babel", "transpilation", "jsx", "polyfills"]
+    },
+    {
+      "id": "bt-011",
+      "front": "What is a loader/plugin in Webpack?",
+      "back": "Loaders and plugins are Webpack's extension mechanisms — they do different things:\n\nLoaders (file transforms):\n• Transform individual files as they're added to the dependency graph\n• Applied per-file via `module.rules` with `test` patterns\n• Examples: `babel-loader` (JS transpile), `css-loader` (resolve CSS imports), `ts-loader` (TypeScript)\n• They chain: `['style-loader', 'css-loader', 'sass-loader']` runs right-to-left\n\nPlugins (build-wide operations):\n• Hook into Webpack's build lifecycle to do broader tasks\n• Examples: `HtmlWebpackPlugin` (generate HTML), `MiniCssExtractPlugin` (extract CSS to files), `DefinePlugin` (inject env vars)\n• Have access to the entire compilation object\n\nKey distinction:\n• Loaders = per-file transformers\n• Plugins = build-level orchestrators",
+      "tags": ["webpack", "loaders", "plugins", "configuration"]
+    },
+    {
+      "id": "bt-012",
+      "front": "Dev server vs production build — what are the key differences?",
+      "back": "Dev server (optimized for speed):\n• No minification — readable code for debugging\n• Source maps are full and inline for instant debugging\n• HMR enabled — instant feedback on changes\n• Vite: serves unbundled ESM; Webpack: bundles but skips optimizations\n• Environment: `NODE_ENV=development`, debug warnings enabled\n\nProduction build (optimized for size + performance):\n• Minification + mangling (Terser, esbuild)\n• Tree-shaking removes dead code\n• Code splitting generates optimized chunks\n• CSS is extracted to separate files, purged of unused rules\n• Assets get content hashes for cache-busting (`app.3f8a2c.js`)\n• Source maps are hidden or omitted\n• Environment: `NODE_ENV=production`, React drops dev warnings\n\nCommon mistake: Testing only in dev — production builds can surface different bugs (dead code removal, different module resolution).",
+      "tags": ["dev-server", "production", "optimization", "workflow"]
+    },
+    {
+      "id": "bt-013",
+      "front": "What is minification and why does it matter?",
+      "back": "Minification shrinks code by removing unnecessary characters without changing behavior.\n\nWhat it does:\n• Removes whitespace, comments, and newlines\n• Shortens variable names: `const userName` → `const a`\n• Simplifies expressions: `true` → `!0`\n• Drops unreachable code: `if (false) { ... }` → removed\n\nImpact:\n• Typical JS bundle shrinks 50-70%\n• Smaller files = faster downloads + faster parsing\n• Combined with gzip/brotli compression, savings are massive\n\nTools:\n• Terser — the standard JS minifier (used by Webpack)\n• esbuild — Go-based, extremely fast (used by Vite)\n• SWC minifier — Rust-based (used by Next.js)\n• cssnano / Lightning CSS — for CSS minification\n\nGotcha: Aggressive mangling can break code that depends on function/class names at runtime (e.g., `someFunc.name`).",
+      "tags": ["minification", "performance", "production", "optimization"]
+    },
+    {
+      "id": "bt-014",
+      "front": "What are polyfills?",
+      "back": "Polyfills are code snippets that implement modern APIs in older environments that lack them.\n\n• Example: `Array.prototype.flat()` doesn't exist in IE11 — a polyfill adds it\n• They run at runtime, adding missing functions to global prototypes or objects\n\nPolyfill vs Transpilation:\n• Transpilation rewrites syntax: `a?.b` → `a === null ? undefined : a.b`\n• Polyfills add missing APIs: `Promise`, `fetch`, `Object.entries`\n• You often need both for full backward compatibility\n\nModern approach:\n• `@babel/preset-env` with `useBuiltIns: 'usage'` auto-injects only needed polyfills from `core-js`\n• Polyfill.io (or similar) serves polyfills based on the requesting browser's User-Agent\n\nSenior tip: Differential serving — ship modern bundles to modern browsers (no polyfills) and legacy bundles to old ones. Avoids penalizing modern users.",
+      "tags": ["polyfills", "compatibility", "babel", "browser-support"]
+    },
+    {
+      "id": "bt-015",
+      "front": "How does Vite use native ESM in dev?",
+      "back": "Vite skips bundling in dev entirely — it serves your source files as native ES modules over HTTP.\n\nHow it works:\n• Your `index.html` has `<script type=\"module\" src=\"/src/main.tsx\">`\n• The browser requests `/src/main.tsx` → Vite intercepts, transpiles (via esbuild), and serves it\n• Each `import` in your code triggers another HTTP request — the browser resolves the module graph\n\nWhy it's fast:\n• No upfront bundling — cold start is near-instant regardless of app size\n• On file change, only that one file is re-transformed — HMR in milliseconds\n• Uses esbuild (Go, ~100x faster than Babel) for transforms\n\nDependency pre-bundling:\n• Node modules (lodash, react) are pre-bundled with esbuild into single files\n• Converts CJS deps to ESM and collapses many internal files into one (avoids 100s of requests)\n\nTrade-off: Lots of HTTP requests in dev — fine on localhost, but native ESM is not used for production (Rollup bundles instead).",
+      "tags": ["vite", "esm", "dev-server", "esbuild"]
+    }
+  ]
+}

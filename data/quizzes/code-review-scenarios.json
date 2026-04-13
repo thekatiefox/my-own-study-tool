@@ -1,0 +1,158 @@
+{
+  "id": "code-review-scenarios",
+  "name": "Code Review Scenarios",
+  "description": "You're reviewing a PR — can you spot the issue?",
+  "icon": "🔍",
+  "questions": [
+    {
+      "id": "cr-1",
+      "scenario": "const UserList = ({ users }) => (\n  <ul>\n    {users.map((user) => (\n      <li>{user.name}</li>\n    ))}\n  </ul>\n);",
+      "question": "What issue would you flag in this code review?",
+      "options": [
+        "Missing key prop on the <li> element inside .map()",
+        "Should use <ol> instead of <ul>",
+        "The component should be a class component",
+        "user.name should be wrapped in a <Text> component"
+      ],
+      "correctIndex": 0,
+      "explanation": "React requires a unique 'key' prop on elements rendered inside .map() to efficiently track list changes. Without it, React may re-render the entire list unnecessarily.",
+      "category": "React",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-2",
+      "scenario": "const [count, setCount] = useState(0);\n\nuseEffect(() => {\n  document.title = `Count: ${count}`;\n}, []);",
+      "question": "What's the problem with this useEffect?",
+      "options": [
+        "useEffect should not access document.title",
+        "The dependency array is missing 'count'",
+        "useState should be initialized to null",
+        "useEffect needs a cleanup function"
+      ],
+      "correctIndex": 1,
+      "explanation": "The effect uses 'count' but the dependency array is empty []. This means the title only updates on mount, not when count changes. Add 'count' to the dependency array.",
+      "category": "React Hooks",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-3",
+      "scenario": "const [items, setItems] = useState(['a', 'b']);\n\nconst addItem = () => {\n  items.push('c');\n  setItems(items);\n};",
+      "question": "Why won't this trigger a re-render?",
+      "options": [
+        "push() doesn't work on state arrays",
+        "State is mutated directly — same reference is passed to setItems",
+        "setItems should be called before push",
+        "useState can't hold arrays"
+      ],
+      "correctIndex": 1,
+      "explanation": "Calling items.push() mutates the existing array. Since setItems receives the same reference, React doesn't detect a change. Use setItems([...items, 'c']) to create a new array.",
+      "category": "React State",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-4",
+      "scenario": "<button onClick={() => handleClick(id)}>\n  Delete\n</button>",
+      "question": "What potential performance issue exists here?",
+      "options": [
+        "handleClick should be async",
+        "Inline arrow function creates a new reference each render, causing unnecessary re-renders of child components",
+        "onClick should use onPress instead",
+        "The button is missing a type attribute"
+      ],
+      "correctIndex": 1,
+      "explanation": "The inline arrow function creates a new function reference on every render. If this button is in a memoized child component, it will break memoization. Use useCallback or extract the handler.",
+      "category": "React Performance",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-5",
+      "scenario": "useEffect(() => {\n  const sub = api.subscribe(data => {\n    setMessages(data);\n  });\n}, []);",
+      "question": "What critical issue is in this useEffect?",
+      "options": [
+        "subscribe should be called outside useEffect",
+        "Missing cleanup — subscription is never unsubscribed, causing a memory leak",
+        "setMessages should use a callback form",
+        "The dependency array should include 'api'"
+      ],
+      "correctIndex": 1,
+      "explanation": "The subscription is never cleaned up. When the component unmounts, the callback still fires, causing memory leaks and state updates on unmounted components. Return a cleanup: return () => sub.unsubscribe();",
+      "category": "React Hooks",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-6",
+      "scenario": "const fetchUser = async (id: any) => {\n  const res: any = await fetch(`/api/${id}`);\n  const data: any = res.json();\n  return data;\n};",
+      "question": "What TypeScript issue would you flag?",
+      "options": [
+        "fetch should use axios instead",
+        "Excessive use of 'any' type defeats the purpose of TypeScript — use proper types",
+        "async functions can't return data",
+        "The function should be a class method"
+      ],
+      "correctIndex": 1,
+      "explanation": "Using 'any' everywhere removes all type safety. Define an interface for the user, type the parameter as string/number, and type the response. Also, res.json() needs 'await'.",
+      "category": "TypeScript",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-7",
+      "scenario": ".header { color: red !important; }\n.header.active { color: blue !important; }\n.main .header { color: green !important; }",
+      "question": "What CSS code smell is present?",
+      "options": [
+        "Colors should use hex values",
+        "Overuse of !important creates a specificity war that's hard to maintain",
+        "Classes should use camelCase",
+        "Each rule should be in a separate file"
+      ],
+      "correctIndex": 1,
+      "explanation": "When !important is used on every rule, you end up fighting specificity with more specificity. Refactor to use a clear, low-specificity naming convention like BEM instead.",
+      "category": "CSS",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-8",
+      "scenario": "const loadData = async () => {\n  const res = await fetch('/api/data');\n  const json = await res.json();\n  setData(json);\n};",
+      "question": "What's missing from this async function?",
+      "options": [
+        "It should use XMLHttpRequest instead",
+        "No error handling — a failed request will silently break the UI",
+        "setData should be called before res.json()",
+        "The function should return the data"
+      ],
+      "correctIndex": 1,
+      "explanation": "There's no try/catch or .catch() handling. If the network request fails or returns a non-OK status, the error is unhandled and the UI may break silently. Always add error handling for async operations.",
+      "category": "Error Handling",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "cr-9",
+      "scenario": "<App>\n  <Layout user={user}>\n    <Sidebar user={user}>\n      <NavMenu user={user}>\n        <Avatar user={user} />\n      </NavMenu>\n    </Sidebar>\n  </Layout>\n</App>",
+      "question": "What architectural issue does this component tree show?",
+      "options": [
+        "Too many components",
+        "Excessive prop drilling — 'user' is passed through every level unnecessarily",
+        "Components should be class-based",
+        "The tree is too shallow"
+      ],
+      "correctIndex": 1,
+      "explanation": "The 'user' prop is drilled through 4 levels. Use React Context, composition (children pattern), or a state management library to avoid passing props through intermediary components that don't use them.",
+      "category": "Architecture",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "cr-10",
+      "scenario": "<img src={product.image} />\n<button onclick={handleBuy}>\n  <svg viewBox=\"0 0 24 24\">...</svg>\n</button>",
+      "question": "What accessibility issues are present?",
+      "options": [
+        "SVG should be a PNG instead",
+        "Missing alt text on image and missing aria-label on icon-only button",
+        "onclick should be onClick",
+        "The button needs a CSS class"
+      ],
+      "correctIndex": 1,
+      "explanation": "The <img> needs an alt attribute for screen readers. The icon-only button has no accessible label — add aria-label='Buy' so assistive technologies can describe its purpose.",
+      "category": "Accessibility",
+      "difficulty": "beginner"
+    }
+  ]
+}

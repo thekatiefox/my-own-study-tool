@@ -75,3 +75,22 @@ export interface PackWithProgress {
   learnedCards: number; // cards reviewed at least once
   dueCards: number; // cards due for review today
 }
+
+export interface QuizQuestion {
+  id: string;
+  scenario: string;      // The situation/code shown to the user
+  question: string;       // What's being asked
+  options: string[];      // 4 multiple choice options
+  correctIndex: number;   // Index of the correct answer (0-based)
+  explanation: string;    // Why the correct answer is right
+  category: string;       // Which topic area
+  difficulty: 'beginner' | 'intermediate' | 'senior';
+}
+
+export interface QuizPack {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  questions: QuizQuestion[];
+}

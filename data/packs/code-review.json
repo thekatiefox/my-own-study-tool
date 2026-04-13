@@ -1,0 +1,99 @@
+{
+  "id": "code-review",
+  "name": "Code Review Skills",
+  "description": "Level up your code reviews — what to look for, how to give feedback, and common red flags in frontend code.",
+  "icon": "🔍",
+  "category": "Skills",
+  "cards": [
+    {
+      "id": "cr-001",
+      "front": "What makes a good code review?",
+      "back": "A good review is:\n\n• Timely — don't block the team for days\n• Kind — critique code, not the person\n• Thorough — check logic, edge cases, readability\n• Educational — explain *why* something is a problem\n• Proportional — don't nitpick trivial style in a critical bugfix\n\nGoal: catch bugs, share knowledge, and improve code quality.\nAnti-goal: gatekeeping or showing off.",
+      "tags": ["fundamentals", "soft-skills"]
+    },
+    {
+      "id": "cr-002",
+      "front": "What should you look at FIRST in a PR? (Big picture)",
+      "back": "Before reading any code, check:\n\n• PR description — does it explain *what* and *why*?\n• Size — PRs over ~400 lines are hard to review well\n• File list — do the changed files make sense for the task?\n• Architecture — does the approach fit the codebase?\n• Tests — are they included?\n\nRed flag: A PR that touches 20 unrelated files.\nGreen flag: Small, focused PR with a clear description.",
+      "tags": ["process", "fundamentals"]
+    },
+    {
+      "id": "cr-003",
+      "front": "What common React anti-patterns should you flag in code review?",
+      "back": "Watch for:\n\n• Prop drilling through 4+ levels → use context or composition\n• Huge god-components (300+ lines) → split into smaller pieces\n• Business logic inside JSX → extract to hooks or utils\n• Derived state stored in useState → compute it during render instead\n• useEffect for things that aren't side effects → often a sign of over-engineering\n• Index as key in dynamic lists → causes subtle re-render bugs\n• Inline object/array literals in props → new ref every render",
+      "tags": ["react", "anti-patterns"]
+    },
+    {
+      "id": "cr-004",
+      "front": "How do you spot performance issues in React code during review?",
+      "back": "Look for:\n\n• Missing keys or index-as-key on lists\n• New object/function refs created every render in props\n• Large components that re-render on unrelated state changes\n• Missing useMemo/useCallback where expensive work is repeated\n• Fetching data in useEffect without cleanup or caching\n• Unnecessary re-renders from context — wrapping too much in one provider\n• Importing entire libraries (e.g., all of lodash) instead of tree-shakeable imports\n\nTip: Not every render is a problem. Only flag when it causes measurable slowness.",
+      "tags": ["react", "performance"]
+    },
+    {
+      "id": "cr-005",
+      "front": "When should you Request Changes vs Approve vs Comment?",
+      "back": "• Approve — code is solid, or issues are trivial (typos, nits)\n• Approve with comments — minor suggestions, trust the author to handle them\n• Comment only — questions or discussion points, not blocking\n• Request changes — bugs, security issues, broken logic, missing tests for critical paths\n\nRule of thumb:\n→ Would you be okay if this shipped as-is? Approve.\n→ Could this cause a bug or outage? Request changes.\n→ Unsure? Comment and ask questions.\n\nDon't request changes for style preferences.",
+      "tags": ["process", "soft-skills"]
+    },
+    {
+      "id": "cr-006",
+      "front": "How do you write helpful code review comments?",
+      "back": "Good comments:\n\n• Explain the WHY, not just \"change this\"\n• Use prefixes: nit:, suggestion:, question:, blocker:\n• Offer alternatives — show a code snippet if possible\n• Are specific — \"this will break when X is null\" > \"looks wrong\"\n• Acknowledge good work — \"nice refactor here 👍\"\n\nBad comments:\n• \"This is wrong.\" (no explanation)\n• \"I would have done it differently.\" (not actionable)\n• \"Why?\" with no context\n\nTone test: Would you say this to someone's face?",
+      "tags": ["soft-skills", "communication"]
+    },
+    {
+      "id": "cr-007",
+      "front": "What should you check when reviewing for accessibility (a11y)?",
+      "back": "Check for:\n\n• Semantic HTML — <button> not <div onClick>, <nav>, <main>, <section>\n• Alt text on images (meaningful, not \"image.png\")\n• Keyboard navigation — can you Tab through interactive elements?\n• ARIA labels on icon-only buttons and custom widgets\n• Color contrast — don't rely on color alone to convey info\n• Focus management — modals should trap focus, route changes should announce\n• Form labels — every input needs a visible or aria-label\n\nQuick test: Can a screen reader user complete the feature?",
+      "tags": ["accessibility", "html"]
+    },
+    {
+      "id": "cr-008",
+      "front": "When reviewing TypeScript types, what should you check?",
+      "back": "Look for:\n\n• `any` usage — almost always a red flag, ask for a real type\n• Overly loose types — string when it should be a union like 'success' | 'error'\n• Missing return types on exported functions\n• Type assertions (as Foo) — hiding real type errors?\n• Duplicated types — should they use a shared interface?\n• Optional props that are actually required in practice\n• Generic types that are too complex — could it be simpler?\n\nGood sign: Types that document intent and prevent impossible states.",
+      "tags": ["typescript", "types"]
+    },
+    {
+      "id": "cr-009",
+      "front": "What security red flags should you catch in frontend code review?",
+      "back": "Flag immediately:\n\n• dangerouslySetInnerHTML without sanitization → XSS risk\n• User input used directly in URLs or DOM\n• Secrets or API keys hardcoded in client code\n• eval() or new Function() with dynamic input\n• Disabling CORS protections or security headers\n• Auth tokens stored in localStorage (prefer httpOnly cookies)\n• Missing input validation before API calls\n• Regex from user input (ReDoS attacks)\n\nRule: Never trust user input. Ever. Even from your own forms.",
+      "tags": ["security", "critical"]
+    },
+    {
+      "id": "cr-010",
+      "front": "What are code smells in component architecture?",
+      "back": "Watch for:\n\n• God component — one file does fetching, state, logic, and UI\n• Boolean prop explosion — <Modal isOpen isLarge isAnimated isDark />\n• Tight coupling — component reaches into another's internal state\n• Wrapper hell — 5+ levels of providers/wrappers for one feature\n• Copy-paste components — 2 components that are 90% identical\n• Smart components at leaf level — data fetching in a Button?\n• Props that just pass through unchanged (prop drilling)\n\nFix: Separate data/logic (hooks) from presentation (components).",
+      "tags": ["architecture", "react"]
+    },
+    {
+      "id": "cr-011",
+      "front": "What should you look for when reviewing CSS?",
+      "back": "Check for:\n\n• Magic numbers — width: 347px; → why that number?\n• !important — usually a specificity hack, find the root cause\n• Fixed heights on text containers — will break with longer content\n• Missing responsive styles — does it work on mobile?\n• Z-index wars — random z-index: 9999 without a scale\n• Hardcoded colors — should use design tokens or theme variables\n• Layout hacks — negative margins, absolute positioning for layout\n• Unused styles — dead CSS adds bundle size\n\nGood sign: Uses design system tokens, logical properties, and container queries.",
+      "tags": ["css", "styling"]
+    },
+    {
+      "id": "cr-012",
+      "front": "How do you review tests — are they actually testing anything useful?",
+      "back": "Watch for:\n\n• Tests that just check \"it renders\" — that's not a real test\n• No assertions — test passes but verifies nothing\n• Testing implementation details — checking internal state or method calls\n• Snapshot-only tests — will be blindly updated, rarely catch bugs\n• Missing edge cases — only happy path, no error states\n• Mocking everything — if you mock the whole system, what are you testing?\n\nGood tests:\n• Test user-visible behavior, not implementation\n• Cover happy path + error path + edge cases\n• Are readable as documentation of what the feature does",
+      "tags": ["testing", "quality"]
+    },
+    {
+      "id": "cr-013",
+      "front": "What naming and readability issues should you flag?",
+      "back": "Flag:\n\n• Single-letter variables outside tiny loops — data, val, x\n• Boolean names without is/has/should — enabled vs isEnabled\n• Misleading names — handleClick that actually submits a form\n• Inconsistent conventions — fetchUser vs getUser vs loadUser in same codebase\n• Abbreviated names — usr, btn, mgr → just spell it out\n• Functions over 40 lines — probably doing too much\n• Deeply nested logic (3+ levels) — extract into named functions\n\nLitmus test: Could a new team member understand this without asking you?",
+      "tags": ["readability", "naming"]
+    },
+    {
+      "id": "cr-014",
+      "front": "What state management red flags should you watch for?",
+      "back": "Flag:\n\n• Duplicated state — same data in useState AND Redux/context\n• Derived state in useState — compute it from source of truth instead\n• Global state for local concerns — form input state in Redux?\n• State updates in useEffect that trigger more useEffects → cascade\n• No loading/error states — what happens when the API fails?\n• Stale closures — useEffect/callback using outdated state\n• Premature state management library — useState + context handles most apps\n\nPrinciple: State should have a single source of truth and live as close to where it's used as possible.",
+      "tags": ["state-management", "react"]
+    },
+    {
+      "id": "cr-015",
+      "front": "How should you handle disagreements during code review?",
+      "back": "Do:\n\n• Assume good intent — they might know something you don't\n• Ask questions first — \"What was the reasoning here?\" before \"This is wrong\"\n• Distinguish preference from correctness — if both work, let the author choose\n• Move to a call if a thread has 3+ back-and-forth replies\n• Cite docs, benchmarks, or examples — not just opinion\n• Agree on team standards beforehand to avoid repeat debates\n\nDon't:\n• Die on every hill — save strong opinions for things that matter\n• Make it personal — it's about the code, not the coder\n• Block a PR over style preferences",
+      "tags": ["soft-skills", "conflict-resolution"]
+    }
+  ]
+}

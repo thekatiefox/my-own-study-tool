@@ -7,6 +7,12 @@ import reactPatterns from '@/data/packs/react-patterns.json';
 import cssLayout from '@/data/packs/css-layout.json';
 import typescriptEssentials from '@/data/packs/typescript-essentials.json';
 import webPerformance from '@/data/packs/web-performance.json';
+import buildTools from '@/data/packs/build-tools.json';
+import typescriptAdvanced from '@/data/packs/typescript-advanced.json';
+import codeReview from '@/data/packs/code-review.json';
+import systemDesignFe from '@/data/packs/system-design-fe.json';
+import frontendArchitecture from '@/data/packs/frontend-architecture.json';
+import reactAdvanced from '@/data/packs/react-advanced.json';
 
 const ALL_PACKS: Pack[] = [
   jsFundamentals as Pack,
@@ -14,6 +20,12 @@ const ALL_PACKS: Pack[] = [
   cssLayout as Pack,
   typescriptEssentials as Pack,
   webPerformance as Pack,
+  buildTools as Pack,
+  typescriptAdvanced as Pack,
+  codeReview as Pack,
+  systemDesignFe as Pack,
+  frontendArchitecture as Pack,
+  reactAdvanced as Pack,
 ];
 
 /**

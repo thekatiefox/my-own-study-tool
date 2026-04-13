@@ -1,0 +1,99 @@
+{
+  "id": "system-design-fe",
+  "name": "Frontend System Design",
+  "description": "Think like a senior — state management, API layers, caching, and designing scalable frontend systems.",
+  "icon": "🏗️",
+  "category": "Architecture",
+  "cards": [
+    {
+      "id": "sd-001",
+      "front": "What is frontend system design? How is it different from backend system design?",
+      "back": "Frontend system design = how you structure a client-side app at scale.\n\n• Backend focuses on: databases, servers, queues, throughput\n• Frontend focuses on: UI architecture, state flow, rendering, UX perf\n\nKey frontend concerns:\n• Component hierarchy & data flow\n• State management strategy\n• API integration layer\n• Caching & optimistic UI\n• Auth flows & route protection\n• Error/loading states everywhere\n• Bundle size & performance budgets\n\nThink of it as: backend = how data is stored & served, frontend = how data is displayed & interacted with.",
+      "tags": ["fundamentals", "interviews"]
+    },
+    {
+      "id": "sd-002",
+      "front": "What's the difference between client-side state and server state? Why does it matter?",
+      "back": "Two different beasts — treat them differently.\n\n• Client state: lives only in the browser\n  → UI toggles, form inputs, modals open/closed, theme\n  → You own it. It's the source of truth.\n\n• Server state: originates from an API/database\n  → User profile, list of posts, notifications\n  → It's a cache of someone else's truth.\n\nWhy it matters:\n• Server state needs syncing, refetching, invalidation\n• Client state just needs local updates\n• Mixing them (e.g. Redux for everything) causes unnecessary complexity\n\nModern approach:\n• Client state → useState, Zustand, Context\n• Server state → React Query, SWR, Apollo\n\nSenior move: pick the right tool for each type.",
+      "tags": ["state-management", "architecture"]
+    },
+    {
+      "id": "sd-003",
+      "front": "Compare state management approaches: local state, Context, Zustand, and Redux. When do you pick each?",
+      "back": "Pick based on scope and complexity:\n\n• Local state (useState/useReducer)\n  → Component-specific UI state\n  → Default choice. Start here.\n\n• React Context\n  → Shared state that rarely changes (theme, auth, locale)\n  → ⚠️ Every consumer re-renders on any change\n\n• Zustand\n  → Lightweight global store, selective subscriptions\n  → Great for: mid-size apps, replacing Context perf issues\n  → Minimal boilerplate, no providers needed\n\n• Redux (Toolkit)\n  → Complex global state with strict patterns\n  → Great for: large teams, time-travel debugging, middleware\n  → Overhead justified only at scale\n\nSenior rule of thumb:\n• Don't reach for global state until local state hurts\n• Separate server state (React Query) from UI state\n• Zustand is the sweet spot for most apps today",
+      "tags": ["state-management", "react", "tradeoffs"]
+    },
+    {
+      "id": "sd-004",
+      "front": "How should you design the API layer in a frontend app? Where does data fetching live?",
+      "back": "Goal: isolate data fetching from UI components.\n\n• Create an API layer (e.g. src/api/ or src/services/)\n  → Thin wrappers around fetch/axios\n  → Handles base URL, auth headers, error transforms\n\n• Use a data-fetching library on top:\n  → React Query / SWR for REST\n  → Apollo / urql for GraphQL\n  → Handles caching, retries, deduplication for free\n\nArchitecture pattern:\n• api/client.ts → configured fetch instance\n• api/users.ts → getUser(), updateUser() functions\n• hooks/useUser.ts → useQuery wrapping api/users.ts\n• Component → calls useUser(), never fetches directly\n\nWhy this matters:\n• Swap backends without touching components\n• Centralized error handling & auth refresh\n• Easier testing — mock the API layer\n• Components stay pure UI",
+      "tags": ["api-design", "architecture", "separation-of-concerns"]
+    },
+    {
+      "id": "sd-005",
+      "front": "What caching strategies matter on the frontend? How do you keep data fresh?",
+      "back": "Caching is the #1 perf lever on the frontend.\n\n• HTTP caching (browser-level)\n  → Cache-Control, ETag, stale-while-revalidate headers\n  → Free speed — configure your CDN/server properly\n\n• In-memory query cache (React Query/SWR)\n  → staleTime: how long before data is considered stale\n  → cacheTime: how long unused data stays in memory\n  → Stale-while-revalidate: show cache, refetch in background\n\n• Persistent cache (localStorage, IndexedDB)\n  → Offline support, fast cold starts\n  → ⚠️ Need invalidation strategy — stale data is dangerous\n\n• Normalized cache (Apollo, Redux)\n  → Store entities by ID, update everywhere at once\n  → Great for relational data, overkill for simple apps\n\nKey decisions:\n• What's the staleness tolerance? (5s vs 5min vs forever)\n• Does the user need offline access?\n• How do you invalidate after mutations?",
+      "tags": ["caching", "performance", "data-fetching"]
+    },
+    {
+      "id": "sd-006",
+      "front": "What are optimistic updates? When should you use them?",
+      "back": "Optimistic update = update the UI before the server confirms.\n\nHow it works:\n• 1. User clicks 'Like'\n• 2. Immediately show liked state (don't wait for API)\n• 3. Send request to server in background\n• 4. If it fails → roll back to previous state\n\nWhen to use:\n• Actions that almost always succeed (likes, toggles, reordering)\n• Low-risk operations where rollback is simple\n• When perceived speed matters for UX\n\nWhen NOT to use:\n• Payment/checkout flows — never fake success\n• Complex operations with side effects\n• When failure is common (bad network conditions)\n\nImplementation with React Query:\n• onMutate: save previous state, update cache\n• onError: restore previous state from snapshot\n• onSettled: refetch to ensure server truth\n\nSenior insight: optimistic UI feels fast but adds complexity. Use for quick wins, not everywhere.",
+      "tags": ["ux", "mutations", "react-query"]
+    },
+    {
+      "id": "sd-007",
+      "front": "How do you handle authentication and authorization in a single-page app?",
+      "back": "Auth in SPAs has unique challenges — no server-rendered sessions.\n\nAuthentication (who are you?):\n• Token-based: JWT stored in memory or httpOnly cookie\n• ⚠️ Never store tokens in localStorage (XSS vulnerable)\n• Best practice: httpOnly cookie + refresh token rotation\n• Auth flow: login → get tokens → attach to API requests\n\nAuthorization (what can you do?):\n• Route guards: check auth before rendering protected routes\n• Component-level: conditionally render based on roles/permissions\n• API-level: always enforce on the server too — frontend is just UX\n\nCommon architecture:\n• AuthProvider context: holds user state + login/logout methods\n• useAuth() hook: access user, isAuthenticated, permissions\n• API interceptor: auto-attach token, handle 401 → refresh or redirect\n• Protected route wrapper: redirect to /login if unauthenticated\n\nSenior rule: frontend auth is UX, not security. Server must always validate.",
+      "tags": ["auth", "security", "spa"]
+    },
+    {
+      "id": "sd-008",
+      "front": "Offset pagination vs cursor pagination — what's the difference and when to use each?",
+      "back": "Two ways to paginate API results:\n\n• Offset-based: ?page=3&limit=20\n  → Simple to implement and understand\n  → User can jump to any page\n  → ⚠️ Breaks with real-time data (items shift between pages)\n  → ⚠️ Slow on large datasets (DB scans to offset)\n\n• Cursor-based: ?after=abc123&limit=20\n  → Cursor = pointer to a specific item (usually encoded ID + timestamp)\n  → Stable results even with new inserts\n  → Fast on large datasets (indexed lookup)\n  → ⚠️ No random page access — only next/previous\n\nWhen to use offset:\n• Admin tables, dashboards, small datasets\n• Users need 'go to page 5'\n\nWhen to use cursor:\n• Infinite scroll feeds (social, chat, activity)\n• Real-time data that changes frequently\n• Large datasets where performance matters\n\nSenior tip: most modern APIs (GraphQL, Twitter, Slack) use cursor pagination for feeds.",
+      "tags": ["api-design", "pagination", "tradeoffs"]
+    },
+    {
+      "id": "sd-009",
+      "front": "Real-time data on the frontend: WebSockets vs polling vs Server-Sent Events (SSE)?",
+      "back": "Three approaches to getting live data:\n\n• Polling (short polling)\n  → Fetch every N seconds via setInterval\n  → Simple, works everywhere\n  → ⚠️ Wasteful if nothing changed, delayed updates\n  → Good for: dashboards refreshing every 30s\n\n• Long polling\n  → Server holds request open until new data exists\n  → Lower latency than short polling\n  → ⚠️ Still one-directional, connection overhead\n\n• Server-Sent Events (SSE)\n  → Server pushes events over HTTP (EventSource API)\n  → One-way: server → client only\n  → Auto-reconnect built in, simple to implement\n  → Good for: notifications, live scores, log streaming\n\n• WebSockets\n  → Full-duplex: both directions simultaneously\n  → Lowest latency, most powerful\n  → ⚠️ Complex: reconnection, auth, scaling\n  → Good for: chat, collaborative editing, gaming\n\nDecision framework:\n• Need two-way? → WebSocket\n• Server push only? → SSE (simpler) or WebSocket\n• Simplicity over speed? → Polling",
+      "tags": ["real-time", "websockets", "sse", "tradeoffs"]
+    },
+    {
+      "id": "sd-010",
+      "front": "How should you design an error handling strategy for a frontend app?",
+      "back": "Errors will happen — plan for them at every layer.\n\n• API errors (network / server):\n  → Centralized in API layer: interceptors catch 4xx/5xx\n  → Map to user-friendly messages\n  → Auto-retry transient failures (503, network)\n  → 401 → trigger token refresh or redirect to login\n\n• UI rendering errors:\n  → React Error Boundaries catch component crashes\n  → Show fallback UI, not a white screen\n  → Log to monitoring (Sentry, DataDog)\n\n• Form validation errors:\n  → Inline field-level validation + form-level summary\n  → Show errors on blur or submit, not on every keystroke\n\n• Global error state:\n  → Toast/snackbar for transient errors (network hiccup)\n  → Inline for contextual errors (form field invalid)\n  → Full-page for fatal errors (app can't load)\n\nSenior pattern:\n• ErrorBoundary at route level + critical section level\n• Centralized error logging service\n• Never swallow errors silently — always log + inform user",
+      "tags": ["error-handling", "resilience", "ux"]
+    },
+    {
+      "id": "sd-011",
+      "front": "How do feature flags work on the frontend? Why use them?",
+      "back": "Feature flags = toggles that control which features are active, without deploying new code.\n\nHow they work:\n• 1. App fetches flags on init (from LaunchDarkly, Unleash, or your API)\n• 2. Flags stored in context/global state\n• 3. Components check: if (flags.newCheckout) → render new UI\n• 4. Flags can target: % of users, specific users, environments\n\nWhy use them:\n• Ship code to prod without exposing it (trunk-based dev)\n• Gradual rollouts: 5% → 25% → 100%\n• Kill switch: instant rollback without deploy\n• A/B testing: compare two versions\n\nFrontend implementation:\n• FeatureFlagProvider wraps app, fetches flags\n• useFeatureFlag('new-checkout') hook\n• Fallback to default values if flag service is down\n\n⚠️ Watch out for:\n• Flag debt: clean up old flags or they pile up\n• Combinatorial explosion: too many flags = untestable states\n• Flickering UI: show loading state until flags are ready\n\nSenior move: treat flags as temporary. Every flag has a removal date.",
+      "tags": ["feature-flags", "devops", "release-strategy"]
+    },
+    {
+      "id": "sd-012",
+      "front": "System Design: How would you design a search/autocomplete component?",
+      "back": "Classic frontend system design question.\n\nRequirements to clarify:\n• Client-side filtering or server search?\n• How many items in the dataset?\n• Need fuzzy matching? Highlighting?\n\nCore architecture:\n• Debounced input (300ms) to avoid flooding the API\n• AbortController: cancel previous request when user types more\n• Cache recent queries in memory (Map or React Query)\n• Keyboard navigation: arrow keys + enter to select\n\nAPI design:\n• GET /search?q=react&limit=10\n• Return: { results: [], total: number }\n• Server should handle ranking/relevance\n\nUX details that matter:\n• Show loading spinner in dropdown, not full-page\n• Highlight matching text in results\n• Handle empty state: 'No results for X'\n• Recent searches stored in localStorage\n• Minimum 2-3 chars before searching\n\nPerformance:\n• Virtualize long result lists (react-window)\n• Prefetch popular queries if possible\n\nAccessibility:\n• combobox ARIA role, aria-activedescendant\n• Screen reader announcements for result count",
+      "tags": ["system-design", "search", "interviews"]
+    },
+    {
+      "id": "sd-013",
+      "front": "System Design: How would you design an infinite scroll feed (like Twitter/Instagram)?",
+      "back": "Key challenge: performance at scale with dynamic content.\n\nData fetching:\n• Cursor-based pagination (not offset — items shift in feeds)\n• Fetch next page when user is ~80% scrolled (IntersectionObserver)\n• React Query useInfiniteQuery handles pages elegantly\n\nRendering:\n• Virtualization is essential (react-window, react-virtuoso)\n  → Only render visible items + small buffer\n  → Without it: 1000 DOM nodes = laggy scrolling\n• Each item needs a stable, unique key (not array index)\n\nState management:\n• Append new pages to existing list in cache\n• Deduplicate items by ID (real-time feeds may have overlap)\n• Pull-to-refresh: prepend new items or show 'New posts' banner\n\nEdge cases:\n• Loading state: skeleton cards, not a spinner\n• Error on page 5: retry button, don't lose pages 1-4\n• Empty feed: onboarding CTA, not blank screen\n• Scroll restoration: save position on navigate away\n\nPerformance budget:\n• < 100ms per page fetch\n• < 16ms per frame while scrolling (60fps)\n• Lazy load images with loading='lazy' or IntersectionObserver",
+      "tags": ["system-design", "infinite-scroll", "interviews"]
+    },
+    {
+      "id": "sd-014",
+      "front": "How should you approach a frontend system design interview?",
+      "back": "Use a structured framework — don't just start coding.\n\n• Step 1: Clarify requirements (2-3 min)\n  → Who are the users? Scale? Core features vs nice-to-have?\n  → Mobile? Offline? Accessibility? i18n?\n\n• Step 2: High-level architecture (5 min)\n  → Draw component tree / data flow diagram\n  → Identify: pages, shared components, data sources\n  → Choose rendering strategy: CSR, SSR, or hybrid\n\n• Step 3: Data model & API design (5 min)\n  → What entities? What endpoints?\n  → State: what's client vs server state?\n  → Caching & sync strategy\n\n• Step 4: Deep dive on core feature (10-15 min)\n  → Pick the hardest feature, design it thoroughly\n  → Component breakdown, state flow, edge cases\n  → Discuss tradeoffs explicitly\n\n• Step 5: Performance & polish (5 min)\n  → Bundle splitting, lazy loading, virtualization\n  → Error handling, loading states, a11y\n  → Monitoring & observability\n\nSenior signals:\n• You discuss tradeoffs, not just solutions\n• You think about failure modes\n• You mention testing strategy",
+      "tags": ["interviews", "framework", "career"]
+    },
+    {
+      "id": "sd-015",
+      "front": "What are performance budgets? How do you monitor frontend performance?",
+      "back": "Performance budget = a set of limits your app must stay within.\n\nCommon budgets:\n• Bundle size: < 200KB JS (gzipped) for initial load\n• Largest Contentful Paint (LCP): < 2.5s\n• First Input Delay (FID): < 100ms\n• Cumulative Layout Shift (CLS): < 0.1\n• Time to Interactive (TTI): < 3.5s\n\nHow to enforce:\n• CI checks: bundlesize, Lighthouse CI, size-limit\n  → Fail the build if bundle exceeds budget\n• Webpack/Vite: analyze with bundle-analyzer plugin\n• Import cost: VS Code extension shows import sizes\n\nMonitoring in production:\n• Real User Monitoring (RUM): track actual user metrics\n  → Tools: Datadog RUM, Sentry Performance, web-vitals library\n• Synthetic monitoring: Lighthouse in CI, WebPageTest\n• Custom marks: performance.mark() / performance.measure()\n\nSenior approach:\n• Set budgets early, not after things are slow\n• Track Core Web Vitals by route, not just globally\n• Budget per-route, not just total app\n• Review perf metrics in sprint retros — treat like bugs",
+      "tags": ["performance", "monitoring", "web-vitals"]
+    }
+  ]
+}

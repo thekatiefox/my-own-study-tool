@@ -1,0 +1,99 @@
+{
+  "id": "typescript-advanced",
+  "name": "TypeScript Deep Cuts",
+  "description": "Go beyond basics — generics, utility types, type guards, conditional types, and real-world TS patterns.",
+  "icon": "🔷",
+  "category": "TypeScript",
+  "cards": [
+    {
+      "id": "tsa-001",
+      "front": "What are Generics in TypeScript, why use them, and give a real example?",
+      "back": "Generics let you write reusable code that works with multiple types while keeping type safety.\n\n• They act as \"type variables\" — placeholders filled in at call time\n• Without them you'd use `any` and lose all safety\n\nExample:\n```\nfunction wrap<T>(value: T): { value: T } {\n  return { value };\n}\nwrap(42);       // { value: number }\nwrap('hello');  // { value: string }\n```\n\n• Use constraints to narrow: `<T extends HasId>`\n• Common in API responses, data stores, reusable hooks",
+      "tags": ["generics", "fundamentals"]
+    },
+    {
+      "id": "tsa-002",
+      "front": "Explain Partial, Required, Pick, and Omit utility types with examples.",
+      "back": "These transform existing types without rewriting them:\n\n• `Partial<T>` — makes ALL props optional\n  → Great for update/patch functions\n  `Partial<User>` → { name?: string; age?: number }\n\n• `Required<T>` — makes ALL props required (opposite of Partial)\n  → Useful to enforce completeness at boundaries\n\n• `Pick<T, Keys>` — grabs only the listed keys\n  `Pick<User, 'name' | 'email'>` → just those two fields\n\n• `Omit<T, Keys>` — removes the listed keys\n  `Omit<User, 'password'>` → everything except password\n\n• Combine them: `Partial<Pick<User, 'bio' | 'avatar'>>`",
+      "tags": ["utility-types", "type-transforms"]
+    },
+    {
+      "id": "tsa-003",
+      "front": "Explain Record, Exclude, Extract, and ReturnType utility types.",
+      "back": "• `Record<Keys, Value>` — builds an object type from key/value types\n  `Record<string, number>` → { [k: string]: number }\n  `Record<'admin' | 'user', Permission[]>` → exact key map\n\n• `Exclude<Union, Removed>` — removes members from a union\n  `Exclude<'a' | 'b' | 'c', 'a'>` → 'b' | 'c'\n\n• `Extract<Union, Kept>` — keeps only matching members\n  `Extract<string | number | boolean, string>` → string\n\n• `ReturnType<Fn>` — extracts the return type of a function\n  `ReturnType<typeof fetchUser>` → Promise<User>\n  → Huge for typing without importing internal types",
+      "tags": ["utility-types", "type-transforms"]
+    },
+    {
+      "id": "tsa-004",
+      "front": "What are type guards in TypeScript? Explain typeof, instanceof, and custom `is` guards.",
+      "back": "Type guards narrow a type inside a conditional block so TS knows exactly what you have.\n\n• `typeof` — works for primitives\n  `if (typeof x === 'string')` → x is string inside block\n\n• `instanceof` — works for classes\n  `if (err instanceof HttpError)` → access HttpError props\n\n• Custom `is` guard — a function returning `param is Type`\n```\nfunction isUser(val: unknown): val is User {\n  return typeof val === 'object' && val !== null && 'name' in val;\n}\n```\n  → TS trusts YOUR logic to narrow the type\n  → Essential for API responses, JSON parsing, form data\n\n• Without guards, you'd cast with `as` everywhere (unsafe!)",
+      "tags": ["type-guards", "narrowing"]
+    },
+    {
+      "id": "tsa-005",
+      "front": "What's the difference between `unknown` and `any`? When should you use each?",
+      "back": "Both accept any value, but they differ in what you can DO with them:\n\n• `any` — disables ALL type checking\n  → You can call methods, access props, pass it anywhere\n  → Basically opts out of TypeScript\n  → Use only for rapid prototyping or legacy migration\n\n• `unknown` — the type-safe top type\n  → You MUST narrow before using (via type guard, typeof, etc.)\n  → Forces you to prove what you have before acting\n\nRule of thumb:\n• Receiving data from outside? → `unknown`\n• Migrating JS code quickly? → `any` (temporarily)\n• In library APIs? → almost always `unknown`\n\n`unknown` = safe any. Prefer it in 99% of cases.",
+      "tags": ["type-safety", "fundamentals"]
+    },
+    {
+      "id": "tsa-006",
+      "front": "What are discriminated unions (tagged unions) in TypeScript?",
+      "back": "A pattern where each variant in a union has a shared literal field (the \"tag\") that TS uses to narrow automatically.\n\n```\ntype Shape =\n  | { kind: 'circle'; radius: number }\n  | { kind: 'rect'; w: number; h: number };\n\nfunction area(s: Shape) {\n  switch (s.kind) {\n    case 'circle': return Math.PI * s.radius ** 2;\n    case 'rect':   return s.w * s.h;\n  }\n}\n```\n\n• The `kind` field is the discriminant — must be a literal type\n• TS narrows the type in each branch automatically\n• Add `never` in default to catch missing cases at compile time\n• Perfect for: Redux actions, API responses, state machines, event systems",
+      "tags": ["unions", "patterns"]
+    },
+    {
+      "id": "tsa-007",
+      "front": "How do conditional types work in TypeScript? (T extends U ? X : Y)",
+      "back": "Conditional types let you pick a type based on a condition — like a ternary but for types.\n\n```\ntype IsString<T> = T extends string ? true : false;\nIsString<'hi'>   // true\nIsString<42>     // false\n```\n\nKey behaviors:\n• Distributes over unions by default:\n  `IsString<string | number>` → true | false (checks each member)\n\n• Used heavily in utility type internals:\n  `Exclude<T, U> = T extends U ? never : T`\n\n• Combine with `infer` for type extraction (see tsa-009)\n\n• Wrap in `[T] extends [U]` to prevent distribution\n\n• Real use: conditional return types, API type routing, feature flags at type level",
+      "tags": ["conditional-types", "advanced"]
+    },
+    {
+      "id": "tsa-008",
+      "front": "What are template literal types in TypeScript?",
+      "back": "They let you build string types from other types using backtick syntax — like template literals but at the type level.\n\n```\ntype Color = 'red' | 'blue';\ntype Size = 'sm' | 'lg';\ntype Token = `${Color}-${Size}`;\n// 'red-sm' | 'red-lg' | 'blue-sm' | 'blue-lg'\n```\n\n• TS generates all permutations automatically\n• Built-in helpers: `Uppercase<T>`, `Lowercase<T>`, `Capitalize<T>`, `Uncapitalize<T>`\n\nReal uses:\n• CSS class name types: `bg-${Color}`\n• Event handler keys: `on${Capitalize<EventName>}`\n• Route patterns: `/api/${Resource}/${string}`\n• Enforce naming conventions at the type level",
+      "tags": ["template-literals", "string-types"]
+    },
+    {
+      "id": "tsa-009",
+      "front": "What does the `infer` keyword do in conditional types?",
+      "back": "`infer` lets you extract a type from inside another type during a conditional check — like pattern matching.\n\n```\ntype UnwrapPromise<T> =\n  T extends Promise<infer U> ? U : T;\n\nUnwrapPromise<Promise<string>> // string\nUnwrapPromise<number>          // number\n```\n\n• `infer U` declares a type variable U that TS fills in by matching the structure\n• Only works inside the `extends` clause of a conditional type\n\nMore examples:\n• Get function args: `T extends (...args: infer A) => any ? A : never`\n• Get array element: `T extends (infer E)[] ? E : T`\n• Get return type: `T extends (...args: any) => infer R ? R : never`\n  → This is literally how `ReturnType<T>` works internally",
+      "tags": ["infer", "conditional-types", "advanced"]
+    },
+    {
+      "id": "tsa-010",
+      "front": "What are mapped types in TypeScript?",
+      "back": "Mapped types iterate over keys to transform an existing type into a new one.\n\n```\ntype Readonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n```\n\nAnatomy: `[K in Keys]: NewValueType`\n\n• `keyof T` gets all property names as a union\n• Add/remove modifiers with `+` / `-`:\n  `-readonly [K in keyof T]` → makes all props mutable\n  `[K in keyof T]-?` → makes all props required\n\n• Remap keys with `as`:\n  `[K in keyof T as `get${Capitalize<K>}`]: () => T[K]`\n  → turns `{ name: string }` into `{ getName: () => string }`\n\n• `Partial`, `Required`, `Readonly`, `Pick` are all mapped types under the hood",
+      "tags": ["mapped-types", "type-transforms"]
+    },
+    {
+      "id": "tsa-011",
+      "front": "What does `as const` do in TypeScript?",
+      "back": "`as const` turns a value into its narrowest possible (literal, readonly) type.\n\n```\nconst colors = ['red', 'blue'] as const;\n// type: readonly ['red', 'blue']  (not string[])\n\nconst config = { env: 'prod', port: 3000 } as const;\n// type: { readonly env: 'prod'; readonly port: 3000 }\n```\n\nWhat it does:\n• Strings/numbers become literal types (not widened)\n• Arrays become readonly tuples\n• Objects become fully readonly with literal values\n\nWhy you'd use it:\n• Derive union types: `type Color = typeof colors[number]` → 'red' | 'blue'\n• Replace enums with plain objects + `as const`\n• Ensure config objects are immutable\n• Great for lookup maps, route defs, and constants files",
+      "tags": ["as-const", "literal-types"]
+    },
+    {
+      "id": "tsa-012",
+      "front": "Enums vs union types in TypeScript — what are the tradeoffs?",
+      "back": "Both model a fixed set of values, but they behave differently:\n\n• String Enums:\n  → Exist at runtime (generate JS code)\n  → Support reverse mapping (numeric only)\n  → Can't be tree-shaken easily\n  → Namespace isolation: `Status.Active`\n\n• Union Types (`type Status = 'active' | 'inactive'`):\n  → Zero runtime cost — erased during compile\n  → Fully tree-shakeable\n  → Work naturally with `as const` objects\n  → Better with discriminated unions\n\n• `const enum` — inlined at compile time but has edge cases with declaration files\n\nSenior recommendation:\n→ Prefer union types + `as const` for most cases\n→ Use enums only when you need runtime iteration or interop with backend enum values",
+      "tags": ["enums", "unions", "patterns"]
+    },
+    {
+      "id": "tsa-013",
+      "front": "What is declaration merging and module augmentation in TypeScript?",
+      "back": "Declaration merging: TS automatically combines multiple declarations of the same name.\n\n• Interface merging — two `interface User` declarations merge their props\n```\ninterface User { name: string; }\ninterface User { age: number; }\n// Result: { name: string; age: number }\n```\n→ This is how you extend third-party types\n\n• Module augmentation — add types to an existing module:\n```\ndeclare module 'express' {\n  interface Request {\n    userId: string;\n  }\n}\n```\n→ Now `req.userId` is typed everywhere\n\nCommon uses:\n• Extending `Window` for global variables\n• Adding fields to Express Request/Response\n• Patching library types when @types is outdated\n\n⚠️ Only interfaces merge — `type` aliases do NOT",
+      "tags": ["declaration-merging", "module-augmentation"]
+    },
+    {
+      "id": "tsa-014",
+      "front": "What does the `satisfies` operator do in TypeScript?",
+      "back": "`satisfies` validates that a value matches a type WITHOUT widening it — you keep the narrow inferred type.\n\n```\ntype Colors = Record<string, string | string[]>;\n\nconst palette = {\n  red: '#ff0000',\n  gray: ['#ccc', '#999'],\n} satisfies Colors;\n\npalette.red.toUpperCase();   // ✅ TS knows it's string\npalette.gray.map(g => g);    // ✅ TS knows it's string[]\n```\n\nWithout `satisfies` (using `: Colors` instead):\n→ `palette.red` would be `string | string[]` — you'd lose the narrowing\n\nWhen to use:\n• Config objects — validate shape, keep literal types\n• Theme tokens, route maps, lookup tables\n• Anywhere you want type-checking + autocomplete on the exact value\n\nAdded in TypeScript 4.9",
+      "tags": ["satisfies", "type-safety"]
+    },
+    {
+      "id": "tsa-015",
+      "front": "What are the key strict mode flags in tsconfig and what do they catch?",
+      "back": "`\"strict\": true` enables ALL strict flags at once. Key individual ones:\n\n• `strictNullChecks` — `null`/`undefined` aren't assignable to other types\n  → Forces you to handle null cases explicitly\n\n• `noImplicitAny` — errors when TS can't infer a type and would default to `any`\n  → Forces explicit typing on ambiguous params\n\n• `strictFunctionTypes` — enforces contravariant function parameter checks\n  → Catches subtle callback type bugs\n\n• `strictPropertyInitialization` — class props must be set in constructor or declared optional\n\n• `noUncheckedIndexedAccess` (not in strict, but highly recommended)\n  → `arr[0]` returns `T | undefined` instead of just `T`\n\n• `exactOptionalPropertyTypes` — distinguishes `undefined` from missing\n\nSenior tip: Always start with `\"strict\": true` and add `noUncheckedIndexedAccess` for maximum safety.",
+      "tags": ["tsconfig", "strict-mode", "best-practices"]
+    }
+  ]
+}

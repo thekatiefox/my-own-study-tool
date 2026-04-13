@@ -1,0 +1,99 @@
+{
+  "id": "react-advanced",
+  "name": "React Advanced Patterns",
+  "description": "Senior-level React — server components, concurrent features, advanced hooks, and performance deep dives.",
+  "icon": "⚛️",
+  "category": "React",
+  "cards": [
+    {
+      "id": "ra-001",
+      "front": "What are React Server Components (RSC) and why do they exist?",
+      "back": "Server Components render ONLY on the server — zero JS shipped to client.\n\n• They can directly access databases, filesystems, and APIs\n• No useState, no useEffect, no event handlers\n• They reduce bundle size dramatically\n• Children can be Client Components (but not vice-versa)\n\nWhy? Performance + DX:\n• Less JS = faster load\n• Co-locate data fetching with UI\n• Automatic code splitting\n\n```jsx\n// This runs on the server only\nasync function UserList() {\n  const users = await db.query('SELECT * FROM users');\n  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;\n}\n```",
+      "tags": ["rsc", "server-components", "architecture"]
+    },
+    {
+      "id": "ra-002",
+      "front": "Server Components vs Client Components — what are the key differences and boundaries?",
+      "back": "Server Components:\n• Default in Next.js App Router\n• Can be async, fetch data directly\n• No hooks (useState, useEffect) — no interactivity\n• Can import Client Components\n\nClient Components:\n• Marked with 'use client' directive at top of file\n• Can use hooks, event handlers, browser APIs\n• Cannot import Server Components (but can receive them as children/props)\n\nBoundary rules:\n• 'use client' creates a boundary — everything imported becomes client\n• Pass Server Components as children to avoid pulling them client-side\n\n```jsx\n// ✅ Good: Server Component passed as child\n<ClientWrapper>\n  <ServerComponent />\n</ClientWrapper>\n```",
+      "tags": ["rsc", "client-components", "boundaries"]
+    },
+    {
+      "id": "ra-003",
+      "front": "How does React Suspense work under the hood?",
+      "back": "Suspense catches promises thrown during render and shows a fallback until they resolve.\n\nMechanism:\n• A child throws a promise (e.g., lazy load, data fetch)\n• Suspense catches it, renders fallback\n• When promise resolves, React re-renders the subtree\n• Multiple Suspense boundaries can nest for granular loading states\n\n```jsx\n<Suspense fallback={<Skeleton />}>\n  <UserProfile />   {/* may suspend */}\n  <Suspense fallback={<Spinner />}>\n    <UserPosts />  {/* independent loading */}\n  </Suspense>\n</Suspense>\n```\n\nKey details:\n• Works with React.lazy, RSC, and Suspense-enabled data fetching\n• Streaming SSR sends fallback HTML first, swaps in content\n• Avoid suspending at the root — too coarse",
+      "tags": ["suspense", "concurrent", "loading"]
+    },
+    {
+      "id": "ra-004",
+      "front": "What do useTransition and startTransition do? When would you use them?",
+      "back": "They mark state updates as LOW PRIORITY so urgent updates (typing, clicking) stay fast.\n\nuseTransition:\n• Returns [isPending, startTransition]\n• isPending = true while transition is rendering\n\n```jsx\nconst [isPending, startTransition] = useTransition();\n\nfunction handleSearch(query) {\n  setInputValue(query);           // urgent — updates input immediately\n  startTransition(() => {\n    setFilteredResults(filter(query)); // deferred — won't block input\n  });\n}\n```\n\nWhen to use:\n• Filtering large lists while user types\n• Tab switching with heavy re-renders\n• Navigation transitions\n\nKey: React can interrupt the low-priority render if a high-priority update arrives.",
+      "tags": ["concurrent", "useTransition", "performance"]
+    },
+    {
+      "id": "ra-005",
+      "front": "What is useDeferredValue and when should you reach for it?",
+      "back": "useDeferredValue returns a 'stale' copy of a value that lags behind during heavy renders.\n\n```jsx\nconst deferredQuery = useDeferredValue(query);\n// deferredQuery updates AFTER urgent renders finish\n\nreturn (\n  <>\n    <input value={query} onChange={e => setQuery(e.target.value)} />\n    <HeavyList filter={deferredQuery} />\n  </>\n);\n```\n\nuseDeferredValue vs useTransition:\n• useTransition — you control WHEN the update happens (wrap setState)\n• useDeferredValue — you defer a VALUE you receive (e.g., from props)\n\nUse useDeferredValue when:\n• You don't control the state update (value comes from parent/URL)\n• You want to show stale UI briefly while new UI renders\n• Pair with memo() on the heavy child for best results",
+      "tags": ["concurrent", "useDeferredValue", "performance"]
+    },
+    {
+      "id": "ra-006",
+      "front": "How do React.lazy and dynamic imports work for code splitting?",
+      "back": "React.lazy lets you lazy-load a component so its code is only fetched when first rendered.\n\n```jsx\nconst Chart = React.lazy(() => import('./Chart'));\n\nfunction Dashboard() {\n  return (\n    <Suspense fallback={<Spinner />}>\n      <Chart data={data} />\n    </Suspense>\n  );\n}\n```\n\nHow it works:\n• import() returns a promise for the module\n• React.lazy wraps it so React can suspend on it\n• Must be wrapped in Suspense for the fallback\n• Webpack/Vite auto-split into a separate chunk\n\nBest practices:\n• Split at route level (biggest wins)\n• Use webpackChunkName for readable chunk names\n• Prefetch likely-needed chunks: import(/* webpackPrefetch: true */ './Chart')\n• React.lazy only works for default exports",
+      "tags": ["code-splitting", "lazy", "performance"]
+    },
+    {
+      "id": "ra-007",
+      "front": "Explain the compound component pattern in React.",
+      "back": "Compound components share implicit state via context, giving users flexible composition.\n\n```jsx\n// API — clean, declarative\n<Select value={val} onChange={setVal}>\n  <Select.Trigger />\n  <Select.Menu>\n    <Select.Option value=\"a\">Alpha</Select.Option>\n    <Select.Option value=\"b\">Beta</Select.Option>\n  </Select.Menu>\n</Select>\n```\n\nHow to build:\n• Parent creates context with shared state\n• Child components consume that context\n• Attach children as static properties (Select.Option)\n\nWhy use it:\n• Users control layout and ordering\n• No prop drilling — state is implicit\n• Extensible without breaking changes\n\nExamples in the wild:\n• Radix UI, Headless UI, Reach UI\n• HTML's own <select>/<option> is the inspiration",
+      "tags": ["patterns", "compound-components", "composition"]
+    },
+    {
+      "id": "ra-008",
+      "front": "Render props vs hooks — when does each pattern make sense?",
+      "back": "Hooks replaced MOST render prop use cases, but render props still have a niche.\n\nUse hooks when:\n• You need to reuse stateful logic (90% of cases)\n• Cleaner, less nesting, composable\n```jsx\nconst { data } = useFetch('/api/users');\n```\n\nUse render props when:\n• The parent needs to control WHAT renders based on child state\n• You're building a headless library component\n• You need to avoid re-mounting on logic change\n```jsx\n<Virtualized items={list}>\n  {({ item, style }) => <Row style={style}>{item.name}</Row>}\n</Virtualized>\n```\n\nStill common in:\n• Downshift, React Spring (older API), react-window\n• Animation libraries where child rendering varies\n\nRule of thumb: hooks first, render props when the CONSUMER decides the JSX.",
+      "tags": ["patterns", "render-props", "hooks"]
+    },
+    {
+      "id": "ra-009",
+      "front": "What are React context performance pitfalls and how do you fix them?",
+      "back": "Pitfall: ANY context value change re-renders ALL consumers — even if they only use part of it.\n\nCommon mistakes:\n• Putting unrelated state in one context\n• Creating new object references every render\n```jsx\n// ❌ New object every render\n<Ctx.Provider value={{ user, theme }}>\n```\n\nFixes:\n• Split contexts — separate UserCtx from ThemeCtx\n• Memoize the value object:\n```jsx\nconst value = useMemo(() => ({ user, theme }), [user, theme]);\n<Ctx.Provider value={value}>\n```\n• Use state + dispatch pattern (like useReducer) — dispatch is stable\n• Use selector libraries: use-context-selector or Zustand\n• React 19's use() + memo can help avoid unnecessary re-renders\n\nRule: If context changes often, consider moving to external state (Zustand, Jotai).",
+      "tags": ["context", "performance", "state-management"]
+    },
+    {
+      "id": "ra-010",
+      "front": "What are forwardRef and useImperativeHandle? When do you need them?",
+      "back": "forwardRef passes a ref through a component to a child DOM node or component.\n\n```jsx\nconst FancyInput = forwardRef((props, ref) => (\n  <input ref={ref} className=\"fancy\" {...props} />\n));\n// Parent: <FancyInput ref={inputRef} />\n```\n\nuseImperativeHandle customizes WHAT the ref exposes (instead of the raw DOM node):\n```jsx\nconst FancyInput = forwardRef((props, ref) => {\n  const inputRef = useRef();\n  useImperativeHandle(ref, () => ({\n    focus: () => inputRef.current.focus(),\n    clear: () => { inputRef.current.value = ''; }\n  }));\n  return <input ref={inputRef} {...props} />;\n});\n```\n\nWhen to use:\n• forwardRef — reusable UI components that wrap DOM elements\n• useImperativeHandle — expose limited API (focus, scroll, play)\n• Avoid for data flow — prefer props/state. Refs are escape hatches.\n\nNote: React 19 passes ref as a regular prop — forwardRef may become optional.",
+      "tags": ["refs", "forwardRef", "useImperativeHandle"]
+    },
+    {
+      "id": "ra-011",
+      "front": "What are best practices for writing custom hooks?",
+      "back": "Custom hooks extract and reuse stateful logic. Name must start with 'use'.\n\nBest practices:\n• Single responsibility — one hook, one concern\n• Return stable references (memoize callbacks/objects)\n• Accept configuration as params, not globals\n• Return [value, actions] or { data, error, loading } — consistent shape\n\n```jsx\nfunction useLocalStorage(key, initial) {\n  const [value, setValue] = useState(() => {\n    const stored = localStorage.getItem(key);\n    return stored ? JSON.parse(stored) : initial;\n  });\n  useEffect(() => {\n    localStorage.setItem(key, JSON.stringify(value));\n  }, [key, value]);\n  return [value, setValue];\n}\n```\n\nPatterns:\n• useToggle, useDebounce, useMediaQuery — utility hooks\n• useFetch, useMutation — data hooks\n• useForm, useAuth — domain hooks\n\nAvoid: hooks that do too many things or have 10+ params.",
+      "tags": ["hooks", "custom-hooks", "patterns"]
+    },
+    {
+      "id": "ra-012",
+      "front": "How do React error boundaries work? What are their limitations?",
+      "back": "Error boundaries catch JS errors in the component tree and render a fallback UI.\n\n• Class component only (no hook equivalent yet)\n• Uses static getDerivedStateFromError() and componentDidCatch()\n\n```jsx\nclass ErrorBoundary extends React.Component {\n  state = { hasError: false };\n  static getDerivedStateFromError(error) {\n    return { hasError: true };\n  }\n  componentDidCatch(error, info) {\n    logToService(error, info.componentStack);\n  }\n  render() {\n    if (this.state.hasError) return <FallbackUI />;\n    return this.props.children;\n  }\n}\n```\n\nWhat they DON'T catch:\n• Event handlers (use try/catch)\n• Async code (promises, setTimeout)\n• SSR errors\n• Errors in the boundary itself\n\nTips:\n• Use react-error-boundary library for hooks-friendly API\n• Place boundaries at route level + around risky widgets\n• Include a 'retry' button in fallback UI",
+      "tags": ["error-boundaries", "error-handling", "resilience"]
+    },
+    {
+      "id": "ra-013",
+      "front": "What are React Portals and when should you use them?",
+      "back": "Portals render children into a DOM node OUTSIDE the parent component's DOM hierarchy.\n\n```jsx\nimport { createPortal } from 'react-dom';\n\nfunction Modal({ children }) {\n  return createPortal(\n    <div className=\"modal-overlay\">{children}</div>,\n    document.getElementById('modal-root')\n  );\n}\n```\n\nWhy portals exist:\n• Escape CSS overflow: hidden, z-index stacking issues\n• Render modals, tooltips, dropdowns at document body level\n\nKey behavior:\n• DOM placement changes, but React tree stays the same\n• Events still bubble through the React tree (not DOM tree!)\n• Context still works across the portal boundary\n\nWhen to use:\n• Modals and dialogs\n• Tooltips and popovers\n• Toast notifications\n• Anything that needs to visually 'break out' of its container",
+      "tags": ["portals", "dom", "modals"]
+    },
+    {
+      "id": "ra-014",
+      "front": "What are the key new features in React 19? (use, actions, form actions)",
+      "back": "React 19 major additions:\n\n• use() hook — read promises and context in render:\n```jsx\nfunction UserName({ userPromise }) {\n  const user = use(userPromise); // suspends until resolved\n  return <span>{user.name}</span>;\n}\n```\n\n• Actions — async functions for transitions:\n```jsx\nconst [error, submitAction, isPending] = useActionState(\n  async (prevState, formData) => {\n    const result = await saveUser(formData);\n    if (result.error) return result.error;\n  }, null\n);\n```\n\n• Form actions — <form action={fn}> for progressive enhancement\n• useFormStatus — get pending state inside form children\n• useOptimistic — show optimistic UI before server confirms\n• ref as prop — no more forwardRef needed\n• Document metadata — <title>, <meta> in components\n• Stylesheet precedence — built-in CSS loading coordination",
+      "tags": ["react-19", "use", "actions", "new-features"]
+    },
+    {
+      "id": "ra-015",
+      "front": "How do you use React Profiler and other tools to debug performance?",
+      "back": "Built-in tools:\n\n• <Profiler> component — measures render cost:\n```jsx\n<Profiler id=\"sidebar\" onRender={(id, phase, duration) => {\n  console.log(`${id} ${phase}: ${duration}ms`);\n}}>\n  <Sidebar />\n</Profiler>\n```\n\n• React DevTools Profiler tab:\n  - Record renders, see flame graph\n  - 'Why did this render?' toggle\n  - Highlight components that re-render\n\n• React DevTools Settings:\n  - Enable 'Highlight updates' for visual re-render detection\n\nDebugging checklist:\n• Wrap expensive children in React.memo()\n• Memoize callbacks with useCallback, objects with useMemo\n• Check if context providers cause waterfall re-renders\n• Look for new object/array literals in JSX props\n• Use useTransition for non-urgent updates\n\nExternal tools:\n• why-did-you-render library — logs unnecessary re-renders\n• Chrome Performance tab — trace long tasks\n• React Scan — visual re-render overlay",
+      "tags": ["profiler", "devtools", "performance", "debugging"]
+    }
+  ]
+}
