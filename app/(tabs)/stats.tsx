@@ -6,10 +6,12 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { getStreak, getDailyStats, getQuizStats, getQuizResults, getDueCardCount } from '@/lib/database';
 import { DailyStats } from '@/types';
+import { useAuth } from '@/lib/auth';
 
 export default function StatsScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  const { user, signOut, configured } = useAuth();
   const router = useRouter();
 
   const [streak, setStreak] = useState(0);
@@ -198,6 +200,16 @@ export default function StatsScreen() {
             : 'Start your first review to begin your streak.'}
         </Text>
       </View>
+
+      {/* Account */}
+      {configured && user && (
+        <View style={styles.accountSection}>
+          <Text style={[styles.accountEmail, { color: colors.textSecondary }]}>{user.email}</Text>
+          <Pressable onPress={signOut}>
+            <Text style={[styles.signOutText, { color: colors.danger }]}>Sign Out</Text>
+          </Pressable>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -371,5 +383,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     letterSpacing: 0.3,
+  },
+  accountSection: {
+    marginTop: 28,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  accountEmail: {
+    fontSize: 12,
+    letterSpacing: 0.2,
+    marginBottom: 8,
+  },
+  signOutText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    letterSpacing: 0.2,
   },
 });

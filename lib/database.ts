@@ -1,9 +1,16 @@
 import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 import { CardProgress, DailyStats, Pack } from '@/types';
+import { pushCardProgress, pushDailyStats, pushQuizResult } from '@/lib/sync';
 
 let db: SQLite.SQLiteDatabase | null = null;
 const isWeb = Platform.OS === 'web';
+
+// Set by auth layer when user signs in — enables cloud sync
+let _currentUserId: string | null = null;
+export function setCurrentUserId(userId: string | null) {
+  _currentUserId = userId;
+}
 
 // --- In-memory web fallback storage ---
 const memPacks: Map<string, { id: string; name: string; description: string; icon: string; category: string; card_count: number }> = new Map();
@@ -155,22 +162,26 @@ export async function getCardProgress(cardId: string): Promise<CardProgress | nu
 }
 
 export async function upsertCardProgress(progress: CardProgress): Promise<void> {
-  if (isWeb) { memProgress.set(progress.cardId, progress); return; }
-  const database = await getDatabase();
-  await database.runAsync(
-    `INSERT OR REPLACE INTO card_progress
-     (card_id, pack_id, ease_factor, interval, repetitions, next_review_date, last_review_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      progress.cardId,
-      progress.packId,
-      progress.easeFactor,
-      progress.interval,
-      progress.repetitions,
-      progress.nextReviewDate,
-      progress.lastReviewDate,
-    ]
-  );
+  if (isWeb) { memProgress.set(progress.cardId, progress); }
+  else {
+    const database = await getDatabase();
+    await database.runAsync(
+      `INSERT OR REPLACE INTO card_progress
+       (card_id, pack_id, ease_factor, interval, repetitions, next_review_date, last_review_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        progress.cardId,
+        progress.packId,
+        progress.easeFactor,
+        progress.interval,
+        progress.repetitions,
+        progress.nextReviewDate,
+        progress.lastReviewDate,
+      ]
+    );
+  }
+  // Background cloud sync
+  if (_currentUserId) pushCardProgress(_currentUserId, progress);
 }
 
 export async function getDueCards(
@@ -262,19 +273,25 @@ export async function recordReview(correct: boolean, isNew: boolean): Promise<vo
     if (correct) existing.cardsCorrect++;
     if (isNew) existing.newCardsSeen++;
     memStats.set(today, existing);
-    return;
+  } else {
+    const database = await getDatabase();
+    await database.runAsync(
+      `INSERT INTO daily_stats (date, cards_reviewed, cards_correct, new_cards_seen)
+       VALUES (?, 1, ?, ?)
+       ON CONFLICT(date) DO UPDATE SET
+         cards_reviewed = cards_reviewed + 1,
+         cards_correct = cards_correct + ?,
+         new_cards_seen = new_cards_seen + ?`,
+      [today, correct ? 1 : 0, isNew ? 1 : 0, correct ? 1 : 0, isNew ? 1 : 0]
+    );
   }
-  const database = await getDatabase();
-
-  await database.runAsync(
-    `INSERT INTO daily_stats (date, cards_reviewed, cards_correct, new_cards_seen)
-     VALUES (?, 1, ?, ?)
-     ON CONFLICT(date) DO UPDATE SET
-       cards_reviewed = cards_reviewed + 1,
-       cards_correct = cards_correct + ?,
-       new_cards_seen = new_cards_seen + ?`,
-    [today, correct ? 1 : 0, isNew ? 1 : 0, correct ? 1 : 0, isNew ? 1 : 0]
-  );
+  // Background cloud sync
+  if (_currentUserId) {
+    const stats = isWeb
+      ? memStats.get(today)!
+      : await getDailyStats(today);
+    if (stats) pushDailyStats(_currentUserId, today, stats);
+  }
 }
 
 export async function getDailyStats(date: string): Promise<DailyStats | null> {
@@ -394,6 +411,35 @@ export async function getTotalNewCards(): Promise<number> {
   return result?.count ?? 0;
 }
 
+// --- Cloud Sync Hydration ---
+import { pullAllProgress } from '@/lib/sync';
+
+export async function hydrateFromCloud(userId: string): Promise<void> {
+  setCurrentUserId(userId);
+  const cloudProgress = await pullAllProgress(userId);
+  if (cloudProgress.length === 0) return;
+
+  for (const cp of cloudProgress) {
+    const local = await getCardProgress(cp.card_id);
+    // Cloud wins if local doesn't exist or cloud has a more recent review
+    if (!local || cp.last_review_date > (local.lastReviewDate ?? '')) {
+      // Temporarily disable sync to avoid pushing what we just pulled
+      const savedId = _currentUserId;
+      _currentUserId = null;
+      await upsertCardProgress({
+        cardId: cp.card_id,
+        packId: cp.pack_id,
+        easeFactor: cp.ease_factor,
+        interval: cp.interval,
+        repetitions: cp.repetitions,
+        nextReviewDate: cp.next_review_date,
+        lastReviewDate: cp.last_review_date,
+      });
+      _currentUserId = savedId;
+    }
+  }
+}
+
 // --- Quiz Results ---
 
 const memQuizResults: { packName: string; score: number; total: number; date: string }[] = [];
@@ -402,13 +448,15 @@ export async function saveQuizResult(packName: string, score: number, total: num
   const date = new Date().toISOString().split('T')[0];
   if (isWeb) {
     memQuizResults.push({ packName, score, total, date });
-    return;
+  } else {
+    const database = await getDatabase();
+    await database.runAsync(
+      'INSERT INTO quiz_results (pack_name, score, total, date) VALUES (?, ?, ?, ?)',
+      [packName, score, total, date]
+    );
   }
-  const database = await getDatabase();
-  await database.runAsync(
-    'INSERT INTO quiz_results (pack_name, score, total, date) VALUES (?, ?, ?, ?)',
-    [packName, score, total, date]
-  );
+  // Background cloud sync
+  if (_currentUserId) pushQuizResult(_currentUserId, packName, score, total, date);
 }
 
 export interface QuizResultRow {

@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
+import { AuthProvider, useAuth } from '@/lib/auth';
 
 export {
   ErrorBoundary,
@@ -42,12 +43,17 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  const { user, loading, configured } = useAuth();
 
   const theme = colorScheme === 'dark' ? {
     ...DarkTheme,
@@ -57,20 +63,29 @@ function RootLayoutNav() {
     colors: { ...DefaultTheme.colors, background: colors.background },
   };
 
+  // If Supabase isn't configured yet, skip auth entirely (local-only mode)
+  const needsAuth = configured && !user && !loading;
+
   return (
     <ThemeProvider value={theme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="review/[packId]"
-          options={{
-            title: 'Review',
-            headerStyle: { backgroundColor: colors.background },
-            headerTintColor: colors.text,
-            headerShadowVisible: false,
-            presentation: 'modal',
-          }}
-        />
+        {needsAuth ? (
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+        ) : (
+          <>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="review/[packId]"
+              options={{
+                title: 'Review',
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.text,
+                headerShadowVisible: false,
+                presentation: 'modal',
+              }}
+            />
+          </>
+        )}
       </Stack>
     </ThemeProvider>
   );
