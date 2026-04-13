@@ -9,7 +9,7 @@ function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
 }) {
-  return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
+  return <FontAwesome size={20} style={{ marginBottom: -2 }} {...props} />;
 }
 
 export default function TabLayout() {
@@ -24,9 +24,22 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
+          borderTopWidth: 0.5,
+          height: 84,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '500',
+          letterSpacing: 0.5,
         },
         headerStyle: {
           backgroundColor: colors.background,
+        },
+        headerTitleStyle: {
+          fontSize: 16,
+          fontWeight: '500',
+          letterSpacing: 0.2,
         },
         headerTintColor: colors.text,
         headerShadowVisible: false,

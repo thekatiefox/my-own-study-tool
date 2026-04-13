@@ -62,7 +62,7 @@ export default function HomeScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
       }
     >
-      {/* Hero — greeting + due count + primary CTA */}
+      {/* Hero — due count + review CTA */}
       <Text style={[styles.greeting, { color: colors.textSecondary }]}>
         {getGreeting()}
       </Text>
@@ -72,20 +72,19 @@ export default function HomeScreen() {
         style={({ pressed }) => [
           styles.heroCta,
           {
-            backgroundColor: colors.primary,
-            opacity: pressed ? 0.9 : 1,
+            backgroundColor: colors.surface,
+            borderColor: pressed ? colors.primary : colors.border,
           },
         ]}
       >
         {dueCards > 0 ? (
           <>
-            <Text style={styles.heroCount}>{dueCards}</Text>
-            <Text style={styles.heroLabel}>cards due — tap to review</Text>
+            <Text style={[styles.heroCount, { color: colors.primary }]}>{dueCards}</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due</Text>
           </>
         ) : (
           <>
-            <Text style={styles.heroLabel}>All caught up</Text>
-            <Text style={styles.heroSub}>Start a review to reinforce</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>All caught up</Text>
           </>
         )}
       </Pressable>
@@ -157,61 +156,55 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 48,
   },
   greeting: {
-    fontSize: 13,
-    letterSpacing: 1.2,
+    fontSize: 12,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    marginBottom: 16,
-    fontWeight: '500',
+    marginBottom: 20,
+    fontWeight: '400',
   },
   heroCta: {
-    borderRadius: 16,
-    paddingVertical: 28,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 32,
     paddingHorizontal: 24,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   heroCount: {
-    fontSize: 36,
-    fontWeight: '600',
-    color: '#FFF9F4',
-    letterSpacing: -0.5,
+    fontSize: 40,
+    fontWeight: '300',
+    letterSpacing: -1,
   },
   heroLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#FFF9F4',
-    letterSpacing: 0.2,
-    marginTop: 2,
-  },
-  heroSub: {
     fontSize: 13,
-    color: 'rgba(255,249,244,0.6)',
+    fontWeight: '400',
+    letterSpacing: 0.5,
     marginTop: 4,
   },
   sectionLabel: {
     fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-    marginBottom: 12,
+    fontWeight: '500',
+    letterSpacing: 2,
+    marginBottom: 14,
   },
   newsSection: {
-    marginTop: 8,
+    marginTop: 12,
     backgroundColor: 'transparent',
   },
   newsItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     backgroundColor: 'transparent',
   },
   newsTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 20,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   newsMeta: {
     flexDirection: 'row',
@@ -219,34 +212,37 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   newsSource: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
+    letterSpacing: 0.3,
   },
   newsDot: {
-    fontSize: 12,
-    marginHorizontal: 5,
+    fontSize: 11,
+    marginHorizontal: 6,
   },
   newsMetaText: {
-    fontSize: 12,
+    fontSize: 11,
+    letterSpacing: 0.2,
   },
   summaryBox: {
-    marginTop: 10,
-    padding: 12,
-    borderRadius: 10,
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 8,
   },
   summaryLine: {
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     marginBottom: 2,
   },
   readLink: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 8,
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: 0.3,
+    marginTop: 10,
   },
   newsEmpty: {
     fontSize: 13,
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: 16,
   },
 });

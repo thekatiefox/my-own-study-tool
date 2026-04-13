@@ -57,13 +57,13 @@ export default function StatsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
     >
-      <Text style={[styles.title, { color: colors.text }]}>Your Progress</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Progress</Text>
 
       {/* Big stats */}
       <View style={styles.bigStatsRow}>
         <View style={[styles.bigStat, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.bigStatNumber, { color: colors.primary }]}>{streak}</Text>
-          <Text style={[styles.bigStatLabel, { color: colors.textSecondary }]}>Day Streak</Text>
+          <Text style={[styles.bigStatLabel, { color: colors.textSecondary }]}>Streak</Text>
         </View>
         <View style={[styles.bigStat, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.bigStatNumber, { color: colors.accent }]}>{accuracy}%</Text>
@@ -133,51 +133,55 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingTop: 16,
+    paddingTop: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '500',
     letterSpacing: -0.3,
-    marginBottom: 24,
+    marginBottom: 28,
   },
   bigStatsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 24,
     backgroundColor: 'transparent',
   },
   bigStat: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 20,
     alignItems: 'center',
   },
   bigStatNumber: {
-    fontSize: 32,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: -0.5,
   },
   bigStatLabel: {
-    fontSize: 13,
-    marginTop: 4,
-    letterSpacing: 0.3,
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 6,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   chartCard: {
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   chartTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     letterSpacing: 0.2,
     marginBottom: 2,
   },
   chartSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 16,
+    letterSpacing: 0.2,
   },
   chart: {
     flexDirection: 'row',
@@ -197,29 +201,30 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   bar: {
-    width: 20,
-    borderRadius: 4,
-    minHeight: 4,
+    width: 18,
+    borderRadius: 3,
+    minHeight: 3,
   },
   barLabel: {
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 6,
+    letterSpacing: 0.3,
   },
   barCount: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 2,
   },
   motivationCard: {
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 24,
     alignItems: 'center',
   },
   motivationText: {
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 21,
-    letterSpacing: 0.1,
+    lineHeight: 20,
+    letterSpacing: 0.3,
   },
 });

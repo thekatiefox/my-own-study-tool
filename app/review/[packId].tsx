@@ -179,7 +179,8 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
   progressHeader: {
     alignItems: 'center',
@@ -187,8 +188,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   progressText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   cardContainer: {
     flex: 1,
@@ -196,33 +198,35 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   completeEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: 48,
+    marginBottom: 20,
   },
   completeTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '500',
     letterSpacing: -0.3,
     marginBottom: 8,
   },
   completeStats: {
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 8,
+    letterSpacing: 0.2,
   },
   completeMessage: {
-    fontSize: 15,
+    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
+    lineHeight: 20,
+    marginBottom: 36,
   },
   doneButton: {
     paddingHorizontal: 48,
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 8,
   },
   doneButtonText: {
     color: '#FFF9F4',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: 0.5,
   },
 });

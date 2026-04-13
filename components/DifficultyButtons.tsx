@@ -82,9 +82,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   prompt: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
+    letterSpacing: 0.3,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -94,19 +95,21 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    borderWidth: 1.5,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   sublabel: {
     fontSize: 10,
-    marginTop: 2,
+    marginTop: 3,
+    letterSpacing: 0.2,
   },
 });

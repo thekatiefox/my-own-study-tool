@@ -31,14 +31,14 @@ export default function ProgressBar({ current, total }: ProgressBarProps) {
 
 const styles = StyleSheet.create({
   container: {
-    height: 6,
-    borderRadius: 3,
+    height: 3,
+    borderRadius: 1.5,
     overflow: 'hidden',
     marginHorizontal: 24,
     marginVertical: 8,
   },
   fill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 1.5,
   },
 });

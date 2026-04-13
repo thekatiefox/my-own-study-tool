@@ -1,47 +1,47 @@
 // Japanese coffee shop palette
-// Inspired by: light wood, concrete, warm amber backlighting, matcha
-const primary = '#B8845C';       // warm caramel — the "backlighting"
-const primaryLight = '#D4B896';  // light maple wood
-const accent = '#7B9E87';        // matcha green
-const danger = '#C47D5A';        // terracotta
-const warning = '#D4A574';       // warm amber
+// Inspired by: raw concrete, light wood grain, warm amber backlight, matcha
+const primary = '#A07A56';       // muted warm wood — restrained accent
+const primaryLight = '#C9B69C';  // light ash wood
+const accent = '#728F7B';        // desaturated matcha
+const danger = '#B07260';        // muted terracotta
+const warning = '#C49B72';       // warm amber
 
 const tintColorLight = primary;
-const tintColorDark = '#D4A574';
+const tintColorDark = '#C49B72';
 
 export default {
   light: {
-    text: '#2C2420',              // dark walnut
-    textSecondary: '#8B8680',     // concrete gray
-    background: '#F5F0EB',        // warm off-white concrete
-    surface: '#FFFFFF',
+    text: '#2A2623',              // dark charcoal (not quite black)
+    textSecondary: '#948E87',     // concrete gray
+    background: '#F0EDEA',        // cool concrete off-white
+    surface: '#F8F7F5',           // warm off-white (not pure white)
     tint: tintColorLight,
-    tabIconDefault: '#B5AFA8',    // muted concrete
+    tabIconDefault: '#B5AFA8',
     tabIconSelected: tintColorLight,
     primary,
     primaryLight,
     accent,
     danger,
     warning,
-    border: '#E0D8D0',            // warm light border
-    cardFront: '#FFFFFF',
-    cardBack: '#FAF4ED',          // light warm linen
+    border: '#E3DED8',            // subtle warm gray
+    cardFront: '#F8F7F5',
+    cardBack: '#F4F1ED',
   },
   dark: {
-    text: '#F0EBE5',              // warm white
-    textSecondary: '#9B9590',     // warm gray
-    background: '#1A1816',        // dark charcoal concrete
-    surface: '#252220',           // slightly lighter dark
+    text: '#E8E4DF',              // warm off-white
+    textSecondary: '#8A857F',     // muted warm gray
+    background: '#191716',        // near-black charcoal
+    surface: '#232120',           // dark surface
     tint: tintColorDark,
-    tabIconDefault: '#5C5753',    // muted dark
+    tabIconDefault: '#504C48',
     tabIconSelected: tintColorDark,
-    primary: '#D4A574',           // brighter amber for dark mode
-    primaryLight: '#E8C9A0',
+    primary: '#C49B72',           // brighter amber for dark mode
+    primaryLight: '#D9C0A0',
     accent,
     danger,
     warning,
-    border: '#3A3633',            // dark warm border
-    cardFront: '#252220',
-    cardBack: '#2D2926',          // subtle warm shift
+    border: '#333029',            // dark warm border
+    cardFront: '#232120',
+    cardBack: '#2A2724',
   },
 };
