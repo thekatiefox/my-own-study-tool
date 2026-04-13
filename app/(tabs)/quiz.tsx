@@ -161,6 +161,41 @@ export default function QuizScreen() {
           </View>
         </Pressable>
 
+        {/* Category mix buttons */}
+        <Text style={[styles.mixSectionLabel, { color: colors.textSecondary }]}>MIX BY AREA</Text>
+        <View style={styles.mixRow}>
+          {[
+            { label: 'Core Skills', icon: '🟢', ids: ['code-review-scenarios', 'best-practices'] },
+            { label: 'Advanced', icon: '🟡', ids: ['code-review-advanced', 'debugging-scenarios'] },
+            { label: 'Senior', icon: '🔴', ids: ['system-design-scenarios'] },
+          ].map(({ label, icon, ids }) => {
+            const poolPacks = quizPacks.filter(p => ids.includes(p.id));
+            const total = poolPacks.reduce((s, p) => s + p.questions.length, 0);
+            if (total === 0) return null;
+            return (
+              <Pressable
+                key={label}
+                onPress={async () => {
+                  const pool = poolPacks.flatMap(p => p.questions) as QuizQuestion[];
+                  const smart = await selectSmartQuestions(pool, Math.min(10, pool.length));
+                  setSelectedPack({ id: `mix-${label}`, name: `${label} Mix`, icon, description: `Questions from ${label}`, questions: smart } as QuizPack);
+                  resetQuiz();
+                  setActiveQuestions(smart);
+                  setChoosingCount(false);
+                }}
+                style={({ pressed }) => [
+                  styles.mixChip,
+                  { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+                ]}
+              >
+                <Text style={{ fontSize: 16 }}>{icon}</Text>
+                <Text style={[styles.mixChipLabel, { color: colors.text }]}>{label}</Text>
+                <Text style={[styles.mixChipCount, { color: colors.textSecondary }]}>{total}q</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         {quizPacks.map((pack) => {
           const maxQ = pack.questions.length;
           const counts = QUESTION_COUNTS.filter(c => c <= maxQ);
@@ -537,6 +572,39 @@ const styles = StyleSheet.create({
     color: 'rgba(255,249,244,0.75)',
     fontSize: 12,
     letterSpacing: 0.1,
+  },
+
+  // Mix by area
+  mixSectionLabel: {
+    fontSize: 11,
+    fontFamily: 'Inter-Medium',
+    letterSpacing: 2,
+    marginHorizontal: 24,
+    marginBottom: 10,
+    marginTop: 4,
+  },
+  mixRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 24,
+    marginBottom: 20,
+  },
+  mixChip: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    gap: 4,
+  },
+  mixChipLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter-SemiBold',
+  },
+  mixChipCount: {
+    fontSize: 10,
+    fontFamily: 'Inter-Regular',
   },
 
   // Pack cards

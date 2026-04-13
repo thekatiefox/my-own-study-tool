@@ -4,7 +4,7 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getTotalDueCards, hasAnyReviewHistory, getStreak, getDailyStats } from '@/lib/database';
+import { getTotalDueCards, hasAnyReviewHistory, getStreak, getDailyStats, getAllPacks, getPackProgress } from '@/lib/database';
 import { loadAllPacks, getAllPackData } from '@/lib/packs';
 import { fetchTopTechNews, NewsStory } from '@/lib/news';
 import { getDailyReviewQuestions } from '@/lib/quizSelection';
@@ -91,6 +91,46 @@ export default function HomeScreen() {
     setExpandedStory(expandedStory === id ? null : id);
   };
 
+  const PACK_CATEGORIES: Record<string, string> = {
+    'js-fundamentals': 'Core Skills', 'css-layout': 'Core Skills',
+    'typescript-essentials': 'Core Skills', 'web-performance': 'Core Skills',
+    'authentication': 'Core Skills',
+    'react-patterns': 'Advanced', 'react-advanced': 'Advanced',
+    'typescript-advanced': 'Advanced', 'build-tools': 'Advanced',
+    'code-review': 'Senior Level', 'code-review-advanced': 'Senior Level',
+    'system-design-fe': 'Senior Level', 'frontend-architecture': 'Senior Level',
+    'authentication-advanced': 'Senior Level',
+  };
+
+  const handleSurpriseMe = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const allPacks = await getAllPacks();
+      const withProgress = await Promise.all(
+        allPacks.map(async (p) => ({ ...p, ...(await getPackProgress(p.id)) }))
+      );
+      // Priority: due cards → unfinished core skills → any unfinished → random
+      const due = withProgress.filter(p => p.dueCards > 0);
+      if (due.length > 0) {
+        router.push(`/review/${due[Math.floor(Math.random() * due.length)].id}`);
+        return;
+      }
+      const core = withProgress.filter(p => PACK_CATEGORIES[p.id] === 'Core Skills' && p.learnedCards < p.totalCards);
+      if (core.length > 0) {
+        router.push(`/review/${core[Math.floor(Math.random() * core.length)].id}`);
+        return;
+      }
+      const unfinished = withProgress.filter(p => p.learnedCards < p.totalCards);
+      const pool = unfinished.length > 0 ? unfinished : withProgress;
+      if (pool.length > 0) {
+        router.push(`/review/${pool[Math.floor(Math.random() * pool.length)].id}`);
+      }
+    } catch (err) {
+      console.error('Surprise me failed:', err);
+      router.push('/(tabs)/packs');
+    }
+  };
+
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: colors.background }]}
@@ -119,60 +159,102 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <Pressable
-        onPress={() => {
-          if (dueCards > 0) {
-            router.push('/review/mix');
-          } else if (!hasHistory) {
-            router.push('/(tabs)/packs');
-          }
-        }}
-        style={({ pressed }) => [
-          styles.heroCta,
-          {
-            backgroundColor: colors.surface,
-            borderColor: pressed ? colors.primary : colors.border,
-          },
-        ]}
-      >
-        {dueCards > 0 ? (
-          <>
-            <Text style={[styles.heroCount, { color: colors.primary }]}>{dueCards}</Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due — tap to review</Text>
-          </>
-        ) : hasHistory ? (
-          <>
-            <Text style={[styles.heroCount, { color: colors.accent }]}>✓</Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>all caught up — nice work</Text>
-          </>
-        ) : (
-          <>
-            <Text style={[styles.heroCount, { color: colors.primary }]}>{totalCards}</Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards available — pick a pack to start</Text>
-          </>
-        )}
-      </Pressable>
+      {/* New user — clear getting started */}
+      {!hasHistory && (
+        <View style={[styles.getStarted, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.getStartedTitle, { color: colors.text }]}>
+            Ready to level up? 🚀
+          </Text>
+          <Text style={[styles.getStartedSub, { color: colors.textSecondary }]}>
+            Pick how you want to learn today
+          </Text>
+          <View style={styles.getStartedActions}>
+            <Pressable
+              onPress={handleSurpriseMe}
+              style={({ pressed }) => [
+                styles.getStartedBtn,
+                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Text style={styles.getStartedBtnIcon}>🎲</Text>
+              <Text style={styles.getStartedBtnLabel}>Surprise Me</Text>
+              <Text style={[styles.getStartedBtnHint, { color: 'rgba(255,255,255,0.8)' }]}>Pick a random pack</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/(tabs)/quiz')}
+              style={({ pressed }) => [
+                styles.getStartedBtn,
+                { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Text style={styles.getStartedBtnIcon}>🧠</Text>
+              <Text style={styles.getStartedBtnLabel}>Take a Quiz</Text>
+              <Text style={[styles.getStartedBtnHint, { color: 'rgba(255,255,255,0.8)' }]}>Test what you know</Text>
+            </Pressable>
+          </View>
+          <Pressable onPress={() => router.push('/(tabs)/packs')}>
+            <Text style={[styles.browsePacks, { color: colors.primary }]}>
+              Or browse all {totalCards} cards by topic →
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
-      {/* Secondary CTAs when caught up */}
-      {dueCards === 0 && hasHistory && (
-        <View style={styles.secondaryCtas}>
+      {/* Returning user — due cards or caught up */}
+      {hasHistory && dueCards > 0 && (
+        <Pressable
+          onPress={() => router.push('/review/mix')}
+          style={({ pressed }) => [
+            styles.heroCta,
+            { backgroundColor: colors.surface, borderColor: pressed ? colors.primary : colors.border },
+          ]}
+        >
+          <Text style={[styles.heroCount, { color: colors.primary }]}>{dueCards}</Text>
+          <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>cards due — tap to review</Text>
+        </Pressable>
+      )}
+
+      {hasHistory && dueCards === 0 && (
+        <View style={[styles.caughtUp, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.caughtUpText, { color: colors.accent }]}>✓ All caught up — nice work</Text>
+        </View>
+      )}
+
+      {/* Surprise Me — always visible for returning users */}
+      {hasHistory && (
+        <View style={styles.actionRow}>
+          <Pressable
+            onPress={handleSurpriseMe}
+            style={({ pressed }) => [
+              styles.actionCard,
+              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Text style={{ fontSize: 20 }}>🎲</Text>
+            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Surprise Me</Text>
+            <Text style={[styles.actionCardHint, { color: colors.textSecondary }]}>Random cards</Text>
+          </Pressable>
           <Pressable
             onPress={() => router.push('/(tabs)/quiz')}
             style={({ pressed }) => [
-              styles.secondaryBtn,
-              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+              styles.actionCard,
+              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>Take a quiz</Text>
+            <Text style={{ fontSize: 20 }}>🧠</Text>
+            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Take a Quiz</Text>
+            <Text style={[styles.actionCardHint, { color: colors.textSecondary }]}>Test yourself</Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/(tabs)/packs')}
             style={({ pressed }) => [
-              styles.secondaryBtn,
-              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+              styles.actionCard,
+              { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>Browse packs</Text>
+            <Text style={{ fontSize: 20 }}>📚</Text>
+            <Text style={[styles.actionCardLabel, { color: colors.text }]}>Browse Packs</Text>
+            <Text style={[styles.actionCardHint, { color: colors.textSecondary }]}>Pick a topic</Text>
           </Pressable>
         </View>
       )}
@@ -339,7 +421,7 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     paddingHorizontal: 24,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   heroCount: {
     fontSize: 40,
@@ -352,23 +434,90 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 4,
   },
-  secondaryCtas: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 24,
-    backgroundColor: 'transparent',
-  },
-  secondaryBtn: {
-    flex: 1,
-    borderRadius: 8,
+  caughtUp: {
+    borderRadius: 10,
     borderWidth: 1,
-    paddingVertical: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  caughtUpText: {
+    fontSize: 15,
+    fontFamily: 'Inter-SemiBold',
+  },
+  getStarted: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 24,
+    marginBottom: 20,
     alignItems: 'center',
   },
-  secondaryBtnText: {
-    fontSize: 12,
+  getStartedTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 4,
+  },
+  getStartedSub: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    marginBottom: 20,
+  },
+  getStartedActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    backgroundColor: 'transparent',
+  },
+  getStartedBtn: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  getStartedBtnIcon: {
+    fontSize: 28,
+    marginBottom: 6,
+  },
+  getStartedBtnLabel: {
+    fontSize: 15,
+    fontFamily: 'Inter-SemiBold',
+    color: '#fff',
+  },
+  getStartedBtnHint: {
+    fontSize: 11,
+    fontFamily: 'Inter-Regular',
+    marginTop: 2,
+  },
+  browsePacks: {
+    fontSize: 13,
     fontFamily: 'Inter-Medium',
-    letterSpacing: 0.3,
+    marginTop: 16,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+    backgroundColor: 'transparent',
+  },
+  actionCard: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionCardLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter-SemiBold',
+    textAlign: 'center',
+  },
+  actionCardHint: {
+    fontSize: 10,
+    fontFamily: 'Inter-Regular',
+    textAlign: 'center',
   },
   sectionLabel: {
     fontSize: 11,
