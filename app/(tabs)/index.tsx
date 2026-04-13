@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { getStreak, getTotalDueCards, getDailyStats, getAllPacks } from '@/lib/database';
 import { loadAllPacks } from '@/lib/packs';
+import { fetchTopTechNews, NewsStory } from '@/lib/news';
+import NewsCard from '@/components/NewsCard';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -15,6 +17,8 @@ export default function HomeScreen() {
   const [streak, setStreak] = useState(0);
   const [dueCards, setDueCards] = useState(0);
   const [todayReviewed, setTodayReviewed] = useState(0);
+  const [news, setNews] = useState<NewsStory[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -34,6 +38,11 @@ export default function HomeScreen() {
     } finally {
       setIsLoading(false);
     }
+
+    // Fetch news in background (non-blocking)
+    fetchTopTechNews(5)
+      .then(setNews)
+      .finally(() => setNewsLoading(false));
   }, []);
 
   useFocusEffect(
@@ -103,6 +112,31 @@ export default function HomeScreen() {
         <Text style={[styles.tipText, { color: colors.text }]}>
           {getDailyTip()}
         </Text>
+      </View>
+
+      {/* Tech News section */}
+      <View style={styles.newsSection}>
+        <Text style={[styles.newsSectionTitle, { color: colors.text }]}>
+          📰 Today in Tech
+        </Text>
+        <Text style={[styles.newsSectionSubtitle, { color: colors.textSecondary }]}>
+          Top stories from Hacker News
+        </Text>
+        {newsLoading ? (
+          <ActivityIndicator
+            size="small"
+            color={colors.primary}
+            style={{ marginTop: 16 }}
+          />
+        ) : news.length > 0 ? (
+          news.map((story) => (
+            <NewsCard key={story.id} story={story} colors={colors} />
+          ))
+        ) : (
+          <Text style={[styles.newsEmpty, { color: colors.textSecondary }]}>
+            Couldn't load news — check your connection
+          </Text>
+        )}
       </View>
     </ScrollView>
   );
@@ -203,5 +237,23 @@ const styles = StyleSheet.create({
   tipText: {
     fontSize: 14,
     lineHeight: 21,
+  },
+  newsSection: {
+    marginTop: 24,
+    backgroundColor: 'transparent',
+  },
+  newsSectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  newsSectionSubtitle: {
+    fontSize: 13,
+    marginBottom: 14,
+  },
+  newsEmpty: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 16,
   },
 });
