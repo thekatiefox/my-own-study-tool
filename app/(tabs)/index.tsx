@@ -22,6 +22,7 @@ export default function HomeScreen() {
   const [news, setNews] = useState<NewsStory[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [expandedStory, setExpandedStory] = useState<number | null>(null);
+  const [showAllNews, setShowAllNews] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -143,7 +144,7 @@ export default function HomeScreen() {
           <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />
         ) : news.length > 0 ? (
           <>
-            {news.slice(0, 2).map((story) => (
+            {(showAllNews ? news : news.slice(0, 2)).map((story) => (
               <View key={story.id} style={[styles.newsItem, { borderColor: colors.border }]}>
                 <Pressable onPress={() => toggleStory(story.id)}>
                   <Text style={[styles.newsTitle, { color: colors.text }]} numberOfLines={2}>
@@ -176,11 +177,8 @@ export default function HomeScreen() {
                 ) : null}
               </View>
             ))}
-            {news.length > 2 && (
-              <Pressable onPress={() => {
-                // Show remaining stories inline
-                setNews(prev => prev); // already loaded, just expand
-              }}>
+            {!showAllNews && news.length > 2 && (
+              <Pressable onPress={() => setShowAllNews(true)}>
                 <Text style={[styles.readLink, { color: colors.primary, marginTop: 8 }]}>
                   +{news.length - 2} more stories
                 </Text>
